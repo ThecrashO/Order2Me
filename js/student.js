@@ -67,9 +67,98 @@ function displayMenuItems(items) {
     });
 }
 
+async function loadStudentOrders() {
+    const container = document.getElementById('orders-container');
+    if (!container) return;
+
+    container.innerHTML = '<p class="text-muted">Loading your orders...</p>';
+
+    const { data, error } = await supabaseClient
+        .from('orders')
+        .select(`
+            id,
+            status,
+            total_amount,
+            delivery_note,
+            created_at,
+            order_items (
+                quantity,
+                price,
+                menu_items (name)
+            )
+        `)
+        .eq('student_id', TEMP_STUDENT_ID)
+        .order('created_at', { ascending: false });
+
+    if (error) {
+        console.error('Error loading student orders:', error);
+        container.innerHTML = `<p class="text-danger">Error loading your orders: ${escapeHtml(error.message)}</p>`;
+        return;
+    }
+
+    displayStudentOrders(data || []);
+}
+
+function displayStudentOrders(orders) {
+    const container = document.getElementById('orders-container');
+    if (!container) return;
+
+    if (!orders || orders.length === 0) {
+        container.innerHTML = '<p class="text-muted">You have no orders yet.</p>';
+        return;
+    }
+
+    container.innerHTML = orders.map(order => {
+        const statusColors = {
+            pending: 'warning',
+            preparing: 'info',
+            ready: 'success',
+            delivered: 'secondary'
+        };
+        const badgeColor = statusColors[order.status] || 'secondary';
+
+        const itemsHtml = (order.order_items || []).map(item => {
+            const name = item.menu_items ? item.menu_items.name : 'Item';
+            return `
+                <div class="d-flex justify-content-between small mb-1">
+                    <span>${escapeHtml(name)} x ${item.quantity}</span>
+                    <span>${item.price * item.quantity} MMK</span>
+                </div>
+            `;
+        }).join('');
+
+        const noteHtml = order.delivery_note
+            ? `<p class="mb-1 small text-muted"><strong>Note:</strong> ${escapeHtml(order.delivery_note)}</p>`
+            : '';
+
+        const time = new Date(order.created_at).toLocaleString('en-GB', {
+            day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit'
+        });
+
+        return `
+            <div class="card mb-3">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <div>
+                        <strong>Order #${order.id}</strong>
+                        <div class="small text-muted">Placed ${time}</div>
+                    </div>
+                    <span class="badge bg-${badgeColor} text-dark text-capitalize">${order.status}</span>
+                </div>
+                <div class="card-body py-2">
+                    ${itemsHtml}
+                    ${noteHtml}
+                    <div class="text-end mt-2">
+                        <strong>Total: ${order.total_amount} MMK</strong>
+                    </div>
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
 function escapeHtml(text) {
     const map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' };
-    return text.replace(/[&<>"']/g, m => map[m]);
+    return String(text).replace(/[&<>"']/g, m => map[m]);
 }
 
 // -- 2. CART --------------------------------------------------
@@ -296,3 +385,4 @@ async function createOrder(studentName, deliveryNote) {
 
 // -- Init -----------------------------------------------------
 loadMenu();
+loadStudentOrders();
