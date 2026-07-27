@@ -14,11 +14,13 @@
 -- Authentication (login/signup) is handled by Supabase Auth.
 -- ============================================================
 CREATE TABLE public.users (
-  id         bigint GENERATED ALWAYS AS IDENTITY NOT NULL,
-  name       text        NOT NULL,
-  email      text        NOT NULL UNIQUE,
-  role       text        NOT NULL CHECK (role = ANY (ARRAY['student'::text, 'owner'::text])),
-  created_at timestamp   WITHOUT TIME ZONE DEFAULT now(),
+  id             bigint GENERATED ALWAYS AS IDENTITY NOT NULL,
+  auth_user_id   uuid        UNIQUE,
+  name           text        NOT NULL,
+  email          text        NOT NULL UNIQUE,
+  phone_number   text        UNIQUE,
+  role           text        NOT NULL CHECK (role = ANY (ARRAY['student'::text, 'owner'::text])),
+  created_at     timestamp   WITHOUT TIME ZONE DEFAULT now(),
   CONSTRAINT users_pkey PRIMARY KEY (id)
 );
 
@@ -139,4 +141,55 @@ CREATE TABLE public.payments (
 --   WavePay  -> screenshot_url required
 --   Cash     -> screenshot_url optional / null
 --
+-- ============================================================-- ============================================================
+-- ROW LEVEL SECURITY POLICIES
+-- ============================================================
+
+ALTER TABLE public.users ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY IF NOT EXISTS "Allow authenticated user select own profile"
+ON public.users
+FOR SELECT
+USING (
+  auth.role() = 'authenticated'
+  AND auth.uid() = auth_user_id
+);
+
+CREATE POLICY IF NOT EXISTS "Allow authenticated user insert own profile"
+ON public.users
+FOR INSERT
+WITH CHECK (
+  auth.role() = 'authenticated'
+  AND auth.uid() = auth_user_id
+);
+
+CREATE POLICY IF NOT EXISTS "Allow authenticated user update own profile"
+ON public.users
+FOR UPDATE
+USING (
+  auth.role() = 'authenticated'
+  AND auth.uid() = auth_user_id
+)
+WITH CHECK (
+  auth.role() = 'authenticated'
+  AND auth.uid() = auth_user_id
+);
+
+CREATE POLICY IF NOT EXISTS "Allow authenticated user delete own profile"
+ON public.users
+FOR DELETE
+USING (
+  auth.role() = 'authenticated'
+  AND auth.uid() = auth_user_id
+);
+
+CREATE POLICY IF NOT EXISTS "Allow anon insert student profile"
+ON public.users
+FOR INSERT
+WITH CHECK (
+  auth.role() = 'anon'
+  AND role = 'student'
+  AND auth_user_id IS NOT NULL
+);
+
 -- ============================================================
