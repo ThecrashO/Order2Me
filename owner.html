@@ -3,9 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
     <title>Owner Dashboard</title>
-
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="css/style.css">
 </head>
@@ -14,60 +12,126 @@
 
 <nav class="navbar navbar-dark bg-dark">
     <div class="container">
-        <span class="navbar-brand">
-            Order2Me - Owner
-        </span>
+        <span class="navbar-brand fw-bold">Order2Me — Owner Dashboard</span>
+        <button class="btn btn-outline-light btn-sm" onclick="refreshOrders()">⟳ Refresh Orders</button>
     </div>
 </nav>
 
-<div class="container py-5">
+<div class="container py-4">
 
-    <!-- Add Food Button -->
-    <div class="mb-4">
-        <button class="btn btn-success btn-lg" data-bs-toggle="modal" data-bs-target="#addFoodModal">
-            <i class="bi bi-plus-circle"></i> Add Food
-        </button>
+    <!-- Tabs -->
+    <ul class="nav nav-tabs mb-4" id="ownerTabs" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="orders-tab" data-bs-toggle="tab"
+                    data-bs-target="#orders-panel" type="button" role="tab">
+                📋 Orders
+                <span class="badge bg-danger ms-1 d-none" id="pending-badge">0</span>
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="menu-tab" data-bs-toggle="tab"
+                    data-bs-target="#menu-panel" type="button" role="tab">
+                🍽️ Menu Management
+            </button>
+        </li>
+    </ul>
+
+    <div class="tab-content">
+
+        <!-- ── ORDERS PANEL ── -->
+        <div class="tab-pane fade show active" id="orders-panel" role="tabpanel">
+
+            <!-- Filter buttons -->
+            <div class="d-flex flex-wrap gap-2 mb-3">
+                <button class="btn btn-sm btn-primary order-filter active" data-status="all">All</button>
+                <button class="btn btn-sm btn-outline-warning order-filter" data-status="pending">Pending</button>
+                <button class="btn btn-sm btn-outline-info order-filter" data-status="preparing">Preparing</button>
+                <button class="btn btn-sm btn-outline-success order-filter" data-status="ready">Ready</button>
+                <button class="btn btn-sm btn-outline-secondary order-filter" data-status="delivered">Delivered</button>
+            </div>
+
+            <div id="orders-list">
+                <p class="text-muted">Loading orders...</p>
+            </div>
+        </div>
+
+        <!-- ── MENU PANEL ── -->
+        <div class="tab-pane fade" id="menu-panel" role="tabpanel">
+            <div class="mb-3">
+                <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#addFoodModal">
+                    + Add Food
+                </button>
+            </div>
+            <div class="card">
+                <div class="card-body">
+                    <div id="menu-list">
+                        <p class="text-muted">Loading menu...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
     </div>
+</div>
 
-    <!-- Menu Items Table -->
-    <div class="card">
-        <div class="card-body">
-            <h3>Menu Items</h3>
-            <div id="menu-list" class="mt-4">
-                <p class="text-muted">Loading menu...</p>
+<!-- ── REJECT REASON MODAL ── -->
+<div class="modal fade" id="rejectModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title text-danger">Reject Order</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="reject-order-id">
+                <label for="reject-reason" class="form-label fw-semibold">
+                    Reason for rejection <span class="text-danger">*</span>
+                </label>
+                <select class="form-select mb-2" id="reject-reason">
+                    <option value="">— Select a reason —</option>
+                    <option value="Food unavailable">Food unavailable</option>
+                    <option value="Shop closed">Shop closed</option>
+                    <option value="Too many orders">Too many orders</option>
+                    <option value="Other">Other</option>
+                </select>
+                <textarea class="form-control" id="reject-reason-custom" rows="2"
+                          placeholder="Additional details (optional)" maxlength="200"></textarea>
+                <div id="reject-error" class="text-danger small mt-1 d-none">Please select a reason.</div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button class="btn btn-danger" id="confirm-reject-btn" onclick="confirmReject()">
+                    <span id="reject-spinner" class="spinner-border spinner-border-sm me-1 d-none"></span>
+                    Confirm Reject
+                </button>
             </div>
         </div>
     </div>
-
 </div>
 
-<!-- Add Food Modal -->
+<!-- ── ADD FOOD MODAL ── -->
 <div class="modal fade" id="addFoodModal" tabindex="-1" aria-labelledby="addFoodLabel" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="addFoodLabel">Add New Food</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
                 <form id="menu-form">
                     <input type="hidden" id="item-id">
-                    
                     <div class="mb-3">
                         <label for="item-name" class="form-label">Food Name</label>
                         <input type="text" class="form-control" id="item-name" required>
                     </div>
-
                     <div class="mb-3">
                         <label for="item-description" class="form-label">Description</label>
                         <input type="text" class="form-control" id="item-description">
                     </div>
-
                     <div class="mb-3">
                         <label for="item-price" class="form-label">Price (MMK)</label>
                         <input type="number" class="form-control" id="item-price" required min="0" step="100">
                     </div>
-
                     <div class="mb-3 form-check">
                         <input type="checkbox" class="form-check-input" id="item-available" checked>
                         <label class="form-check-label" for="item-available">Available</label>
@@ -82,33 +146,29 @@
     </div>
 </div>
 
-<!-- Edit Food Modal -->
+<!-- ── EDIT FOOD MODAL ── -->
 <div class="modal fade" id="editFoodModal" tabindex="-1" aria-labelledby="editFoodLabel" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="editFoodLabel">Edit Food</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
                 <form id="edit-form">
                     <input type="hidden" id="edit-item-id">
-                    
                     <div class="mb-3">
                         <label for="edit-item-name" class="form-label">Food Name</label>
                         <input type="text" class="form-control" id="edit-item-name" required>
                     </div>
-
                     <div class="mb-3">
                         <label for="edit-item-description" class="form-label">Description</label>
                         <input type="text" class="form-control" id="edit-item-description">
                     </div>
-
                     <div class="mb-3">
                         <label for="edit-item-price" class="form-label">Price (MMK)</label>
                         <input type="number" class="form-control" id="edit-item-price" required min="0" step="100">
                     </div>
-
                     <div class="mb-3 form-check">
                         <input type="checkbox" class="form-check-input" id="edit-item-available" checked>
                         <label class="form-check-label" for="edit-item-available">Available</label>
