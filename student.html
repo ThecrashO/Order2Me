@@ -37,7 +37,7 @@
 
 </div>
 
-<!-- Cart Modal -->
+<!-- ① Cart Modal -->
 <div class="modal fade" id="cartModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-lg modal-dialog-centered">
         <div class="modal-content">
@@ -53,7 +53,87 @@
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Continue Shopping</button>
-                <button type="button" class="btn btn-primary" onclick="checkout()">Checkout</button>
+                <button type="button" class="btn btn-primary" onclick="openCheckout()">Checkout</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ② Checkout Modal -->
+<div class="modal fade" id="checkoutModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Confirm Your Order</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+
+                <!-- Order summary -->
+                <div class="mb-3 p-3 bg-light rounded">
+                    <div id="checkout-summary"></div>
+                    <div class="text-end mt-2">
+                        <strong>Total: <span id="checkout-total">0</span> MMK</strong>
+                    </div>
+                </div>
+
+                <!-- Name input -->
+                <div class="mb-3">
+                    <label for="checkout-name" class="form-label fw-semibold">
+                        Your Name <span class="text-danger">*</span>
+                    </label>
+                    <input
+                        type="text"
+                        id="checkout-name"
+                        class="form-control"
+                        placeholder="e.g. Mg Mg"
+                        maxlength="100"
+                    >
+                    <div id="checkout-name-error" class="text-danger small mt-1 d-none">
+                        Please enter your name.
+                    </div>
+                </div>
+
+                <!-- Delivery note -->
+                <div class="mb-3">
+                    <label for="checkout-note" class="form-label fw-semibold">
+                        Delivery Note <span class="text-muted fw-normal">(optional)</span>
+                    </label>
+                    <textarea
+                        id="checkout-note"
+                        class="form-control"
+                        rows="2"
+                        placeholder="e.g. No spicy, extra rice..."
+                        maxlength="300"
+                    ></textarea>
+                </div>
+
+                <!-- Error banner -->
+                <div id="checkout-error" class="alert alert-danger d-none" role="alert"></div>
+
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Back to Cart</button>
+                <button type="button" class="btn btn-success" id="place-order-btn" onclick="submitCheckout()">
+                    <span id="place-order-spinner" class="spinner-border spinner-border-sm me-1 d-none" role="status"></span>
+                    Place Order
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ③ Order Success Modal -->
+<div class="modal fade" id="successModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-body text-center py-5">
+                <div class="display-4 mb-3">🎉</div>
+                <h4 class="fw-bold text-success">Order Placed!</h4>
+                <p class="text-muted mt-2 mb-1">Your order has been sent to the canteen.</p>
+                <p class="text-muted small">Order ID: <strong id="success-order-id">—</strong></p>
+                <p class="text-muted small mb-4">Total: <strong id="success-total">—</strong> MMK</p>
+                <button class="btn btn-primary" data-bs-dismiss="modal">Done</button>
             </div>
         </div>
     </div>
