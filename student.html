@@ -78,52 +78,115 @@
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title">Confirm Your Order</h5>
+                <h5 class="modal-title">🛒 Checkout</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
 
                 <!-- Order summary -->
-                <div class="mb-3 p-3 bg-light rounded">
+                <div class="mb-4 p-3 bg-light rounded">
+                    <h6 class="fw-bold mb-2 text-secondary small text-uppercase">Order Summary</h6>
                     <div id="checkout-summary"></div>
-                    <div class="text-end mt-2">
-                        <strong>Total: <span id="checkout-total">0</span> MMK</strong>
+                    <hr class="my-2">
+                    <div class="d-flex justify-content-between fw-bold">
+                        <span>Total</span>
+                        <span><span id="checkout-total">0</span> MMK</span>
                     </div>
                 </div>
 
-                <!-- Name input -->
-                <div class="mb-3">
-                    <label for="checkout-name" class="form-label fw-semibold">
-                        Your Name <span class="text-danger">*</span>
-                    </label>
-                    <input
-                        type="text"
-                        id="checkout-name"
-                        class="form-control"
-                        placeholder="e.g. Mg Mg"
-                        maxlength="100"
-                    >
-                    <div id="checkout-name-error" class="text-danger small mt-1 d-none">
-                        Please enter your name.
-                    </div>
-                </div>
-
-                <!-- Delivery note -->
-                <div class="mb-3">
+                <!-- Delivery Note (REQUIRED) -->
+                <div class="mb-4">
                     <label for="checkout-note" class="form-label fw-semibold">
-                        Delivery Note <span class="text-muted fw-normal">(optional)</span>
+                        📍 Delivery Location &amp; Note <span class="text-danger">*</span>
                     </label>
                     <textarea
                         id="checkout-note"
                         class="form-control"
-                        rows="2"
-                        placeholder="e.g. No spicy, extra rice..."
+                        rows="3"
+                        placeholder="Where to deliver? e.g. Room 201, Building A&#10;Any food preferences? e.g. No spicy, extra rice"
                         maxlength="300"
                     ></textarea>
+                    <div class="form-text text-muted">Tell the owner where you are and any special requests.</div>
+                    <div id="checkout-note-error" class="text-danger small mt-1 d-none">
+                        ⚠ Please enter your delivery location.
+                    </div>
+                </div>
+
+                <!-- Payment Method -->
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">
+                        💳 Payment Method <span class="text-danger">*</span>
+                    </label>
+                    <div class="d-flex gap-2 flex-wrap">
+                        <button type="button" class="btn btn-outline-primary payment-method-btn"
+                                data-method="KBZPay" onclick="selectPaymentMethod('KBZPay')">
+                            📱 KBZPay
+                        </button>
+                        <button type="button" class="btn btn-outline-success payment-method-btn"
+                                data-method="WavePay" onclick="selectPaymentMethod('WavePay')">
+                            🌊 WavePay
+                        </button>
+                        <button type="button" class="btn btn-outline-warning payment-method-btn"
+                                data-method="Cash" onclick="selectPaymentMethod('Cash')">
+                            ✅ Already Paid
+                        </button>
+                    </div>
+                    <div id="checkout-payment-error" class="text-danger small mt-2 d-none">
+                        ⚠ Please select a payment method.
+                    </div>
+                </div>
+
+                <!-- Payment Details Panel (shown after selecting method) -->
+                <div id="payment-info-panel" class="d-none">
+
+                    <!-- KBZPay -->
+                    <div id="kbzpay-panel" class="d-none alert alert-primary py-2">
+                        <p class="fw-bold mb-1 small">📱 KBZPay — Send to:</p>
+                        <p class="fs-5 fw-bold mb-1" id="kbz-display-number"></p>
+                        <ol class="small mb-0 ps-3">
+                            <li>Open KBZPay app</li>
+                            <li>Send <strong><span id="kbz-amount">0</span> MMK</strong> to the number above</li>
+                            <li>Take a screenshot of the success screen</li>
+                            <li>Upload the screenshot below ↓</li>
+                        </ol>
+                    </div>
+
+                    <!-- WavePay -->
+                    <div id="wavepay-panel" class="d-none alert alert-success py-2">
+                        <p class="fw-bold mb-1 small">🌊 WavePay — Send to:</p>
+                        <p class="fs-5 fw-bold mb-1" id="wave-display-number"></p>
+                        <ol class="small mb-0 ps-3">
+                            <li>Open WavePay app</li>
+                            <li>Send <strong><span id="wave-amount">0</span> MMK</strong> to the number above</li>
+                            <li>Take a screenshot of the success screen</li>
+                            <li>Upload the screenshot below ↓</li>
+                        </ol>
+                    </div>
+
+                    <!-- Already Paid -->
+                    <div id="cash-panel" class="d-none alert alert-warning py-2">
+                        <p class="mb-0 small">✅ You've already paid. Please upload your payment screenshot below.</p>
+                    </div>
+
+                    <!-- Screenshot Upload -->
+                    <div class="mb-2">
+                        <label for="payment-screenshot" class="form-label fw-semibold">
+                            📷 Payment Screenshot <span class="text-danger">*</span>
+                        </label>
+                        <input type="file" id="payment-screenshot" class="form-control"
+                               accept="image/*" onchange="previewScreenshot(this)">
+                        <div id="screenshot-preview-wrap" class="mt-2 d-none text-center">
+                            <img id="screenshot-preview-img" src="" alt="Preview"
+                                 class="img-thumbnail rounded" style="max-height:180px;">
+                        </div>
+                        <div id="checkout-screenshot-error" class="text-danger small mt-1 d-none">
+                            ⚠ Please upload your payment screenshot.
+                        </div>
+                    </div>
                 </div>
 
                 <!-- Error banner -->
-                <div id="checkout-error" class="alert alert-danger d-none" role="alert"></div>
+                <div id="checkout-error" class="alert alert-danger d-none mt-3" role="alert"></div>
 
             </div>
             <div class="modal-footer">

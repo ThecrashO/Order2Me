@@ -77,6 +77,10 @@ async function loadOrders() {
                 quantity,
                 price,
                 menu_items ( name )
+            ),
+            payments (
+                payment_method,
+                screenshot_url
             )
         `)
         .order('created_at', { ascending: false });
@@ -167,9 +171,33 @@ function buildOrderCard(order) {
             </button>`;
     }
 
-    const deliveryNote = order.delivery_note
-        ? `<p class="mb-1 small text-muted"><strong>Note:</strong> ${escapeHtml(order.delivery_note)}</p>`
+    // Delivery note (now always required — display prominently)
+    const deliveryNoteHtml = order.delivery_note
+        ? `<div class="p-2 mb-2 rounded" style="background:#fff8e1;border-left:4px solid #ffc107">
+               <strong>📍 Delivery Note:</strong><br>
+               <span class="small">${escapeHtml(order.delivery_note)}</span>
+           </div>`
         : '';
+
+    // Payment info
+    const payment = order.payments && order.payments[0];
+    let paymentHtml = '';
+    if (payment) {
+        const methodIcons = { KBZPay: '📱', WavePay: '🌊', Cash: '✅' };
+        const icon = methodIcons[payment.payment_method] || '💳';
+        const screenshotLink = payment.screenshot_url
+            ? `<a href="${payment.screenshot_url}" target="_blank" class="btn btn-sm btn-outline-secondary ms-2">
+                   🖼 View Screenshot
+               </a>`
+            : '<span class="text-muted small ms-2">(no screenshot)</span>';
+        paymentHtml = `
+            <div class="d-flex align-items-center mb-2">
+                <span class="badge bg-dark me-1">${icon} ${escapeHtml(payment.payment_method)}</span>
+                ${screenshotLink}
+            </div>`;
+    } else {
+        paymentHtml = '<p class="text-muted small mb-2">⚠ No payment record</p>';
+    }
 
     const time = new Date(order.created_at).toLocaleString('en-GB', {
         day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit'
@@ -178,12 +206,16 @@ function buildOrderCard(order) {
     return `
         <div class="card mb-3 border-${cfg.color}" id="order-card-${order.id}">
             <div class="card-header d-flex justify-content-between align-items-center bg-${cfg.color} bg-opacity-10">
-                <span class="fw-semibold">Order #${order.id} &mdash; ${escapeHtml(order.student_name || 'Unknown')}</span>
+                <div>
+                    <span class="fw-semibold">Order #${order.id}</span>
+                    <span class="text-muted small ms-2">— ${escapeHtml(order.student_name || 'Unknown')}</span>
+                </div>
                 <span class="badge bg-${cfg.color} text-dark">${cfg.label}</span>
             </div>
             <div class="card-body py-2">
                 <ul class="list-group list-group-flush mb-2">${itemsHtml}</ul>
-                ${deliveryNote}
+                ${deliveryNoteHtml}
+                ${paymentHtml}
                 <p class="mb-1 small"><strong>Total:</strong> ${order.total_amount} MMK</p>
                 <p class="mb-2 text-muted small"><strong>Placed:</strong> ${time}</p>
                 <div class="d-flex gap-2">${actionHtml}</div>
