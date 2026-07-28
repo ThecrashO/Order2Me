@@ -1,4 +1,4 @@
-﻿// ============================================================
+// ============================================================
 // owner.js  --  Order2Me Owner Dashboard
 // ============================================================
 // Sections:
@@ -14,10 +14,11 @@ let rejectModal;
 
 let allOrders      = [];   // cache for client-side filtering
 let activeFilter   = 'all';
+let ownerProfile   = null; // current logged-in owner
 
 // ── 1. INIT ──────────────────────────────────────────────────
 
-function initializeApp() {
+async function initializeApp() {
     if (typeof supabaseClient === 'undefined') {
         console.error('Supabase client not loaded');
         return;
@@ -26,6 +27,10 @@ function initializeApp() {
         console.error('Bootstrap not loaded');
         return;
     }
+
+    // Auth guard: must be an owner
+    ownerProfile = await requireOwner();
+    if (!ownerProfile) return; // requireOwner redirects to login
 
     // Init modals
     addFoodModal = new bootstrap.Modal(document.getElementById('addFoodModal'));

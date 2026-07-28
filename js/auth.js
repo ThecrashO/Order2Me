@@ -56,8 +56,14 @@ async function signUpStudent(name, email, phone, password) {
     const { data, error } = await supabaseClient.auth.signUp({ email, password });
     if (error) return { error };
 
+    // If email confirmation is required, data.user will be null
+    // (Supabase sends a confirmation email first)
+    if (!data.user || !data.user.id) {
+        return { emailConfirmationRequired: true };
+    }
+
     const profile = {
-        auth_user_id: data.user?.id,
+        auth_user_id: data.user.id,
         name,
         email,
         phone_number: phone || null,
@@ -69,6 +75,7 @@ async function signUpStudent(name, email, phone, password) {
         .insert(profile);
 
     if (profileError) {
+        console.error('Profile insert error:', profileError);
         return { error: profileError };
     }
 

@@ -10,6 +10,7 @@ async function initSignupPage() {
 
     form.addEventListener('submit', async (event) => {
         event.preventDefault();
+        status.className = 'text-danger mb-3';
         status.textContent = '';
         const submitButton = form.querySelector('button[type="submit"]');
         if (submitButton) submitButton.disabled = true;
@@ -26,20 +27,37 @@ async function initSignupPage() {
             return;
         }
 
+        if (password.length < 6) {
+            status.textContent = 'Password must be at least 6 characters.';
+            if (submitButton) submitButton.disabled = false;
+            return;
+        }
+
         if (password !== confirmPassword) {
             status.textContent = 'Passwords do not match.';
             if (submitButton) submitButton.disabled = false;
             return;
         }
 
-        const { error } = await signUpStudent(name, email, phone, password);
-        if (error) {
-            status.textContent = error.message;
+        const result = await signUpStudent(name, email, phone, password);
+
+        if (result.error) {
+            status.textContent = result.error.message;
             if (submitButton) submitButton.disabled = false;
             return;
         }
 
-        alert('Registration successful. Please sign in to continue.');
+        // Email confirmation required — Supabase will send a verification email
+        if (result.emailConfirmationRequired) {
+            status.className = 'text-success mb-3';
+            status.textContent = '✅ Account created! Please check your email and click the confirmation link, then sign in.';
+            form.reset();
+            if (submitButton) submitButton.disabled = false;
+            return;
+        }
+
+        // No email confirmation required — profile created, go to login
+        alert('Registration successful! Please sign in to continue.');
         window.location.href = 'login.html';
     });
 }

@@ -1,4 +1,4 @@
-﻿// ============================================================
+// ============================================================
 // student.js  --  Order2Me Student Page
 // ============================================================
 // Handles:
@@ -9,8 +9,8 @@
 //   5. Success feedback
 // ============================================================
 
-// TODO: Replace with real student_id from auth when login is added.
-const TEMP_STUDENT_ID = 1;
+// Current student profile (populated at init)
+let currentStudentProfile = null;
 
 let cart = [];
 
@@ -73,6 +73,8 @@ async function loadStudentOrders() {
 
     container.innerHTML = '<p class="text-muted">Loading your orders...</p>';
 
+    if (!currentStudentProfile) return;
+
     const { data, error } = await supabaseClient
         .from('orders')
         .select(`
@@ -87,7 +89,7 @@ async function loadStudentOrders() {
                 menu_items (name)
             )
         `)
-        .eq('student_id', TEMP_STUDENT_ID)
+        .eq('student_id', currentStudentProfile.id)
         .order('created_at', { ascending: false });
 
     if (error) {
@@ -327,7 +329,7 @@ async function createOrder(studentName, deliveryNote) {
     const { data: orderData, error: orderError } = await supabaseClient
         .from('orders')
         .insert({
-            student_id:    TEMP_STUDENT_ID,
+            student_id:    currentStudentProfile.id,
             student_name:  studentName,
             total_amount:  totalAmount,
             delivery_note: deliveryNote || null,
@@ -384,5 +386,24 @@ async function createOrder(studentName, deliveryNote) {
 }
 
 // -- Init -----------------------------------------------------
-loadMenu();
-loadStudentOrders();
+async function initStudentPage() {
+    currentStudentProfile = await requireStudent();
+    if (!currentStudentProfile) return; // requireStudent redirects to login
+
+    // Show greeting in navbar
+    const greetingEl = document.getElementById('student-greeting');
+    if (greetingEl && currentStudentProfile.name) {
+        greetingEl.textContent = 'Hi, ' + currentStudentProfile.name;
+    }
+
+    // Pre-fill checkout name field
+    const checkoutName = document.getElementById('checkout-name');
+    if (checkoutName && currentStudentProfile.name) {
+        checkoutName.value = currentStudentProfile.name;
+    }
+
+    loadMenu();
+    loadStudentOrders();
+}
+
+document.addEventListener('DOMContentLoaded', initStudentPage);
