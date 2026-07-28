@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -12,217 +13,224 @@
 
 <body>
 
-<nav class="navbar navbar-dark bg-primary">
-    <div class="container">
-        <span class="navbar-brand">
-            Order2Me - Student
-        </span>
-        <div class="d-flex align-items-center gap-2">
-            <span id="student-greeting" class="text-white small"></span>
-            <button id="cart-btn" class="btn btn-light" onclick="showCart()">
-                Cart (<span id="cart-count">0</span>)
-            </button>
-            <button class="btn btn-outline-light btn-sm" onclick="signOut()">Sign Out</button>
-        </div>
-    </div>
-</nav>
-
-<div class="container py-5">
-
-    <h2 class="mb-4">
-        Today's Menu
-    </h2>
-
-    <div class="row" id="menu-container">
-
-    </div>
-
-    <div class="mt-5">
-        <div class="d-flex justify-content-between align-items-center mb-3">
-            <h2>Your Orders</h2>
-            <button id="refresh-orders-btn" class="btn btn-sm btn-outline-secondary" onclick="loadStudentOrders()">
-                Refresh Orders
-            </button>
-        </div>
-        <div id="orders-container">
-            <p class="text-muted">Loading your orders...</p>
-        </div>
-    </div>
-
-</div>
-
-<!-- ① Cart Modal -->
-<div class="modal fade" id="cartModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-lg modal-dialog-centered">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Your Cart</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <div id="cart-items"></div>
-                <div class="mt-3 text-end">
-                    <strong>Total: <span id="cart-total">0</span> MMK</strong>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Continue Shopping</button>
-                <button type="button" class="btn btn-primary" onclick="openCheckout()">Checkout</button>
+    <nav class="navbar navbar-dark bg-primary">
+        <div class="container">
+            <span class="navbar-brand">
+                Order2Me - Student
+            </span>
+            <div class="d-flex align-items-center gap-2">
+                <span id="student-greeting" class="text-white small"></span>
+                <button id="cart-btn" class="btn btn-light" onclick="showCart()">
+                    Cart (<span id="cart-count">0</span>)
+                </button>
+                <button class="btn btn-outline-light btn-sm" onclick="signOut()">Sign Out</button>
             </div>
         </div>
-    </div>
-</div>
+    </nav>
 
-<!-- ② Checkout Modal -->
-<div class="modal fade" id="checkoutModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">🛒 Checkout</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
+    <div class="container py-5">
 
-                <!-- Order summary -->
-                <div class="mb-4 p-3 bg-light rounded">
-                    <h6 class="fw-bold mb-2 text-secondary small text-uppercase">Order Summary</h6>
-                    <div id="checkout-summary"></div>
-                    <hr class="my-2">
-                    <div class="d-flex justify-content-between fw-bold">
-                        <span>Total</span>
-                        <span><span id="checkout-total">0</span> MMK</span>
-                    </div>
-                </div>
+        <h2 class="mb-4">
+            Today's Menu
+        </h2>
 
-                <!-- Delivery Note (REQUIRED) -->
-                <div class="mb-4">
-                    <label for="checkout-note" class="form-label fw-semibold">
-                        📍 Delivery Location &amp; Note <span class="text-danger">*</span>
-                    </label>
-                    <textarea
-                        id="checkout-note"
-                        class="form-control"
-                        rows="3"
-                        placeholder="Where to deliver? e.g. Room 201, Building A&#10;Any food preferences? e.g. No spicy, extra rice"
-                        maxlength="300"
-                    ></textarea>
-                    <div class="form-text text-muted">Tell the owner where you are and any special requests.</div>
-                    <div id="checkout-note-error" class="text-danger small mt-1 d-none">
-                        ⚠ Please enter your delivery location.
-                    </div>
-                </div>
+        <div class="row" id="menu-container">
 
-                <!-- Payment Method -->
-                <div class="mb-3">
-                    <label class="form-label fw-semibold">
-                        💳 Payment Method <span class="text-danger">*</span>
-                    </label>
-                    <div class="d-flex gap-2 flex-wrap">
-                        <button type="button" class="btn btn-outline-primary payment-method-btn"
-                                data-method="KBZPay" onclick="selectPaymentMethod('KBZPay')">
-                            📱 KBZPay
-                        </button>
-                        <button type="button" class="btn btn-outline-success payment-method-btn"
-                                data-method="WavePay" onclick="selectPaymentMethod('WavePay')">
-                            🌊 WavePay
-                        </button>
-                        <button type="button" class="btn btn-outline-warning payment-method-btn"
-                                data-method="Cash" onclick="selectPaymentMethod('Cash')">
-                            ✅ Already Paid
-                        </button>
-                    </div>
-                    <div id="checkout-payment-error" class="text-danger small mt-2 d-none">
-                        ⚠ Please select a payment method.
-                    </div>
-                </div>
+        </div>
 
-                <!-- Payment Details Panel (shown after selecting method) -->
-                <div id="payment-info-panel" class="d-none">
-
-                    <!-- KBZPay -->
-                    <div id="kbzpay-panel" class="d-none alert alert-primary py-2">
-                        <p class="fw-bold mb-1 small">📱 KBZPay — Send to:</p>
-                        <p class="fs-5 fw-bold mb-1" id="kbz-display-number"></p>
-                        <ol class="small mb-0 ps-3">
-                            <li>Open KBZPay app</li>
-                            <li>Send <strong><span id="kbz-amount">0</span> MMK</strong> to the number above</li>
-                            <li>Take a screenshot of the success screen</li>
-                            <li>Upload the screenshot below ↓</li>
-                        </ol>
-                    </div>
-
-                    <!-- WavePay -->
-                    <div id="wavepay-panel" class="d-none alert alert-success py-2">
-                        <p class="fw-bold mb-1 small">🌊 WavePay — Send to:</p>
-                        <p class="fs-5 fw-bold mb-1" id="wave-display-number"></p>
-                        <ol class="small mb-0 ps-3">
-                            <li>Open WavePay app</li>
-                            <li>Send <strong><span id="wave-amount">0</span> MMK</strong> to the number above</li>
-                            <li>Take a screenshot of the success screen</li>
-                            <li>Upload the screenshot below ↓</li>
-                        </ol>
-                    </div>
-
-                    <!-- Already Paid -->
-                    <div id="cash-panel" class="d-none alert alert-warning py-2">
-                        <p class="mb-0 small">✅ You've already paid. Please upload your payment screenshot below.</p>
-                    </div>
-
-                    <!-- Screenshot Upload -->
-                    <div class="mb-2">
-                        <label for="payment-screenshot" class="form-label fw-semibold">
-                            📷 Payment Screenshot <span class="text-danger">*</span>
-                        </label>
-                        <input type="file" id="payment-screenshot" class="form-control"
-                               accept="image/*" onchange="previewScreenshot(this)">
-                        <div id="screenshot-preview-wrap" class="mt-2 d-none text-center">
-                            <img id="screenshot-preview-img" src="" alt="Preview"
-                                 class="img-thumbnail rounded" style="max-height:180px;">
-                        </div>
-                        <div id="checkout-screenshot-error" class="text-danger small mt-1 d-none">
-                            ⚠ Please upload your payment screenshot.
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Error banner -->
-                <div id="checkout-error" class="alert alert-danger d-none mt-3" role="alert"></div>
-
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Back to Cart</button>
-                <button type="button" class="btn btn-success" id="place-order-btn" onclick="submitCheckout()">
-                    <span id="place-order-spinner" class="spinner-border spinner-border-sm me-1 d-none" role="status"></span>
-                    Place Order
+        <div class="mt-5">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h2>Your Orders</h2>
+                <button id="refresh-orders-btn" class="btn btn-sm btn-outline-secondary" onclick="loadStudentOrders()">
+                    Refresh Orders
                 </button>
             </div>
+            <div id="orders-container">
+                <p class="text-muted">Loading your orders...</p>
+            </div>
         </div>
-    </div>
-</div>
 
-<!-- ③ Order Success Modal -->
-<div class="modal fade" id="successModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-            <div class="modal-body text-center py-5">
-                <div class="display-4 mb-3">🎉</div>
-                <h4 class="fw-bold text-success">Order Placed!</h4>
-                <p class="text-muted mt-2 mb-1">Your order has been sent to the canteen.</p>
-                <p class="text-muted small">Order ID: <strong id="success-order-id">—</strong></p>
-                <p class="text-muted small mb-4">Total: <strong id="success-total">—</strong> MMK</p>
-                <button class="btn btn-primary" data-bs-dismiss="modal">Done</button>
+    </div>
+
+    <!-- ① Cart Modal -->
+    <div class="modal fade" id="cartModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Your Cart</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="cart-items"></div>
+                    <div class="mt-3 text-end">
+                        <strong>Total: <span id="cart-total">0</span> MMK</strong>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Continue Shopping</button>
+                    <button type="button" class="btn btn-primary" onclick="openCheckout()">Checkout</button>
+                </div>
             </div>
         </div>
     </div>
-</div>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <!-- ② Checkout Modal -->
+    <div class="modal fade" id="checkoutModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">🛒 Checkout</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/js/bootstrap.bundle.min.js"></script>
+                    <!-- Order summary -->
+                    <div class="mb-4 p-3 bg-light rounded">
+                        <h6 class="fw-bold mb-2 text-secondary small text-uppercase">Order Summary</h6>
+                        <div id="checkout-summary"></div>
+                        <hr class="my-2">
+                        <div class="d-flex justify-content-between fw-bold">
+                            <span>Total</span>
+                            <span><span id="checkout-total">0</span> MMK</span>
+                        </div>
+                    </div>
 
-<script src="js/supabase.js"></script>
-<script src="js/auth.js"></script>
-<script src="js/student.js"></script>
+                    <!-- Delivery Note (REQUIRED) -->
+                    <div class="mb-4">
+                        <label for="checkout-note" class="form-label fw-semibold">
+                            📍 Delivery Location &amp; Note <span class="text-danger">*</span>
+                        </label>
+                        <textarea id="checkout-note" class="form-control" rows="3"
+                            placeholder="Where to deliver? e.g. Room 201, Building A&#10;Any food preferences? e.g. No spicy, extra rice"
+                            maxlength="300"></textarea>
+                        <div class="form-text text-muted">Tell the owner where you are and any special requests.</div>
+                        <div id="checkout-note-error" class="text-danger small mt-1 d-none">
+                            ⚠ Please enter your delivery location.
+                        </div>
+                    </div>
+
+                    <!-- Payment Method -->
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">
+                            💳 Payment Method <span class="text-danger">*</span>
+                        </label>
+                        <div class="d-flex gap-2 flex-wrap">
+                            <button type="button" class="btn btn-outline-primary payment-method-btn"
+                                data-method="KBZPay" onclick="selectPaymentMethod('KBZPay')">
+                                📱 KBZPay
+                            </button>
+                            <button type="button" class="btn btn-outline-success payment-method-btn"
+                                data-method="WavePay" onclick="selectPaymentMethod('WavePay')">
+                                🌊 WavePay
+                            </button>
+                            <button type="button" class="btn btn-outline-warning payment-method-btn" data-method="Cash"
+                                onclick="selectPaymentMethod('Cash')">
+                                ✅ Already Paid
+                            </button>
+                        </div>
+                        <div id="checkout-payment-error" class="text-danger small mt-2 d-none">
+                            ⚠ Please select a payment method.
+                        </div>
+                    </div>
+
+                    <!-- Payment Details Panel (shown after selecting method) -->
+                    <div id="payment-info-panel" class="d-none">
+
+                        <!-- KBZPay -->
+                        <div id="kbzpay-panel" class="d-none alert alert-primary py-2">
+                            <p class="fw-bold mb-1 small">📱 KBZPay — Send to:</p>
+                            <p class="fs-5 fw-bold mb-1" id="kbz-display-number"></p>
+                            <button type="button" class="btn btn-sm btn-outline-dark mb-3"
+                                onclick="openPaymentApp('KBZPay')">
+                                Open KBZPay app
+                            </button>
+                            <ol class="small mb-0 ps-3">
+                                <li>Open KBZPay app</li>
+                                <li>Send <strong><span id="kbz-amount">0</span> MMK</strong> to the number above</li>
+                                <li>Take a screenshot of the success screen</li>
+                                <li>Upload the screenshot below ↓</li>
+                            </ol>
+                        </div>
+
+                        <!-- WavePay -->
+                        <div id="wavepay-panel" class="d-none alert alert-success py-2">
+                            <p class="fw-bold mb-1 small">🌊 WavePay — Send to:</p>
+                            <p class="fs-5 fw-bold mb-1" id="wave-display-number"></p>
+                            <button type="button" class="btn btn-sm btn-outline-dark mb-3"
+                                onclick="openPaymentApp('WavePay')">
+                                Open WavePay app
+                            </button>
+                            <ol class="small mb-0 ps-3">
+                                <li>Open WavePay app</li>
+                                <li>Send <strong><span id="wave-amount">0</span> MMK</strong> to the number above</li>
+                                <li>Take a screenshot of the success screen</li>
+                                <li>Upload the screenshot below ↓</li>
+                            </ol>
+                        </div>
+
+                        <!-- Already Paid -->
+                        <div id="cash-panel" class="d-none alert alert-warning py-2">
+                            <p class="mb-0 small">✅ You've already paid. Please upload your payment screenshot below.
+                            </p>
+                        </div>
+
+                        <!-- Screenshot Upload -->
+                        <div class="mb-2">
+                            <label for="payment-screenshot" class="form-label fw-semibold">
+                                📷 Payment Screenshot <span class="text-danger">*</span>
+                            </label>
+                            <input type="file" id="payment-screenshot" class="form-control" accept="image/*"
+                                onchange="previewScreenshot(this)">
+                            <div id="screenshot-preview-wrap" class="mt-2 d-none text-center">
+                                <img id="screenshot-preview-img" src="" alt="Preview" class="img-thumbnail rounded"
+                                    style="max-height:180px;">
+                            </div>
+                            <div id="checkout-screenshot-error" class="text-danger small mt-1 d-none">
+                                ⚠ Please upload your payment screenshot.
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Error banner -->
+                    <div id="checkout-error" class="alert alert-danger d-none mt-3" role="alert"></div>
+
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Back to Cart</button>
+                    <button type="button" class="btn btn-success" id="place-order-btn" onclick="submitCheckout()">
+                        <span id="place-order-spinner" class="spinner-border spinner-border-sm me-1 d-none"
+                            role="status"></span>
+                        Place Order
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ③ Order Success Modal -->
+    <div class="modal fade" id="successModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-body text-center py-5">
+                    <div class="display-4 mb-3">🎉</div>
+                    <h4 class="fw-bold text-success">Order Placed!</h4>
+                    <p class="text-muted mt-2 mb-1">Your order has been sent to the canteen.</p>
+                    <p class="text-muted small">Order ID: <strong id="success-order-id">—</strong></p>
+                    <p class="text-muted small mb-4">Total: <strong id="success-total">—</strong> MMK</p>
+                    <button class="btn btn-primary" data-bs-dismiss="modal">Done</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script src="js/supabase.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/student.js"></script>
 
 </body>
+
 </html>

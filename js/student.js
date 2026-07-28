@@ -358,6 +358,23 @@ function selectPaymentMethod(method) {
     document.getElementById('checkout-payment-error').classList.add('d-none');
 }
 
+function openPaymentApp(method) {
+    const amountEl = document.getElementById(method === 'KBZPay' ? 'kbz-amount' : 'wave-amount');
+    const number = method === 'KBZPay' ? OWNER_KBZPAY_NUMBER : OWNER_WAVEPAY_NUMBER;
+    const amount = amountEl ? amountEl.textContent.trim() : '';
+
+    let url = '';
+    if (method === 'KBZPay') {
+        url = `kbzpay://transfer?recipient=${encodeURIComponent(number)}&amount=${encodeURIComponent(amount)}`;
+    } else if (method === 'WavePay') {
+        url = `wavepay://transfer?recipient=${encodeURIComponent(number)}&amount=${encodeURIComponent(amount)}`;
+    }
+
+    if (url) {
+        window.location.href = url;
+    }
+}
+
 function previewScreenshot(input) {
     const preview = document.getElementById('screenshot-preview-wrap');
     const img     = document.getElementById('screenshot-preview-img');
@@ -405,6 +422,12 @@ async function submitCheckout() {
     // Validate screenshot
     const screenshotFile = screenshotInput.files[0];
     if (!screenshotFile) {
+        if (selectedPaymentMethod === 'KBZPay' || selectedPaymentMethod === 'WavePay') {
+            // Open the payment app first so the student can complete payment and return with a screenshot.
+            openPaymentApp(selectedPaymentMethod);
+            return;
+        }
+
         screenshotError.classList.remove('d-none');
         valid = false;
     } else {
