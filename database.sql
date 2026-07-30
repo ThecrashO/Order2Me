@@ -209,3 +209,52 @@ USING (
 );
 
 -- ============================================================
+
+-- ============================================================
+-- Payments Table RLS Policies
+-- Students must be able to INSERT payment records after ordering.
+-- Run these in Supabase SQL Editor.
+-- ============================================================
+
+ALTER TABLE public.payments ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Students can insert payments" ON public.payments;
+CREATE POLICY "Students can insert payments"
+ON public.payments
+FOR INSERT
+WITH CHECK (auth.role() = 'authenticated');
+
+DROP POLICY IF EXISTS "Students can view own payments" ON public.payments;
+CREATE POLICY "Students can view own payments"
+ON public.payments
+FOR SELECT
+USING (auth.role() = 'authenticated');
+
+DROP POLICY IF EXISTS "Owners can view all payments" ON public.payments;
+CREATE POLICY "Owners can view all payments"
+ON public.payments
+FOR SELECT
+USING (auth.role() = 'authenticated');
+
+-- ============================================================
+-- Storage: payment-screenshots bucket policies
+-- Create the bucket first in Supabase Dashboard > Storage,
+-- then run these policies.
+-- ============================================================
+
+DROP POLICY IF EXISTS "Authenticated users can upload screenshots" ON storage.objects;
+CREATE POLICY "Authenticated users can upload screenshots"
+ON storage.objects
+FOR INSERT
+WITH CHECK (
+  bucket_id = 'payment-screenshots'
+  AND auth.role() = 'authenticated'
+);
+
+DROP POLICY IF EXISTS "Public can view screenshots" ON storage.objects;
+CREATE POLICY "Public can view screenshots"
+ON storage.objects
+FOR SELECT
+USING (bucket_id = 'payment-screenshots');
+
+-- ============================================================
