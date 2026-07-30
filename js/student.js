@@ -363,9 +363,18 @@ function selectPaymentMethod(method) {
     }
 }
 
-function openPaymentApp(method) {
+async function openPaymentApp(method) {
+    // If ownerPhoneNumber wasn't loaded at startup, try once more
     if (!ownerPhoneNumber) {
-        alert('Owner phone number not available. Please try again.');
+        await fetchOwnerPhone();
+    }
+
+    // Final fallback: still null → show alert with instructions
+    if (!ownerPhoneNumber) {
+        alert(
+            'Owner phone number is not set in the database yet.\n\n' +
+            'Please ask the owner to add their phone number to their profile.'
+        );
         return;
     }
 
@@ -385,7 +394,7 @@ function openPaymentApp(method) {
 
     if (!url) return;
 
-    // window.location.href is the correct approach for mobile deep-links.
+    // window.location.href hands off to the native app on mobile
     window.location.href = url;
 }
 
