@@ -180,7 +180,11 @@ function buildOrderCard(order) {
         : '';
 
     // Payment info
-    const payment = order.payments && order.payments[0];
+    // NOTE: Supabase returns payments as a plain object (not array) because
+    // payments.order_id has a UNIQUE constraint (1-to-1 relationship).
+    const payment = order.payments
+        ? (Array.isArray(order.payments) ? order.payments[0] : order.payments)
+        : null;
     let paymentHtml = '';
     if (payment) {
         const methodIcons = { KBZPay: '📱', WavePay: '🌊', Cash: '✅' };

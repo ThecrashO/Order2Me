@@ -139,7 +139,10 @@ function displayStudentOrders(orders) {
             `;
         }).join('');
 
-        const payment = order.payments && order.payments[0];
+        // Supabase returns payments as object (1-to-1) or array — handle both
+        const payment = order.payments
+            ? (Array.isArray(order.payments) ? order.payments[0] : order.payments)
+            : null;
         const paymentHtml = payment ? `
             <div class="mt-2 pt-2 border-top small">
                 <span class="badge bg-secondary">${escapeHtml(payment.payment_method)}</span>
