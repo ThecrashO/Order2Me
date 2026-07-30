@@ -190,9 +190,10 @@ function buildOrderCard(order) {
         const methodIcons = { KBZPay: '📱', WavePay: '🌊', Cash: '✅' };
         const icon = methodIcons[payment.payment_method] || '💳';
         const screenshotLink = payment.screenshot_url
-            ? `<a href="${payment.screenshot_url}" target="_blank" class="btn btn-sm btn-outline-secondary ms-2">
+            ? `<button type="button" class="btn btn-sm btn-outline-secondary ms-2"
+                   onclick="showImageLightbox('${payment.screenshot_url}')">
                    🖼 View Screenshot
-               </a>`
+               </button>`
             : '<span class="text-muted small ms-2">(no screenshot)</span>';
         paymentHtml = `
             <div class="d-flex align-items-center mb-2">
@@ -456,6 +457,66 @@ async function deleteItem(id) {
     if (error) { console.error('Error deleting food:', error); return; }
 
     loadMenuItems();
+}
+
+// ── Image Lightbox ───────────────────────────────────────────
+
+function showImageLightbox(url) {
+    // Remove any existing lightbox
+    const existing = document.getElementById('img-lightbox');
+    if (existing) existing.remove();
+
+    const overlay = document.createElement('div');
+    overlay.id = 'img-lightbox';
+    overlay.style.cssText = `
+        position: fixed; inset: 0; z-index: 99999;
+        background: rgba(0,0,0,0.75);
+        backdrop-filter: blur(4px);
+        display: flex; align-items: center; justify-content: center;
+        animation: fadeIn .2s ease;
+    `;
+    overlay.innerHTML = `
+        <style>
+            @keyframes fadeIn { from { opacity:0 } to { opacity:1 } }
+            @keyframes popIn  { from { transform:scale(.85); opacity:0 } to { transform:scale(1); opacity:1 } }
+        </style>
+        <div style="position:relative; max-width:90vw; max-height:90vh; animation: popIn .25s ease;">
+            <button onclick="closeImageLightbox()"
+                style="
+                    position:absolute; top:-14px; right:-14px;
+                    width:32px; height:32px; border-radius:50%;
+                    background:#fff; border:none; font-size:18px;
+                    font-weight:bold; cursor:pointer; color:#333;
+                    box-shadow:0 2px 8px rgba(0,0,0,.4);
+                    display:flex; align-items:center; justify-content:center;
+                    line-height:1; z-index:1;
+                "
+                title="Close">&times;</button>
+            <img src="${url}" alt="Payment Screenshot"
+                style="
+                    max-width:90vw; max-height:88vh;
+                    border-radius:12px;
+                    box-shadow:0 8px 40px rgba(0,0,0,.6);
+                    display:block;
+                ">
+        </div>
+    `;
+    // Click backdrop to close
+    overlay.addEventListener('click', e => { if (e.target === overlay) closeImageLightbox(); });
+    document.body.appendChild(overlay);
+
+    // ESC key to close
+    document.addEventListener('keydown', _lightboxEscHandler);
+}
+
+function _lightboxEscHandler(e) {
+    if (e.key === 'Escape') closeImageLightbox();
+}
+
+function closeImageLightbox() {
+    const lb = document.getElementById('img-lightbox');
+    if (lb) lb.remove();
+    document.removeEventListener('keydown', _lightboxEscHandler);
 }
 
 // ── Init ──────────────────────────────────────────────────────
