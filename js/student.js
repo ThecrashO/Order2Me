@@ -356,46 +356,26 @@ function selectPaymentMethod(method) {
 
     document.getElementById('payment-info-panel').classList.remove('d-none');
     document.getElementById('checkout-payment-error').classList.add('d-none');
-
-    // ── Immediately open the payment app when KBZPay or WavePay is chosen ──
-    if (method === 'KBZPay' || method === 'WavePay') {
-        openPaymentApp(method);
-    }
 }
 
-async function openPaymentApp(method) {
-    // If ownerPhoneNumber wasn't loaded at startup, try once more
+// Copy owner phone number to clipboard
+function copyOwnerNumber(btnEl) {
     if (!ownerPhoneNumber) {
-        await fetchOwnerPhone();
-    }
-
-    // Final fallback: still null → show alert with instructions
-    if (!ownerPhoneNumber) {
-        alert(
-            'Owner phone number is not set in the database yet.\n\n' +
-            'Please ask the owner to add their phone number to their profile.'
-        );
+        alert('Phone number not available yet. Please wait a moment and try again.');
         return;
     }
-
-    // Strip spaces so the deep link URL is clean
-    const number   = ownerPhoneNumber.replace(/\s+/g, '');
-    const amountEl = document.getElementById(method === 'KBZPay' ? 'kbz-amount' : 'wave-amount');
-    const amount   = amountEl ? amountEl.textContent.trim() : '';
-
-    let url = '';
-    if (method === 'KBZPay') {
-        // KBZPay deep link — opens transfer screen with owner number pre-filled
-        url = `kbzpay://payment?phoneNo=${encodeURIComponent(number)}&amount=${encodeURIComponent(amount)}`;
-    } else if (method === 'WavePay') {
-        // WavePay deep link — opens transfer screen with owner number pre-filled
-        url = `wavemoney://wavemoney.io/transfer?phone=${encodeURIComponent(number)}&amount=${encodeURIComponent(amount)}`;
-    }
-
-    if (!url) return;
-
-    // window.location.href hands off to the native app on mobile
-    window.location.href = url;
+    navigator.clipboard.writeText(ownerPhoneNumber).then(() => {
+        const original = btnEl.innerHTML;
+        btnEl.innerHTML = '✅ Copied!';
+        btnEl.disabled = true;
+        setTimeout(() => {
+            btnEl.innerHTML = original;
+            btnEl.disabled = false;
+        }, 2000);
+    }).catch(() => {
+        // Clipboard API not available — select text manually
+        prompt('Copy this number:', ownerPhoneNumber);
+    });
 }
 
 function previewScreenshot(input) {

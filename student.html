@@ -137,35 +137,59 @@
                     <div id="payment-info-panel" class="d-none">
 
                         <!-- KBZPay -->
-                        <div id="kbzpay-panel" class="d-none alert alert-primary py-2">
-                            <p class="fw-bold mb-1 small">📱 KBZPay — Send to:</p>
-                            <p class="fs-5 fw-bold mb-1" id="kbz-display-number"></p>
-                            <button type="button" class="btn btn-sm btn-outline-dark mb-3"
-                                onclick="openPaymentApp('KBZPay')">
-                                Open KBZPay app
-                            </button>
-                            <ol class="small mb-0 ps-3">
-                                <li>Open KBZPay app</li>
-                                <li>Send <strong><span id="kbz-amount">0</span> MMK</strong> to the number above</li>
-                                <li>Take a screenshot of the success screen</li>
-                                <li>Upload the screenshot below ↓</li>
-                            </ol>
+                        <div id="kbzpay-panel" class="d-none">
+                            <div class="border border-primary rounded-3 p-3" style="background:linear-gradient(135deg,#e8f0fe,#f0f4ff)">
+                                <div class="d-flex align-items-center mb-2">
+                                    <span style="font-size:24px;">📱</span>
+                                    <span class="fw-bold ms-2 text-primary">KBZPay</span>
+                                </div>
+                                <div class="small text-muted mb-1">Owner's KBZPay Number</div>
+                                <div class="d-flex align-items-center gap-2 mb-2">
+                                    <span id="kbz-display-number" class="fs-4 fw-bold text-dark"></span>
+                                    <button type="button" class="btn btn-sm btn-outline-primary"
+                                        onclick="copyOwnerNumber(this)">
+                                        📋 Copy
+                                    </button>
+                                </div>
+                                <div class="small text-muted mb-2">
+                                    Amount: <strong><span id="kbz-amount">0</span> MMK</strong>
+                                </div>
+                                <ol class="small mb-0 ps-3 text-dark">
+                                    <li>Open <strong>KBZPay</strong> app on your phone</li>
+                                    <li>Go to <strong>Send Money / Transfer</strong></li>
+                                    <li>Enter the number above &amp; send <strong><span class="text-primary">the exact amount</span></strong></li>
+                                    <li>Screenshot the success screen</li>
+                                    <li>Upload the screenshot below ↓</li>
+                                </ol>
+                            </div>
                         </div>
 
                         <!-- WavePay -->
-                        <div id="wavepay-panel" class="d-none alert alert-success py-2">
-                            <p class="fw-bold mb-1 small">🌊 WavePay — Send to:</p>
-                            <p class="fs-5 fw-bold mb-1" id="wave-display-number"></p>
-                            <button type="button" class="btn btn-sm btn-outline-dark mb-3"
-                                onclick="openPaymentApp('WavePay')">
-                                Open WavePay app
-                            </button>
-                            <ol class="small mb-0 ps-3">
-                                <li>Open WavePay app</li>
-                                <li>Send <strong><span id="wave-amount">0</span> MMK</strong> to the number above</li>
-                                <li>Take a screenshot of the success screen</li>
-                                <li>Upload the screenshot below ↓</li>
-                            </ol>
+                        <div id="wavepay-panel" class="d-none">
+                            <div class="border border-success rounded-3 p-3" style="background:linear-gradient(135deg,#e8f5e9,#f0fdf4)">
+                                <div class="d-flex align-items-center mb-2">
+                                    <span style="font-size:24px;">🌊</span>
+                                    <span class="fw-bold ms-2 text-success">WavePay</span>
+                                </div>
+                                <div class="small text-muted mb-1">Owner's WavePay Number</div>
+                                <div class="d-flex align-items-center gap-2 mb-2">
+                                    <span id="wave-display-number" class="fs-4 fw-bold text-dark"></span>
+                                    <button type="button" class="btn btn-sm btn-outline-success"
+                                        onclick="copyOwnerNumber(this)">
+                                        📋 Copy
+                                    </button>
+                                </div>
+                                <div class="small text-muted mb-2">
+                                    Amount: <strong><span id="wave-amount">0</span> MMK</strong>
+                                </div>
+                                <ol class="small mb-0 ps-3 text-dark">
+                                    <li>Open <strong>WavePay</strong> app on your phone</li>
+                                    <li>Go to <strong>Send Money / Transfer</strong></li>
+                                    <li>Enter the number above &amp; send <strong><span class="text-success">the exact amount</span></strong></li>
+                                    <li>Screenshot the success screen</li>
+                                    <li>Upload the screenshot below ↓</li>
+                                </ol>
+                            </div>
                         </div>
 
                         <!-- Already Paid -->
