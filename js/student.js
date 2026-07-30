@@ -50,8 +50,18 @@ function displayMenuItems(items) {
     items.forEach(food => {
         const card = document.createElement('div');
         card.className = 'col-md-4 mb-4';
+
+        const imageHtml = food.image_url
+            ? `<img src="${food.image_url}" alt="${escapeHtml(food.name)}"
+                    class="card-img-top"
+                    style="height:180px;object-fit:cover;"
+                    onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
+               <div class="d-none align-items-center justify-content-center bg-light text-muted" style="height:180px;font-size:2.5rem;">🍽️</div>`
+            : `<div class="d-flex align-items-center justify-content-center bg-light text-muted rounded-top" style="height:130px;font-size:2.5rem;">🍽️</div>`;
+
         card.innerHTML = `
             <div class="card shadow-sm h-100">
+                ${imageHtml}
                 <div class="card-body d-flex flex-column">
                     <h5 class="card-title">${food.name}</h5>
                     <p class="card-text text-muted flex-grow-1">
@@ -147,9 +157,9 @@ function displayStudentOrders(orders) {
             <div class="mt-2 pt-2 border-top small">
                 <span class="badge bg-secondary">${escapeHtml(payment.payment_method)}</span>
                 ${payment.screenshot_url
-                    ? `<button type="button" class="btn btn-sm btn-link ms-2 p-0 small"
-                           onclick="showImageLightbox('${payment.screenshot_url}')">
-                           🖼 View Receipt</button>`
+                    ? `<button type="button" class="btn btn-sm btn-link ms-2 p-0 small btn-view-receipt"
+                               data-screenshot-url="${payment.screenshot_url}">
+                               🖼 View Receipt</button>`
                     : ''}
             </div>
         ` : '';
@@ -182,6 +192,14 @@ function displayStudentOrders(orders) {
             </div>
         `;
     }).join('');
+
+    // Wire up receipt buttons after innerHTML is set
+    document.querySelectorAll('.btn-view-receipt').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const url = btn.dataset.screenshotUrl;
+            if (url) showImageLightbox(url);
+        });
+    });
 }
 
 function escapeHtml(text) {

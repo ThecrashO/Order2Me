@@ -15,6 +15,7 @@ let rejectModal;
 let allOrders      = [];   // cache for client-side filtering
 let activeFilter   = 'all';
 let ownerProfile   = null; // current logged-in owner
+let menuItemsData  = new Map(); // id -> full item object (used for edit/image lookups)
 
 // ── 1. INIT ──────────────────────────────────────────────────
 
@@ -44,6 +45,8 @@ async function initializeApp() {
     // Reset add form when modal closes
     document.getElementById('addFoodModal').addEventListener('hidden.bs.modal', () => {
         document.getElementById('menu-form').reset();
+        document.getElementById('add-image-preview-wrap').classList.add('d-none');
+        document.getElementById('add-image-preview').src = '';
     });
 
     // Filter buttons
@@ -125,6 +128,14 @@ function renderOrders() {
     }
 
     container.innerHTML = filtered.map(order => buildOrderCard(order)).join('');
+
+    // Wire up screenshot view buttons (can't embed URL in onclick safely)
+    document.querySelectorAll('.btn-view-screenshot').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const url = btn.dataset.screenshotUrl;
+            if (url) showImageLightbox(url);
+        });
+    });
 }
 
 function buildOrderCard(order) {
@@ -190,8 +201,8 @@ function buildOrderCard(order) {
         const methodIcons = { KBZPay: '📱', WavePay: '🌊', Cash: '✅' };
         const icon = methodIcons[payment.payment_method] || '💳';
         const screenshotLink = payment.screenshot_url
-            ? `<button type="button" class="btn btn-sm btn-outline-secondary ms-2"
-                   onclick="showImageLightbox('${payment.screenshot_url}')">
+            ? `<button type="button" class="btn btn-sm btn-outline-secondary ms-2 btn-view-screenshot"
+                   data-screenshot-url="${payment.screenshot_url}">
                    🖼 View Screenshot
                </button>`
             : '<span class="text-muted small ms-2">(no screenshot)</span>';
@@ -332,11 +343,16 @@ function displayMenuItems(items) {
         return;
     }
 
+    // Store full item objects for later use by event listeners
+    menuItemsData.clear();
+    items.forEach(item => menuItemsData.set(item.id, item));
+
     menuList.innerHTML = `
         <div class="table-responsive">
-            <table class="table table-hover">
+            <table class="table table-hover align-middle">
                 <thead class="table-light">
                     <tr>
+                        <th>Image</th>
                         <th>Name</th>
                         <th>Description</th>
                         <th>Price (MMK)</th>
@@ -346,7 +362,17 @@ function displayMenuItems(items) {
                 </thead>
                 <tbody>
                     ${items.map(item => `
-                        <tr>
+                        <tr data-item-id="${item.id}">
+                            <td style="width:72px">
+                                ${item.image_url
+                                    ? `<img src="${item.image_url}" alt="${escapeHtml(item.name)}"
+                                           class="rounded menu-thumb"
+                                           data-item-id="${item.id}"
+                                           style="width:60px;height:60px;object-fit:cover;cursor:pointer;"
+                                           onerror="this.style.display='none'">`
+                                    : `<span class="text-muted small">—</span>`
+                                }
+                            </td>
                             <td>${escapeHtml(item.name)}</td>
                             <td>${escapeHtml(item.description || '-')}</td>
                             <td>${item.price}</td>
@@ -358,11 +384,12 @@ function displayMenuItems(items) {
                                 </div>
                             </td>
                             <td>
-                                <button class="btn btn-sm btn-warning me-2"
-                                        onclick="openEditModal(${item.id}, '${escapeHtml(item.name)}', '${escapeHtml(item.description || '')}', ${item.price}, ${item.is_available})">
+                                <button class="btn btn-sm btn-warning me-2 btn-edit-item"
+                                        data-item-id="${item.id}">
                                     Edit
                                 </button>
-                                <button class="btn btn-sm btn-danger" onclick="deleteItem(${item.id})">
+                                <button class="btn btn-sm btn-danger btn-delete-item"
+                                        data-item-id="${item.id}">
                                     Delete
                                 </button>
                             </td>
@@ -373,8 +400,30 @@ function displayMenuItems(items) {
         </div>
     `;
 
+    // Wire up toggle switches
     document.querySelectorAll('.toggle-availability').forEach(toggle => {
         toggle.addEventListener('change', toggleAvailability);
+    });
+
+    // Wire up image thumbnail clicks (no inline onclick with URL)
+    document.querySelectorAll('.menu-thumb').forEach(img => {
+        img.addEventListener('click', () => {
+            const item = menuItemsData.get(Number(img.dataset.itemId));
+            if (item && item.image_url) showImageLightbox(item.image_url);
+        });
+    });
+
+    // Wire up Edit buttons
+    document.querySelectorAll('.btn-edit-item').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const item = menuItemsData.get(Number(btn.dataset.itemId));
+            if (item) openEditModal(item.id, item.name, item.description || '', item.price, item.is_available, item.image_url || '');
+        });
+    });
+
+    // Wire up Delete buttons
+    document.querySelectorAll('.btn-delete-item').forEach(btn => {
+        btn.addEventListener('click', () => deleteItem(Number(btn.dataset.itemId)));
     });
 }
 
@@ -383,46 +432,141 @@ function escapeHtml(text) {
     return String(text).replace(/[&<>"']/g, m => map[m]);
 }
 
+// ── Image upload helpers ──────────────────────────────────────
+
+function previewAddImage(input) {
+    const wrap = document.getElementById('add-image-preview-wrap');
+    const img  = document.getElementById('add-image-preview');
+    if (input.files && input.files[0]) {
+        const reader = new FileReader();
+        reader.onload = e => { img.src = e.target.result; wrap.classList.remove('d-none'); };
+        reader.readAsDataURL(input.files[0]);
+    } else {
+        wrap.classList.add('d-none');
+        img.src = '';
+    }
+}
+
+function previewEditImage(input) {
+    const wrap = document.getElementById('edit-image-preview-wrap');
+    const img  = document.getElementById('edit-image-preview');
+    if (input.files && input.files[0]) {
+        const reader = new FileReader();
+        reader.onload = e => { img.src = e.target.result; wrap.classList.remove('d-none'); };
+        reader.readAsDataURL(input.files[0]);
+    } else {
+        wrap.classList.add('d-none');
+        img.src = '';
+    }
+}
+
+async function uploadMenuItemImage(file, itemId) {
+    const ext      = file.name.split('.').pop();
+    const fileName = `menu_${itemId}_${Date.now()}.${ext}`;
+
+    const { error: uploadError } = await supabaseClient.storage
+        .from('menu-images')
+        .upload(fileName, file, { upsert: true });
+
+    if (uploadError) {
+        console.error('Menu image upload error:', uploadError);
+        alert(`Image upload failed: ${uploadError.message}\n\nMake sure the "menu-images" storage bucket exists in Supabase Dashboard > Storage and is set to Public.`);
+        return null;
+    }
+
+    const { data } = supabaseClient.storage
+        .from('menu-images')
+        .getPublicUrl(fileName);
+
+    console.log('Image uploaded successfully. Public URL:', data.publicUrl);
+    return data.publicUrl || null;
+}
+
+// ─────────────────────────────────────────────────────────────
+
 async function handleAddFood() {
     const name        = document.getElementById('item-name').value.trim();
     const description = document.getElementById('item-description').value.trim();
     const price       = parseFloat(document.getElementById('item-price').value);
     const isAvailable = document.getElementById('item-available').checked;
+    const imageFile   = document.getElementById('item-image').files[0];
 
     if (!name || isNaN(price) || price < 0) return;
 
-    const { error } = await supabaseClient
+    // Insert first to get the new item id for the image filename
+    const { data: insertedItem, error } = await supabaseClient
         .from('menu_items')
-        .insert([{ name, description, price, is_available: isAvailable }]);
+        .insert([{ name, description, price, is_available: isAvailable }])
+        .select()
+        .single();
 
     if (error) { console.error('Error adding food:', error); return; }
 
+    // Upload image if provided
+    if (imageFile) {
+        const imageUrl = await uploadMenuItemImage(imageFile, insertedItem.id);
+        if (imageUrl) {
+            await supabaseClient
+                .from('menu_items')
+                .update({ image_url: imageUrl })
+                .eq('id', insertedItem.id);
+        }
+    }
+
     document.getElementById('menu-form').reset();
+    document.getElementById('add-image-preview-wrap').classList.add('d-none');
     addFoodModal.hide();
     loadMenuItems();
 }
 
-function openEditModal(id, name, description, price, isAvailable) {
-    document.getElementById('edit-item-id').value          = id;
-    document.getElementById('edit-item-name').value        = name;
-    document.getElementById('edit-item-description').value = description;
-    document.getElementById('edit-item-price').value       = price;
-    document.getElementById('edit-item-available').checked = isAvailable;
+function openEditModal(id, name, description, price, isAvailable, imageUrl) {
+    document.getElementById('edit-item-id').value             = id;
+    document.getElementById('edit-item-name').value           = name;
+    document.getElementById('edit-item-description').value    = description;
+    document.getElementById('edit-item-price').value          = price;
+    document.getElementById('edit-item-available').checked    = isAvailable;
+    document.getElementById('edit-item-existing-image').value = imageUrl || '';
+
+    // Show/hide current image
+    const currentWrap = document.getElementById('edit-current-image-wrap');
+    const currentImg  = document.getElementById('edit-current-image');
+    if (imageUrl) {
+        currentImg.src = imageUrl;
+        currentWrap.classList.remove('d-none');
+    } else {
+        currentImg.src = '';
+        currentWrap.classList.add('d-none');
+    }
+
+    // Reset new-image preview
+    document.getElementById('edit-item-image').value = '';
+    document.getElementById('edit-image-preview-wrap').classList.add('d-none');
+    document.getElementById('edit-image-preview').src = '';
+
     editFoodModal.show();
 }
 
 async function handleEditFood() {
-    const itemId      = document.getElementById('edit-item-id').value;
-    const name        = document.getElementById('edit-item-name').value.trim();
-    const description = document.getElementById('edit-item-description').value.trim();
-    const price       = parseFloat(document.getElementById('edit-item-price').value);
-    const isAvailable = document.getElementById('edit-item-available').checked;
+    const itemId        = document.getElementById('edit-item-id').value;
+    const name          = document.getElementById('edit-item-name').value.trim();
+    const description   = document.getElementById('edit-item-description').value.trim();
+    const price         = parseFloat(document.getElementById('edit-item-price').value);
+    const isAvailable   = document.getElementById('edit-item-available').checked;
+    const newImageFile  = document.getElementById('edit-item-image').files[0];
+    const existingImage = document.getElementById('edit-item-existing-image').value;
 
     if (!itemId || !name || isNaN(price) || price < 0) return;
 
+    // Upload new image if provided, otherwise keep existing
+    let imageUrl = existingImage || null;
+    if (newImageFile) {
+        const uploaded = await uploadMenuItemImage(newImageFile, itemId);
+        if (uploaded) imageUrl = uploaded;
+    }
+
     const { error } = await supabaseClient
         .from('menu_items')
-        .update({ name, description, price, is_available: isAvailable })
+        .update({ name, description, price, is_available: isAvailable, image_url: imageUrl })
         .eq('id', itemId);
 
     if (error) { console.error('Error editing food:', error); return; }

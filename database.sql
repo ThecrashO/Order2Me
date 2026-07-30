@@ -258,3 +258,33 @@ FOR SELECT
 USING (bucket_id = 'payment-screenshots');
 
 -- ============================================================
+
+-- ============================================================
+-- Storage: menu-images bucket policies
+-- 1. Create the bucket in Supabase Dashboard > Storage
+--    Name it exactly: menu-images  (set to Public)
+-- 2. Run these policies in the Supabase SQL Editor.
+-- ============================================================
+
+DROP POLICY IF EXISTS "Owner can upload menu images" ON storage.objects;
+CREATE POLICY "Owner can upload menu images"
+ON storage.objects
+FOR INSERT
+WITH CHECK (
+  bucket_id = 'menu-images'
+  AND auth.role() = 'authenticated'
+);
+
+DROP POLICY IF EXISTS "Owner can update menu images" ON storage.objects;
+CREATE POLICY "Owner can update menu images"
+ON storage.objects
+FOR UPDATE
+USING (bucket_id = 'menu-images' AND auth.role() = 'authenticated');
+
+DROP POLICY IF EXISTS "Public can view menu images" ON storage.objects;
+CREATE POLICY "Public can view menu images"
+ON storage.objects
+FOR SELECT
+USING (bucket_id = 'menu-images');
+
+-- ============================================================

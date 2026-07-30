@@ -135,6 +135,13 @@
                         <label for="item-price" class="form-label">Price (MMK)</label>
                         <input type="number" class="form-control" id="item-price" required min="0" step="100">
                     </div>
+                    <div class="mb-3">
+                        <label for="item-image" class="form-label">🖼 Food Image <span class="text-muted small">(optional)</span></label>
+                        <input type="file" class="form-control" id="item-image" accept="image/*" onchange="previewAddImage(this)">
+                        <div id="add-image-preview-wrap" class="mt-2 d-none text-center">
+                            <img id="add-image-preview" src="" alt="Preview" class="img-thumbnail rounded" style="max-height:140px;object-fit:cover;">
+                        </div>
+                    </div>
                     <div class="mb-3 form-check">
                         <input type="checkbox" class="form-check-input" id="item-available" checked>
                         <label class="form-check-label" for="item-available">Available</label>
@@ -160,6 +167,7 @@
             <div class="modal-body">
                 <form id="edit-form">
                     <input type="hidden" id="edit-item-id">
+                    <input type="hidden" id="edit-item-existing-image">
                     <div class="mb-3">
                         <label for="edit-item-name" class="form-label">Food Name</label>
                         <input type="text" class="form-control" id="edit-item-name" required>
@@ -171,6 +179,18 @@
                     <div class="mb-3">
                         <label for="edit-item-price" class="form-label">Price (MMK)</label>
                         <input type="number" class="form-control" id="edit-item-price" required min="0" step="100">
+                    </div>
+                    <div class="mb-3">
+                        <label for="edit-item-image" class="form-label">🖼 Food Image <span class="text-muted small">(leave blank to keep existing)</span></label>
+                        <div id="edit-current-image-wrap" class="mb-2 d-none">
+                            <span class="small text-muted">Current image:</span><br>
+                            <img id="edit-current-image" src="" alt="Current" class="img-thumbnail rounded mt-1" style="max-height:100px;object-fit:cover;">
+                        </div>
+                        <input type="file" class="form-control" id="edit-item-image" accept="image/*" onchange="previewEditImage(this)">
+                        <div id="edit-image-preview-wrap" class="mt-2 d-none text-center">
+                            <span class="small text-muted">New image preview:</span><br>
+                            <img id="edit-image-preview" src="" alt="Preview" class="img-thumbnail rounded mt-1" style="max-height:140px;object-fit:cover;">
+                        </div>
                     </div>
                     <div class="mb-3 form-check">
                         <input type="checkbox" class="form-check-input" id="edit-item-available" checked>
