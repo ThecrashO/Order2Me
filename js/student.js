@@ -293,9 +293,10 @@ function openCheckout() {
     document.getElementById('kbz-amount').textContent  = total;
     document.getElementById('wave-amount').textContent = total;
 
-    // Set owner numbers
-    document.getElementById('kbz-display-number').textContent  = OWNER_KBZPAY_NUMBER;
-    document.getElementById('wave-display-number').textContent = OWNER_WAVEPAY_NUMBER;
+    // Set owner numbers (fetched from DB in initStudentPage)
+    const displayNum = ownerPhoneNumber || '—';
+    document.getElementById('kbz-display-number').textContent  = displayNum;
+    document.getElementById('wave-display-number').textContent = displayNum;
 
     // Reset form
     document.getElementById('checkout-note').value = '';
