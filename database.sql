@@ -1,4 +1,4 @@
-﻿-- ============================================================
+-- ============================================================
 -- Order2Me - Supabase Database Schema
 -- University Canteen Digital Ordering System
 -- ============================================================
@@ -190,6 +190,22 @@ WITH CHECK (
   auth.role() = 'anon'
   AND role = 'student'
   AND auth_user_id IS NOT NULL
+);
+
+-- ============================================================
+-- Allow any authenticated user to read the owner's phone number
+-- (needed by the student page to display KBZPay / WavePay numbers)
+-- Run this in your Supabase SQL editor if not already applied.
+-- ============================================================
+
+DROP POLICY IF EXISTS "Allow authenticated users to read owner phone" ON public.users;
+
+CREATE POLICY "Allow authenticated users to read owner phone"
+ON public.users
+FOR SELECT
+USING (
+  auth.role() = 'authenticated'
+  AND role = 'owner'
 );
 
 -- ============================================================

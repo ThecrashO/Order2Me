@@ -10,9 +10,8 @@
 //   6. Success feedback
 // ============================================================
 
-// ── Owner Payment Numbers (set these to real numbers) ────────
-const OWNER_KBZPAY_NUMBER  = '09 7654 3210';
-const OWNER_WAVEPAY_NUMBER = '09 8765 4321';
+// ── Owner payment number — fetched from DB at runtime ────────
+let ownerPhoneNumber = null; // loaded in initStudentPage()
 
 // ── State ────────────────────────────────────────────────────
 let currentStudentProfile = null;
@@ -356,23 +355,37 @@ function selectPaymentMethod(method) {
 
     document.getElementById('payment-info-panel').classList.remove('d-none');
     document.getElementById('checkout-payment-error').classList.add('d-none');
+
+    // ── Immediately open the payment app when KBZPay or WavePay is chosen ──
+    if (method === 'KBZPay' || method === 'WavePay') {
+        openPaymentApp(method);
+    }
 }
 
 function openPaymentApp(method) {
+    if (!ownerPhoneNumber) {
+        alert('Owner phone number not available. Please try again.');
+        return;
+    }
+
+    // Strip spaces so the deep link URL is clean
+    const number   = ownerPhoneNumber.replace(/\s+/g, '');
     const amountEl = document.getElementById(method === 'KBZPay' ? 'kbz-amount' : 'wave-amount');
-    const number = method === 'KBZPay' ? OWNER_KBZPAY_NUMBER : OWNER_WAVEPAY_NUMBER;
-    const amount = amountEl ? amountEl.textContent.trim() : '';
+    const amount   = amountEl ? amountEl.textContent.trim() : '';
 
     let url = '';
     if (method === 'KBZPay') {
-        url = `kbzpay://transfer?recipient=${encodeURIComponent(number)}&amount=${encodeURIComponent(amount)}`;
+        // KBZPay deep link — opens transfer screen with owner number pre-filled
+        url = `kbzpay://payment?phoneNo=${encodeURIComponent(number)}&amount=${encodeURIComponent(amount)}`;
     } else if (method === 'WavePay') {
-        url = `wavepay://transfer?recipient=${encodeURIComponent(number)}&amount=${encodeURIComponent(amount)}`;
+        // WavePay deep link — opens transfer screen with owner number pre-filled
+        url = `wavemoney://wavemoney.io/transfer?phone=${encodeURIComponent(number)}&amount=${encodeURIComponent(amount)}`;
     }
 
-    if (url) {
-        window.location.href = url;
-    }
+    if (!url) return;
+
+    // window.location.href is the correct approach for mobile deep-links.
+    window.location.href = url;
 }
 
 function previewScreenshot(input) {
@@ -563,6 +576,31 @@ async function createOrder(deliveryNote, paymentMethod, screenshotFile) {
     console.log('Order placed successfully. Order ID:', orderId, 'Payment:', paymentMethod);
 }
 
+// -- Fetch owner phone number from DB -------------------------
+
+async function fetchOwnerPhone() {
+    const { data, error } = await supabaseClient
+        .from('users')
+        .select('phone_number')
+        .eq('role', 'owner')
+        .order('id', { ascending: true })
+        .limit(1)
+        .single();
+
+    if (error) {
+        console.warn('Could not fetch owner phone number:', error.message);
+        return;
+    }
+    ownerPhoneNumber = data?.phone_number || null;
+
+    // Update the displayed numbers in the payment panels
+    const displayNum = ownerPhoneNumber || '—';
+    const kbzEl  = document.getElementById('kbz-display-number');
+    const waveEl = document.getElementById('wave-display-number');
+    if (kbzEl)  kbzEl.textContent  = displayNum;
+    if (waveEl) waveEl.textContent = displayNum;
+}
+
 // -- Init -----------------------------------------------------
 async function initStudentPage() {
     currentStudentProfile = await requireStudent();
@@ -573,6 +611,9 @@ async function initStudentPage() {
     if (greetingEl && currentStudentProfile.name) {
         greetingEl.textContent = 'Hi, ' + currentStudentProfile.name;
     }
+
+    // Load owner phone number from DB (used for KBZPay / WavePay deep links)
+    await fetchOwnerPhone();
 
     loadMenu();
     loadStudentOrders();
