@@ -22,8 +22,6 @@ let activeCategory        = 'all';
 
 // -- 1. MENU --------------------------------------------------
 
-let allMenuItems = []; // cache for client-side search
-
 async function loadMenu() {
     const { data, error } = await supabaseClient
         .from('menu_items')
@@ -47,19 +45,26 @@ async function loadMenu() {
     allMenuItems = data;
     setupCategoryFilters();
     displayMenuItems(data);
-    allMenuItems = data; // cache for search
 }
 
 function filterMenu(query) {
     const q = query.trim().toLowerCase();
+
+    // Start from category-filtered list
+    let base = activeCategory === 'all'
+        ? allMenuItems
+        : allMenuItems.filter(item => (item.category || 'food') === activeCategory);
+
     if (!q) {
-        displayMenuItems(allMenuItems);
+        displayMenuItems(base);
         return;
     }
-    const filtered = allMenuItems.filter(item =>
+
+    const filtered = base.filter(item =>
         item.name.toLowerCase().includes(q) ||
         (item.description || '').toLowerCase().includes(q)
     );
+
     const container = document.getElementById('menu-container');
     if (filtered.length === 0) {
         container.innerHTML = `<p class='text-muted'>No items match "${escapeHtml(query)}".</p>`;
