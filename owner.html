@@ -45,12 +45,27 @@
         <div class="tab-pane fade show active" id="orders-panel" role="tabpanel">
 
             <!-- Filter buttons -->
-            <div class="d-flex flex-wrap gap-2 mb-3">
+            <div class="d-flex flex-wrap align-items-center gap-2 mb-3">
                 <button class="btn btn-sm btn-primary order-filter active" data-status="all">All</button>
                 <button class="btn btn-sm btn-outline-warning order-filter" data-status="pending">Pending</button>
                 <button class="btn btn-sm btn-outline-info order-filter" data-status="preparing">Preparing</button>
                 <button class="btn btn-sm btn-outline-success order-filter" data-status="ready">Ready</button>
                 <button class="btn btn-sm btn-outline-secondary order-filter" data-status="delivered">Delivered</button>
+                <div class="input-group ms-auto" style="max-width:280px;">
+                    <span class="input-group-text bg-white border-end-0">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" fill="currentColor" class="text-muted" viewBox="0 0 16 16">
+                            <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.099zm-5.242 1.156a5.5 5.5 0 1 1 0-11 5.5 5.5 0 0 1 0 11z"/>
+                        </svg>
+                    </span>
+                    <input
+                        type="search"
+                        id="orders-search"
+                        class="form-control border-start-0 ps-0"
+                        placeholder="Search by name or #ID..."
+                        oninput="filterOrdersBySearch(this.value)"
+                        autocomplete="off"
+                    >
+                </div>
             </div>
 
             <div id="orders-list">
@@ -60,10 +75,25 @@
 
         <!-- ── MENU PANEL ── -->
         <div class="tab-pane fade" id="menu-panel" role="tabpanel">
-            <div class="mb-3">
+            <div class="d-flex flex-wrap align-items-center gap-2 mb-3">
                 <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#addFoodModal">
                     + Add Food
                 </button>
+                <div class="input-group ms-auto" style="max-width:280px;">
+                    <span class="input-group-text bg-white border-end-0">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" fill="currentColor" class="text-muted" viewBox="0 0 16 16">
+                            <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.099zm-5.242 1.156a5.5 5.5 0 1 1 0-11 5.5 5.5 0 0 1 0 11z"/>
+                        </svg>
+                    </span>
+                    <input
+                        type="search"
+                        id="menu-search-owner"
+                        class="form-control border-start-0 ps-0"
+                        placeholder="Search menu items..."
+                        oninput="filterMenuItems(this.value)"
+                        autocomplete="off"
+                    >
+                </div>
             </div>
             <div class="card">
                 <div class="card-body">

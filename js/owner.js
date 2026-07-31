@@ -14,8 +14,10 @@ let rejectModal;
 
 let allOrders      = [];   // cache for client-side filtering
 let activeFilter   = 'all';
+let activeSearch   = '';   // search query for orders
 let ownerProfile   = null; // current logged-in owner
 let menuItemsData  = new Map(); // id -> full item object (used for edit/image lookups)
+let allMenuItemsArr = [];  // flat array cache for menu search
 
 // ── 1. INIT ──────────────────────────────────────────────────
 
@@ -118,12 +120,23 @@ function updatePendingBadge() {
 
 function renderOrders() {
     const container = document.getElementById('orders-list');
-    const filtered  = activeFilter === 'all'
+    let filtered  = activeFilter === 'all'
         ? allOrders
         : allOrders.filter(o => o.status === activeFilter);
 
+    // Apply text search
+    const q = activeSearch.trim().toLowerCase();
+    if (q) {
+        filtered = filtered.filter(o =>
+            String(o.id).includes(q) ||
+            (o.student_name || '').toLowerCase().includes(q)
+        );
+    }
+
     if (filtered.length === 0) {
-        container.innerHTML = '<p class="text-muted">No orders found.</p>';
+        container.innerHTML = q
+            ? `<p class="text-muted">No orders match "${escapeHtml(activeSearch)}".</p>`
+            : '<p class="text-muted">No orders found.</p>';
         return;
     }
 
@@ -136,6 +149,11 @@ function renderOrders() {
             if (url) showImageLightbox(url);
         });
     });
+}
+
+function filterOrdersBySearch(query) {
+    activeSearch = query;
+    renderOrders();
 }
 
 function buildOrderCard(order) {
@@ -335,6 +353,24 @@ async function loadMenuItems() {
     displayMenuItems(data);
 }
 
+function filterMenuItems(query) {
+    const q = query.trim().toLowerCase();
+    const menuList = document.getElementById('menu-list');
+    if (!q) {
+        displayMenuItems(allMenuItemsArr);
+        return;
+    }
+    const filtered = allMenuItemsArr.filter(item =>
+        item.name.toLowerCase().includes(q) ||
+        (item.description || '').toLowerCase().includes(q)
+    );
+    if (filtered.length === 0) {
+        menuList.innerHTML = `<p class="text-muted">No items match "${escapeHtml(query)}".</p>`;
+        return;
+    }
+    displayMenuItems(filtered);
+}
+
 function displayMenuItems(items) {
     const menuList = document.getElementById('menu-list');
 
@@ -346,6 +382,7 @@ function displayMenuItems(items) {
     // Store full item objects for later use by event listeners
     menuItemsData.clear();
     items.forEach(item => menuItemsData.set(item.id, item));
+    allMenuItemsArr = items; // cache for search
 
     menuList.innerHTML = `
         <div class="table-responsive">

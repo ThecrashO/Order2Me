@@ -20,6 +20,8 @@ let selectedPaymentMethod = null; // 'KBZPay' | 'WavePay' | 'Cash'
 
 // -- 1. MENU --------------------------------------------------
 
+let allMenuItems = []; // cache for client-side search
+
 async function loadMenu() {
     const { data, error } = await supabaseClient
         .from('menu_items')
@@ -41,6 +43,25 @@ async function loadMenu() {
     }
 
     displayMenuItems(data);
+    allMenuItems = data; // cache for search
+}
+
+function filterMenu(query) {
+    const q = query.trim().toLowerCase();
+    if (!q) {
+        displayMenuItems(allMenuItems);
+        return;
+    }
+    const filtered = allMenuItems.filter(item =>
+        item.name.toLowerCase().includes(q) ||
+        (item.description || '').toLowerCase().includes(q)
+    );
+    const container = document.getElementById('menu-container');
+    if (filtered.length === 0) {
+        container.innerHTML = `<p class='text-muted'>No items match "${escapeHtml(query)}".</p>`;
+        return;
+    }
+    displayMenuItems(filtered);
 }
 
 function displayMenuItems(items) {
