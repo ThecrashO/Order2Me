@@ -17,6 +17,8 @@ let ownerPhoneNumber = null; // loaded in initStudentPage()
 let currentStudentProfile = null;
 let cart                  = [];
 let selectedPaymentMethod = null; // 'KBZPay' | 'WavePay' | 'Cash'
+let allMenuItems          = [];   // full list for client-side category filter
+let activeCategory        = 'all';
 
 // -- 1. MENU --------------------------------------------------
 
@@ -40,6 +42,8 @@ async function loadMenu() {
         return;
     }
 
+    allMenuItems = data;
+    setupCategoryFilters();
     displayMenuItems(data);
 }
 
@@ -47,22 +51,39 @@ function displayMenuItems(items) {
     const container = document.getElementById('menu-container');
     container.innerHTML = '';
 
+    if (!items || items.length === 0) {
+        container.innerHTML = "<p class='text-muted'>No items in this category.</p>";
+        return;
+    }
+
+    const CATEGORY_META = {
+        food:    { icon: '\ud83c\udf7d\ufe0f', label: 'Food',    color: 'primary'  },
+        drink:   { icon: '\ud83e\udd64', label: 'Drink',   color: 'info'     },
+        salad:   { icon: '\ud83e\udd57', label: 'Salad',   color: 'success'  },
+        snack:   { icon: '\ud83c\udf7f', label: 'Snack',   color: 'warning'  },
+        dessert: { icon: '\ud83c\udf70', label: 'Dessert', color: 'danger'   },
+        other:   { icon: '\ud83d\udce6', label: 'Other',   color: 'secondary'}
+    };
+
     items.forEach(food => {
         const card = document.createElement('div');
         card.className = 'col-md-4 mb-4';
+
+        const catMeta  = CATEGORY_META[food.category] || CATEGORY_META.other;
+        const catBadge = `<span class="badge bg-${catMeta.color} bg-opacity-75 mb-2">${catMeta.icon} ${catMeta.label}</span>`;
 
         const imageHtml = food.image_url
             ? `<img src="${food.image_url}" alt="${escapeHtml(food.name)}"
                     class="card-img-top"
                     style="height:180px;object-fit:cover;"
-                    onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
-               <div class="d-none align-items-center justify-content-center bg-light text-muted" style="height:180px;font-size:2.5rem;">🍽️</div>`
-            : `<div class="d-flex align-items-center justify-content-center bg-light text-muted rounded-top" style="height:130px;font-size:2.5rem;">🍽️</div>`;
+                    onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><div class="d-none align-items-center justify-content-center bg-light text-muted" style="height:180px;font-size:2.5rem;">\ud83c\udf7d\ufe0f</div>`
+            : `<div class="d-flex align-items-center justify-content-center bg-light text-muted rounded-top" style="height:130px;font-size:2.5rem;">\ud83c\udf7d\ufe0f</div>`;
 
         card.innerHTML = `
             <div class="card shadow-sm h-100">
                 ${imageHtml}
                 <div class="card-body d-flex flex-column">
+                    ${catBadge}
                     <h5 class="card-title">${food.name}</h5>
                     <p class="card-text text-muted flex-grow-1">
                         ${food.description || 'Delicious item'}
@@ -78,6 +99,50 @@ function displayMenuItems(items) {
             </div>
         `;
         container.appendChild(card);
+    });
+}
+
+// ── Category filter wiring ─────────────────────────────────
+
+const CAT_ACTIVE_CLASSES = {
+    all:     ['btn-primary'],
+    food:    ['btn-primary'],
+    drink:   ['btn-info'],
+    salad:   ['btn-success'],
+    snack:   ['btn-warning'],
+    dessert: ['btn-danger'],
+    other:   ['btn-secondary']
+};
+const CAT_OUTLINE_CLASSES = {
+    all:     ['btn-outline-primary'],
+    food:    ['btn-outline-primary'],
+    drink:   ['btn-outline-info'],
+    salad:   ['btn-outline-success'],
+    snack:   ['btn-outline-warning'],
+    dessert: ['btn-outline-danger'],
+    other:   ['btn-outline-secondary']
+};
+
+function setupCategoryFilters() {
+    document.querySelectorAll('.category-filter-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            // Update active state visually
+            document.querySelectorAll('.category-filter-btn').forEach(b => {
+                const cat = b.dataset.category;
+                b.classList.remove('active', ...CAT_ACTIVE_CLASSES[cat] || []);
+                b.classList.add(...(CAT_OUTLINE_CLASSES[cat] || ['btn-outline-secondary']));
+            });
+            const cat = btn.dataset.category;
+            btn.classList.remove(...(CAT_OUTLINE_CLASSES[cat] || []));
+            btn.classList.add('active', ...(CAT_ACTIVE_CLASSES[cat] || []));
+
+            // Filter and render
+            activeCategory = cat;
+            const filtered = cat === 'all'
+                ? allMenuItems
+                : allMenuItems.filter(item => (item.category || 'food') === cat);
+            displayMenuItems(filtered);
+        });
     });
 }
 
@@ -221,8 +286,37 @@ function addToCart(itemId, itemName, price) {
 
 function updateCartCount() {
     const count = cart.reduce((s, i) => s + i.quantity, 0);
-    const el = document.getElementById('cart-count');
-    if (el) el.textContent = count;
+
+    // Navbar counter (legacy)
+    const navEl = document.getElementById('cart-count');
+    if (navEl) navEl.textContent = count;
+
+    // FAB badge
+    const fab   = document.getElementById('cart-fab');
+    const badge = document.getElementById('cart-fab-badge');
+    if (badge) {
+        badge.textContent = count;
+        if (count > 0) {
+            badge.classList.remove('d-none');
+            fab && fab.classList.add('has-items');
+        } else {
+            badge.classList.add('d-none');
+            fab && fab.classList.remove('has-items');
+        }
+    }
+
+    // Drawer header count badge
+    const dcBadge = document.getElementById('drawer-count-badge');
+    if (dcBadge) dcBadge.textContent = count === 1 ? '1 item' : `${count} items`;
+
+    // Drawer checkout button
+    const chkBtn = document.getElementById('drawer-checkout-btn');
+    if (chkBtn) chkBtn.disabled = count === 0;
+
+    // If drawer is open, refresh its contents live
+    if (document.getElementById('cart-drawer')?.classList.contains('open')) {
+        renderDrawer();
+    }
 }
 
 function showCart() {
@@ -285,6 +379,91 @@ function changeQuantity(itemId, delta) {
     updateCartCount();
     renderCart();
 }
+
+// -- Side-Cart Drawer -----------------------------------------
+
+let _drawerOpen = false;
+
+function toggleCartDrawer() {
+    _drawerOpen ? closeCartDrawer() : openCartDrawer();
+}
+
+function openCartDrawer() {
+    _drawerOpen = true;
+    renderDrawer();
+    document.getElementById('cart-drawer').classList.add('open');
+    document.getElementById('cart-drawer-backdrop').classList.add('open');
+    document.body.style.overflow = 'hidden'; // prevent background scroll
+}
+
+function closeCartDrawer() {
+    _drawerOpen = false;
+    document.getElementById('cart-drawer').classList.remove('open');
+    document.getElementById('cart-drawer-backdrop').classList.remove('open');
+    document.body.style.overflow = '';
+}
+
+function renderDrawer() {
+    const body   = document.getElementById('cart-drawer-body');
+    const totalEl = document.getElementById('drawer-total');
+    if (!body) return;
+
+    if (cart.length === 0) {
+        body.innerHTML = `
+            <div id="drawer-empty">
+                <div class="empty-icon">🛍️</div>
+                <div style="font-weight:600;font-size:.95rem;color:#475569">Your cart is empty</div>
+                <div style="font-size:.82rem">Add items from the menu to get started</div>
+            </div>`;
+        if (totalEl) totalEl.textContent = '0';
+        return;
+    }
+
+    let total = 0;
+    const rows = cart.map((item, idx) => {
+        const subtotal = item.price * item.quantity;
+        total += subtotal;
+        return `
+            <div class="drawer-item" style="animation-delay:${idx * 0.04}s">
+                <div class="drawer-item-info">
+                    <div class="drawer-item-name" title="${escapeHtml(item.name)}">${escapeHtml(item.name)}</div>
+                    <div class="drawer-item-price">${item.price.toLocaleString()} MMK each</div>
+                </div>
+                <div class="drawer-qty-ctrl">
+                    <button class="drawer-qty-btn" onclick="drawerChangeQty(${item.id}, -1)" aria-label="Decrease">−</button>
+                    <span class="drawer-qty-num">${item.quantity}</span>
+                    <button class="drawer-qty-btn" onclick="drawerChangeQty(${item.id}, 1)" aria-label="Increase">+</button>
+                </div>
+                <div class="drawer-item-subtotal">${subtotal.toLocaleString()} MMK</div>
+                <button class="drawer-remove-btn" onclick="drawerRemove(${item.id})" aria-label="Remove item" title="Remove">
+                    ✕
+                </button>
+            </div>`;
+    }).join('');
+
+    body.innerHTML = rows;
+    if (totalEl) totalEl.textContent = total.toLocaleString();
+}
+
+function drawerChangeQty(itemId, delta) {
+    changeQuantity(itemId, delta); // reuses existing logic, updateCartCount rerenders drawer
+}
+
+function drawerRemove(itemId) {
+    removeFromCart(itemId); // reuses existing logic
+}
+
+function drawerCheckout() {
+    if (cart.length === 0) return;
+    closeCartDrawer();
+    // Small delay so drawer closes before checkout modal opens
+    setTimeout(() => openCheckout(), 320);
+}
+
+// Close drawer on ESC key
+document.addEventListener('keydown', e => {
+    if (e.key === 'Escape' && _drawerOpen) closeCartDrawer();
+});
 
 // -- 3. CHECKOUT ----------------------------------------------
 

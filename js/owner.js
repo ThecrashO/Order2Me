@@ -354,6 +354,7 @@ function displayMenuItems(items) {
                     <tr>
                         <th>Image</th>
                         <th>Name</th>
+                        <th>Category</th>
                         <th>Description</th>
                         <th>Price (MMK)</th>
                         <th>Available</th>
@@ -361,7 +362,9 @@ function displayMenuItems(items) {
                     </tr>
                 </thead>
                 <tbody>
-                    ${items.map(item => `
+                    ${items.map(item => {
+                        const catBadge = categoryBadge(item.category);
+                        return `
                         <tr data-item-id="${item.id}">
                             <td style="width:72px">
                                 ${item.image_url
@@ -374,6 +377,7 @@ function displayMenuItems(items) {
                                 }
                             </td>
                             <td>${escapeHtml(item.name)}</td>
+                            <td>${catBadge}</td>
                             <td>${escapeHtml(item.description || '-')}</td>
                             <td>${item.price}</td>
                             <td>
@@ -394,7 +398,7 @@ function displayMenuItems(items) {
                                 </button>
                             </td>
                         </tr>
-                    `).join('')}
+                    `}).join('')}
                 </tbody>
             </table>
         </div>
@@ -417,7 +421,7 @@ function displayMenuItems(items) {
     document.querySelectorAll('.btn-edit-item').forEach(btn => {
         btn.addEventListener('click', () => {
             const item = menuItemsData.get(Number(btn.dataset.itemId));
-            if (item) openEditModal(item.id, item.name, item.description || '', item.price, item.is_available, item.image_url || '');
+            if (item) openEditModal(item.id, item.name, item.description || '', item.price, item.is_available, item.image_url || '', item.category || 'food');
         });
     });
 
@@ -430,6 +434,21 @@ function displayMenuItems(items) {
 function escapeHtml(text) {
     const map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' };
     return String(text).replace(/[&<>"']/g, m => map[m]);
+}
+
+// ── Category badge helper ─────────────────────────────────────
+const CATEGORY_META = {
+    food:    { icon: '🍽️', label: 'Food',    color: 'primary'  },
+    drink:   { icon: '🥤', label: 'Drink',   color: 'info'     },
+    salad:   { icon: '🥗', label: 'Salad',   color: 'success'  },
+    snack:   { icon: '🍿', label: 'Snack',   color: 'warning'  },
+    dessert: { icon: '🍰', label: 'Dessert', color: 'danger'   },
+    other:   { icon: '📦', label: 'Other',   color: 'secondary'}
+};
+
+function categoryBadge(cat) {
+    const m = CATEGORY_META[cat] || CATEGORY_META.other;
+    return `<span class="badge bg-${m.color} bg-opacity-75">${m.icon} ${m.label}</span>`;
 }
 
 // ── Image upload helpers ──────────────────────────────────────
@@ -489,6 +508,7 @@ async function handleAddFood() {
     const description = document.getElementById('item-description').value.trim();
     const price       = parseFloat(document.getElementById('item-price').value);
     const isAvailable = document.getElementById('item-available').checked;
+    const category    = document.getElementById('item-category').value;
     const imageFile   = document.getElementById('item-image').files[0];
 
     if (!name || isNaN(price) || price < 0) return;
@@ -496,7 +516,7 @@ async function handleAddFood() {
     // Insert first to get the new item id for the image filename
     const { data: insertedItem, error } = await supabaseClient
         .from('menu_items')
-        .insert([{ name, description, price, is_available: isAvailable }])
+        .insert([{ name, description, price, is_available: isAvailable, category }])
         .select()
         .single();
 
@@ -519,13 +539,14 @@ async function handleAddFood() {
     loadMenuItems();
 }
 
-function openEditModal(id, name, description, price, isAvailable, imageUrl) {
+function openEditModal(id, name, description, price, isAvailable, imageUrl, category) {
     document.getElementById('edit-item-id').value             = id;
     document.getElementById('edit-item-name').value           = name;
     document.getElementById('edit-item-description').value    = description;
     document.getElementById('edit-item-price').value          = price;
     document.getElementById('edit-item-available').checked    = isAvailable;
     document.getElementById('edit-item-existing-image').value = imageUrl || '';
+    document.getElementById('edit-item-category').value       = category || 'food';
 
     // Show/hide current image
     const currentWrap = document.getElementById('edit-current-image-wrap');
@@ -552,6 +573,7 @@ async function handleEditFood() {
     const description   = document.getElementById('edit-item-description').value.trim();
     const price         = parseFloat(document.getElementById('edit-item-price').value);
     const isAvailable   = document.getElementById('edit-item-available').checked;
+    const category      = document.getElementById('edit-item-category').value;
     const newImageFile  = document.getElementById('edit-item-image').files[0];
     const existingImage = document.getElementById('edit-item-existing-image').value;
 
@@ -566,7 +588,7 @@ async function handleEditFood() {
 
     const { error } = await supabaseClient
         .from('menu_items')
-        .update({ name, description, price, is_available: isAvailable, image_url: imageUrl })
+        .update({ name, description, price, is_available: isAvailable, image_url: imageUrl, category })
         .eq('id', itemId);
 
     if (error) { console.error('Error editing food:', error); return; }

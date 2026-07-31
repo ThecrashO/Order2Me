@@ -136,6 +136,17 @@
                         <input type="number" class="form-control" id="item-price" required min="0" step="100">
                     </div>
                     <div class="mb-3">
+                        <label for="item-category" class="form-label">Category</label>
+                        <select class="form-select" id="item-category">
+                            <option value="food">🍽️ Food</option>
+                            <option value="drink">🥤 Drink</option>
+                            <option value="salad">🥗 Salad</option>
+                            <option value="snack">🍿 Snack</option>
+                            <option value="dessert">🍰 Dessert</option>
+                            <option value="other">📦 Other</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
                         <label for="item-image" class="form-label">🖼 Food Image <span class="text-muted small">(optional)</span></label>
                         <input type="file" class="form-control" id="item-image" accept="image/*" onchange="previewAddImage(this)">
                         <div id="add-image-preview-wrap" class="mt-2 d-none text-center">
@@ -179,6 +190,17 @@
                     <div class="mb-3">
                         <label for="edit-item-price" class="form-label">Price (MMK)</label>
                         <input type="number" class="form-control" id="edit-item-price" required min="0" step="100">
+                    </div>
+                    <div class="mb-3">
+                        <label for="edit-item-category" class="form-label">Category</label>
+                        <select class="form-select" id="edit-item-category">
+                            <option value="food">🍽️ Food</option>
+                            <option value="drink">🥤 Drink</option>
+                            <option value="salad">🥗 Salad</option>
+                            <option value="snack">🍿 Snack</option>
+                            <option value="dessert">🍰 Dessert</option>
+                            <option value="other">📦 Other</option>
+                        </select>
                     </div>
                     <div class="mb-3">
                         <label for="edit-item-image" class="form-label">🖼 Food Image <span class="text-muted small">(leave blank to keep existing)</span></label>
