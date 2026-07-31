@@ -57,43 +57,41 @@ function displayMenuItems(items) {
     }
 
     const CATEGORY_META = {
-        food:    { icon: '\ud83c\udf7d\ufe0f', label: 'Food',    color: 'primary'  },
-        drink:   { icon: '\ud83e\udd64', label: 'Drink',   color: 'info'     },
-        salad:   { icon: '\ud83e\udd57', label: 'Salad',   color: 'success'  },
-        snack:   { icon: '\ud83c\udf7f', label: 'Snack',   color: 'warning'  },
-        dessert: { icon: '\ud83c\udf70', label: 'Dessert', color: 'danger'   },
-        other:   { icon: '\ud83d\udce6', label: 'Other',   color: 'secondary'}
+        food:    { icon: '🍽️', label: 'Food',    css: 'cat-food'    },
+        drink:   { icon: '🥤',       label: 'Drink',   css: 'cat-drink'   },
+        salad:   { icon: '🥗',       label: 'Salad',   css: 'cat-salad'   },
+        snack:   { icon: '🍿',       label: 'Snack',   css: 'cat-snack'   },
+        dessert: { icon: '🍰',       label: 'Dessert', css: 'cat-dessert' },
+        other:   { icon: '📦',       label: 'Other',   css: 'cat-other'   }
     };
 
     items.forEach(food => {
         const card = document.createElement('div');
-        card.className = 'col-md-4 mb-4';
+        card.className = 'col-6 col-md-4 mb-3 mb-md-4';
 
-        const catMeta  = CATEGORY_META[food.category] || CATEGORY_META.other;
-        const catBadge = `<span class="badge bg-${catMeta.color} bg-opacity-75 mb-2">${catMeta.icon} ${catMeta.label}</span>`;
+        const catMeta = CATEGORY_META[food.category] || CATEGORY_META.other;
 
-        const imageHtml = food.image_url
-            ? `<img src="${food.image_url}" alt="${escapeHtml(food.name)}"
-                    class="card-img-top"
-                    style="height:180px;object-fit:cover;"
-                    onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><div class="d-none align-items-center justify-content-center bg-light text-muted" style="height:180px;font-size:2.5rem;">\ud83c\udf7d\ufe0f</div>`
-            : `<div class="d-flex align-items-center justify-content-center bg-light text-muted rounded-top" style="height:130px;font-size:2.5rem;">\ud83c\udf7d\ufe0f</div>`;
+        // Small floating pill overlaid on the image corner
+        const catPill = `<span class="menu-cat-pill ${catMeta.css}"><span class="menu-cat-pill-icon">${catMeta.icon}</span><span class="menu-cat-pill-label">${catMeta.label}</span></span>`;
+
+        const imgWrap = food.image_url
+            ? `<div class="menu-img-wrap"><img src="${food.image_url}" alt="${escapeHtml(food.name)}" class="menu-card-img" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><div class="menu-card-img menu-img-placeholder" style="display:none;">🍽️</div>${catPill}</div>`
+            : `<div class="menu-img-wrap"><div class="menu-card-img menu-img-placeholder">🍽️</div>${catPill}</div>`;
 
         card.innerHTML = `
-            <div class="card shadow-sm h-100">
-                ${imageHtml}
-                <div class="card-body d-flex flex-column">
-                    ${catBadge}
-                    <h5 class="card-title">${food.name}</h5>
-                    <p class="card-text text-muted flex-grow-1">
-                        ${food.description || 'Delicious item'}
+            <div class="card shadow-sm h-100 menu-card">
+                ${imgWrap}
+                <div class="card-body d-flex flex-column menu-card-body">
+                    <h6 class="card-title menu-card-title">${escapeHtml(food.name)}</h6>
+                    <p class="card-text text-muted small flex-grow-1 menu-card-desc">
+                        ${escapeHtml(food.description || 'Delicious item')}
                     </p>
-                    <h6 class="text-primary mb-3">${food.price} MMK</h6>
+                    <div class="fw-bold text-primary menu-card-price mb-2">${food.price.toLocaleString()} MMK</div>
                     <button
-                        class="btn btn-primary w-100"
+                        class="btn btn-primary btn-sm w-100 menu-add-btn"
                         onclick="addToCart(${food.id}, '${escapeHtml(food.name)}', ${food.price})"
                     >
-                        Add to Cart
+                        + Add
                     </button>
                 </div>
             </div>

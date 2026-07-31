@@ -25,35 +25,21 @@
         </div>
     </nav>
 
-    <div class="container py-5">
+    <div class="container py-3 py-md-5">
 
-        <h2 class="mb-3">
+        <h2 class="mb-3 fs-4 fs-md-2">
             Today's Menu
         </h2>
 
         <!-- Category Filter Buttons -->
-        <div class="d-flex flex-wrap gap-2 mb-4" id="category-filters">
-            <button class="btn btn-primary category-filter-btn active" data-category="all" id="cat-btn-all">
-                🍴 All
-            </button>
-            <button class="btn btn-outline-primary category-filter-btn" data-category="food" id="cat-btn-food">
-                🍽️ Food
-            </button>
-            <button class="btn btn-outline-info category-filter-btn" data-category="drink" id="cat-btn-drink">
-                🥤 Drink
-            </button>
-            <button class="btn btn-outline-success category-filter-btn" data-category="salad" id="cat-btn-salad">
-                🥗 Salad
-            </button>
-            <button class="btn btn-outline-warning category-filter-btn" data-category="snack" id="cat-btn-snack">
-                🍿 Snack
-            </button>
-            <button class="btn btn-outline-danger category-filter-btn" data-category="dessert" id="cat-btn-dessert">
-                🍰 Dessert
-            </button>
-            <button class="btn btn-outline-secondary category-filter-btn" data-category="other" id="cat-btn-other">
-                📦 Other
-            </button>
+        <div class="cat-filter-strip mb-3" id="category-filters">
+            <button class="btn btn-sm btn-primary category-filter-btn active" data-category="all" id="cat-btn-all">🍴 All</button>
+            <button class="btn btn-sm btn-outline-primary category-filter-btn" data-category="food" id="cat-btn-food">🍽️ Food</button>
+            <button class="btn btn-sm btn-outline-info category-filter-btn" data-category="drink" id="cat-btn-drink">🥤 Drink</button>
+            <button class="btn btn-sm btn-outline-success category-filter-btn" data-category="salad" id="cat-btn-salad">🥗 Salad</button>
+            <button class="btn btn-sm btn-outline-warning category-filter-btn" data-category="snack" id="cat-btn-snack">🍿 Snack</button>
+            <button class="btn btn-sm btn-outline-danger category-filter-btn" data-category="dessert" id="cat-btn-dessert">🍰 Dessert</button>
+            <button class="btn btn-sm btn-outline-secondary category-filter-btn" data-category="other" id="cat-btn-other">📦 Other</button>
         </div>
 
         <div class="row" id="menu-container">

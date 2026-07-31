@@ -78,13 +78,235 @@ body{
 /* Responsive adjustments */
 @media (max-width: 768px) {
     .card {
-        margin-bottom: 1rem;
+        margin-bottom: 0;
     }
-    
+
     .table-responsive {
         font-size: 0.9rem;
     }
 }
+
+/* ============================================================
+   Category filter — horizontal scroll strip (mobile-friendly)
+   ============================================================ */
+
+.cat-filter-strip {
+    display: flex;
+    gap: 0.4rem;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scroll-snap-type: x mandatory;
+    padding-bottom: 6px;     /* room for scrollbar */
+    scrollbar-width: none;   /* Firefox */
+}
+
+.cat-filter-strip::-webkit-scrollbar {
+    display: none; /* Chrome/Safari */
+}
+
+.cat-filter-strip .btn {
+    flex-shrink: 0;
+    scroll-snap-align: start;
+    border-radius: 999px;
+    padding: 0.3rem 0.85rem;
+    font-size: 0.8rem;
+    white-space: nowrap;
+}
+
+/* ============================================================
+   Menu cards — responsive image + compact body
+   ============================================================ */
+
+.menu-card-img {
+    height: 160px;
+    object-fit: cover;
+    width: 100%;
+}
+
+.menu-card-body {
+    padding: 0.65rem;
+}
+
+/* Image wrapper — needed so the pill can be positioned absolutely over the image */
+.menu-img-wrap {
+    position: relative;
+    overflow: hidden;
+    border-radius: 12px 12px 0 0;
+    flex-shrink: 0;
+}
+
+.menu-img-placeholder {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #f1f5f9;
+    color: #94a3b8;
+    font-size: 2rem;
+}
+
+/* ── Category pill overlay ────────────────────────────────── */
+
+.menu-cat-pill {
+    position: absolute;
+    top: 8px;
+    left: 8px;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 9px 3px 6px;
+    border-radius: 999px;
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    border: 1px solid rgba(255,255,255,0.35);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.18);
+    white-space: nowrap;
+    pointer-events: none;
+    transition: transform 0.2s ease;
+}
+
+.menu-cat-pill-icon {
+    font-size: 0.78rem;
+    line-height: 1;
+}
+
+.menu-cat-pill-label {
+    line-height: 1;
+}
+
+/* Per-category color themes */
+.menu-cat-pill.cat-food    { background: rgba(59,130,246,0.82); color:#fff; }
+.menu-cat-pill.cat-drink   { background: rgba(6,182,212,0.82);  color:#fff; }
+.menu-cat-pill.cat-salad   { background: rgba(34,197,94,0.82);  color:#fff; }
+.menu-cat-pill.cat-snack   { background: rgba(234,179,8,0.88);  color:#1a1a1a; }
+.menu-cat-pill.cat-dessert { background: rgba(239,68,68,0.82);  color:#fff; }
+.menu-cat-pill.cat-other   { background: rgba(100,116,139,0.82);color:#fff; }
+
+/* Lift pill slightly when card is hovered */
+.menu-card:hover .menu-cat-pill {
+    transform: translateY(-2px);
+}
+
+.menu-card-title {
+    font-size: 0.88rem;
+    font-weight: 700;
+    color: #1e293b;
+    margin-bottom: 0.25rem;
+    /* Clamp to 2 lines on small screens */
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.menu-card-desc {
+    font-size: 0.75rem;
+    line-height: 1.35;
+    /* Clamp description to 2 lines */
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    margin-bottom: 0.35rem;
+}
+
+.menu-card-price {
+    font-size: 0.88rem;
+}
+
+.menu-add-btn {
+    font-size: 0.8rem;
+    padding: 0.3rem 0.5rem;
+    border-radius: 8px;
+    font-weight: 600;
+}
+
+/* Hover lift only on non-touch devices */
+@media (hover: hover) {
+    .menu-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 8px 20px rgba(0,0,0,.12) !important;
+    }
+}
+
+/* ============================================================
+   Mobile-specific overrides  ≤ 575px
+   ============================================================ */
+
+@media (max-width: 575.98px) {
+
+    /* Navbar — tighter brand text */
+    .navbar-brand {
+        font-size: 0.95rem;
+    }
+
+    /* Menu heading */
+    .fs-4.fs-md-2 {
+        font-size: 1.15rem !important;
+    }
+
+    /* Card image shorter on very small phones */
+    .menu-card-img {
+        height: 110px;
+    }
+
+    /* Card body — even tighter */
+    .menu-card-body {
+        padding: 0.5rem;
+    }
+
+    .menu-card-title {
+        font-size: 0.82rem;
+    }
+
+    .menu-card-price {
+        font-size: 0.82rem;
+    }
+
+    .menu-add-btn {
+        font-size: 0.75rem;
+        padding: 0.25rem 0.4rem;
+    }
+
+    /* Your Orders section */
+    #orders-container .card-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.3rem;
+    }
+
+    /* FAB — keep above iOS bottom bar */
+    #cart-fab {
+        bottom: calc(1.25rem + env(safe-area-inset-bottom, 0px));
+        right: 1.25rem;
+        width: 54px;
+        height: 54px;
+    }
+
+    #cart-fab-icon {
+        width: 24px;
+        height: 24px;
+    }
+
+    /* Side drawer full-width on very small screens */
+    #cart-drawer {
+        width: 100vw;
+        border-radius: 0;
+    }
+}
+
+/* ============================================================
+   Tablet: 576–767px  →  2 col (same as mobile but bigger cards)
+   ============================================================ */
+
+@media (min-width: 576px) and (max-width: 767.98px) {
+    .menu-card-img {
+        height: 140px;
+    }
+}
+
 
 /* ============================================================
    FAB — Floating Action Button (Cart)
