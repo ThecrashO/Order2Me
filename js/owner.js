@@ -391,62 +391,43 @@ function displayMenuItems(items) {
     items.forEach(item => menuItemsData.set(item.id, item));
     allMenuItemsArr = items; // cache for search
 
-    menuList.innerHTML = `
-        <div class="table-responsive">
-            <table class="table table-hover align-middle">
-                <thead class="table-light">
-                    <tr>
-                        <th>Image</th>
-                        <th>Name</th>
-                        <th>Category</th>
-                        <th>Description</th>
-                        <th>Price (MMK)</th>
-                        <th>Available</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    ${items.map(item => {
-                        const catBadge = categoryBadge(item.category);
-                        return `
-                        <tr data-item-id="${item.id}">
-                            <td style="width:72px">
-                                ${item.image_url
-                                    ? `<img src="${item.image_url}" alt="${escapeHtml(item.name)}"
-                                           class="rounded menu-thumb"
-                                           data-item-id="${item.id}"
-                                           style="width:60px;height:60px;object-fit:cover;cursor:pointer;"
-                                           onerror="this.style.display='none'">`
-                                    : `<span class="text-muted small">—</span>`
-                                }
-                            </td>
-                            <td>${escapeHtml(item.name)}</td>
-                            <td>${catBadge}</td>
-                            <td>${escapeHtml(item.description || '-')}</td>
-                            <td>${item.price}</td>
-                            <td>
-                                <div class="form-check form-switch">
-                                    <input class="form-check-input toggle-availability" type="checkbox"
-                                           id="toggle-${item.id}" ${item.is_available ? 'checked' : ''}
-                                           data-id="${item.id}">
-                                </div>
-                            </td>
-                            <td>
-                                <button class="btn btn-sm btn-warning me-2 btn-edit-item"
-                                        data-item-id="${item.id}">
-                                    Edit
-                                </button>
-                                <button class="btn btn-sm btn-danger btn-delete-item"
-                                        data-item-id="${item.id}">
-                                    Delete
-                                </button>
-                            </td>
-                        </tr>
-                    `}).join('')}
-                </tbody>
-            </table>
-        </div>
-    `;
+    menuList.innerHTML = `<div class="row g-3 owner-menu-grid">${items.map(item => {
+        const catBadge = categoryBadge(item.category);
+        const imgHtml = item.image_url
+            ? `<img src="${item.image_url}" alt="${escapeHtml(item.name)}"
+                    class="owner-menu-card-img" onerror="this.style.display='none'">`
+            : `<div class="owner-menu-card-img owner-menu-img-placeholder">🍽️</div>`;
+        return `
+        <div class="col-12 col-sm-6 col-lg-4">
+            <div class="card h-100 shadow-sm owner-menu-card ${item.is_available ? '' : 'opacity-60'}">
+                <div class="owner-menu-img-wrap">${imgHtml}</div>
+                <div class="card-body p-3">
+                    <div class="d-flex align-items-start justify-content-between gap-2 mb-1">
+                        <h6 class="card-title mb-0 owner-menu-card-name">${escapeHtml(item.name)}</h6>
+                        ${catBadge}
+                    </div>
+                    <p class="text-muted small mb-2 owner-menu-card-desc">${escapeHtml(item.description || '—')}</p>
+                    <div class="fw-bold text-primary mb-2">${Number(item.price).toLocaleString()} MMK</div>
+                    <div class="d-flex align-items-center justify-content-between gap-2">
+                        <div class="d-flex align-items-center gap-1">
+                            <div class="form-check form-switch mb-0">
+                                <input class="form-check-input toggle-availability" type="checkbox"
+                                       id="toggle-${item.id}" ${item.is_available ? 'checked' : ''}
+                                       data-id="${item.id}" role="switch">
+                                <label class="form-check-label small text-muted" for="toggle-${item.id}">
+                                    ${item.is_available ? 'Available' : 'Hidden'}
+                                </label>
+                            </div>
+                        </div>
+                        <div class="d-flex gap-1">
+                            <button class="btn btn-sm btn-warning btn-edit-item" data-item-id="${item.id}">✏️</button>
+                            <button class="btn btn-sm btn-danger btn-delete-item" data-item-id="${item.id}">🗑️</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>`;
+    }).join('')}</div>`;
 
     // Wire up toggle switches
     document.querySelectorAll('.toggle-availability').forEach(toggle => {
