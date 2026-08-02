@@ -1,100 +1,212 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Owner Dashboard</title>
+    <title>Owner Dashboard — Order2Me</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="css/style.css">
 </head>
 
 <body>
 
+<!-- ── Navbar ── -->
 <nav class="navbar navbar-dark bg-dark">
-    <div class="container">
-        <span class="navbar-brand fw-bold">Order2Me — Owner Dashboard</span>
-        <div class="d-flex gap-2">
-            <button class="btn btn-outline-light btn-sm" onclick="refreshOrders()">⟳ Refresh Orders</button>
-            <button class="btn btn-outline-danger btn-sm" onclick="signOut()">Sign Out</button>
+    <div class="container-fluid px-3">
+        <!-- Hamburger toggle -->
+        <button id="owner-sidebar-toggle" class="sidebar-hamburger" onclick="openOwnerSidebar()"
+                aria-label="Open navigation" aria-expanded="false" aria-controls="owner-sidebar">
+            <span></span>
+            <span></span>
+            <span></span>
+        </button>
+        <span class="navbar-brand ms-2">Order2Me — Owner</span>
+
+        <!-- Navbar right: refresh + profile dropdown -->
+        <div class="d-flex align-items-center gap-2 ms-auto">
+            <button class="btn btn-sm btn-outline-light" onclick="refreshCurrentPanel()" title="Refresh">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                     stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path d="M1 4v6h6"/><path d="M23 20v-6h-6"/>
+                    <path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4-4.64 4.36A9 9 0 0 1 3.51 15"/>
+                </svg>
+                <span class="d-none d-sm-inline ms-1">Refresh</span>
+            </button>
+
+            <!-- Profile dropdown -->
+            <div class="profile-dropdown" id="owner-profile-dropdown-wrap">
+                <button class="profile-avatar-btn" id="owner-profile-avatar-btn"
+                    onclick="toggleOwnerProfileDropdown()"
+                    aria-haspopup="true" aria-expanded="false"
+                    aria-controls="owner-profile-dropdown-menu"
+                    aria-label="Open profile menu">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                        <circle cx="12" cy="7" r="4"/>
+                    </svg>
+                    <span class="profile-avatar-caret" aria-hidden="true">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2.5"
+                            stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="6 9 12 15 18 9"/>
+                        </svg>
+                    </span>
+                </button>
+
+                <!-- Dropdown panel -->
+                <div class="profile-dropdown-menu" id="owner-profile-dropdown-menu" role="menu" aria-hidden="true">
+                    <div class="profile-dropdown-header">
+                        <div class="profile-dropdown-avatar">
+                            <svg width="26" height="26" viewBox="0 0 24 24" fill="none"
+                                stroke="currentColor" stroke-width="1.8"
+                                stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                                <circle cx="12" cy="7" r="4"/>
+                            </svg>
+                        </div>
+                        <div class="profile-dropdown-userinfo">
+                            <div class="profile-dropdown-name" id="owner-profile-name">—</div>
+                            <div class="profile-dropdown-role">Owner</div>
+                        </div>
+                    </div>
+                    <div class="profile-dropdown-divider"></div>
+                    <button class="profile-dropdown-item profile-dropdown-signout" role="menuitem" onclick="signOut()">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2"
+                            stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+                            <polyline points="16 17 21 12 16 7"/>
+                            <line x1="21" y1="12" x2="9" y2="12"/>
+                        </svg>
+                        Sign Out
+                    </button>
+                </div>
+            </div>
         </div>
     </div>
 </nav>
 
-<div class="container py-4">
+<!-- Sidebar backdrop -->
+<div id="owner-sidebar-backdrop" class="sidebar-backdrop" onclick="closeOwnerSidebar()" aria-hidden="true"></div>
 
-    <!-- Tabs -->
-    <ul class="nav nav-tabs mb-4" id="ownerTabs" role="tablist">
-        <li class="nav-item" role="presentation">
-            <button class="nav-link active" id="orders-tab" data-bs-toggle="tab"
-                    data-bs-target="#orders-panel" type="button" role="tab">
-                📋 Orders
-                <span class="badge bg-danger ms-1 d-none" id="pending-badge">0</span>
+<!-- Layout wrapper -->
+<div class="student-layout">
+
+    <!-- ── Sidebar ── -->
+    <aside class="student-sidebar" id="owner-sidebar" aria-label="Owner navigation" role="dialog" aria-modal="true">
+
+        <div class="sidebar-header">
+            <span class="sidebar-logo">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                     stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/>
+                    <line x1="3" y1="6" x2="21" y2="6"/>
+                    <path d="M16 10a4 4 0 0 1-8 0"/>
+                </svg>
+                Order2Me
+            </span>
+            <button class="sidebar-close-btn" onclick="closeOwnerSidebar()" aria-label="Close sidebar">&times;</button>
+        </div>
+
+        <nav class="sidebar-nav" aria-label="Owner navigation">
+            <button class="sidebar-nav-item active" id="owner-nav-orders"
+                    onclick="showOwnerPanel('orders')" aria-current="page">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                     stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/>
+                    <rect x="9" y="3" width="6" height="4" rx="1"/>
+                    <path d="M9 12h6M9 16h4"/>
+                </svg>
+                <span>Orders</span>
+                <span class="badge bg-danger ms-auto d-none" id="pending-badge">0</span>
             </button>
-        </li>
-        <li class="nav-item" role="presentation">
-            <button class="nav-link" id="menu-tab" data-bs-toggle="tab"
-                    data-bs-target="#menu-panel" type="button" role="tab">
-                🍽️ Menu Management
+            <button class="sidebar-nav-item" id="owner-nav-menu"
+                    onclick="showOwnerPanel('menu')">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                     stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path d="M3 12h18M3 6h18M3 18h18"/>
+                </svg>
+                <span>Menu Management</span>
             </button>
-        </li>
-    </ul>
+            <button class="sidebar-nav-item" id="owner-nav-students"
+                    onclick="showOwnerPanel('students')">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                     stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                    <circle cx="9" cy="7" r="4"/>
+                    <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+                    <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+                </svg>
+                <span>Students</span>
+                <span class="badge bg-secondary ms-auto d-none" id="students-count-badge">0</span>
+            </button>
+        </nav>
+    </aside>
 
-    <div class="tab-content">
+    <!-- ── Main content ── -->
+    <main class="student-main">
 
-        <!-- ── ORDERS PANEL ── -->
-        <div class="tab-pane fade show active" id="orders-panel" role="tabpanel">
+        <!-- Panel: Orders -->
+        <section id="owner-panel-orders" class="student-panel active-panel">
 
-            <!-- Filter buttons -->
-            <div class="d-flex flex-wrap align-items-center gap-2 mb-3">
-                <button class="btn btn-sm btn-primary order-filter active" data-status="all">All</button>
-                <button class="btn btn-sm btn-outline-warning order-filter" data-status="pending">Pending</button>
-                <button class="btn btn-sm btn-outline-info order-filter" data-status="preparing">Preparing</button>
-                <button class="btn btn-sm btn-outline-success order-filter" data-status="ready">Ready</button>
-                <button class="btn btn-sm btn-outline-secondary order-filter" data-status="delivered">Delivered</button>
-                <div class="input-group ms-auto" style="max-width:280px;">
+            <div class="panel-header">
+                <h2 class="panel-title">📋 Orders</h2>
+                <!-- Filter buttons -->
+                <div class="d-flex flex-wrap gap-2 align-items-center">
+                    <button class="btn btn-sm btn-primary order-filter active" data-status="all">All</button>
+                    <button class="btn btn-sm btn-outline-warning order-filter" data-status="pending">Pending</button>
+                    <button class="btn btn-sm btn-outline-info order-filter" data-status="preparing">Preparing</button>
+                    <button class="btn btn-sm btn-outline-success order-filter" data-status="ready">Ready</button>
+                    <button class="btn btn-sm btn-outline-secondary order-filter" data-status="delivered">Delivered</button>
+                </div>
+            </div>
+
+            <!-- Search bar -->
+            <div class="mb-3" style="max-width:320px;">
+                <div class="input-group">
                     <span class="input-group-text bg-white border-end-0">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" fill="currentColor" class="text-muted" viewBox="0 0 16 16">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" fill="currentColor"
+                             class="text-muted" viewBox="0 0 16 16">
                             <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.099zm-5.242 1.156a5.5 5.5 0 1 1 0-11 5.5 5.5 0 0 1 0 11z"/>
                         </svg>
                     </span>
-                    <input
-                        type="search"
-                        id="orders-search"
-                        class="form-control border-start-0 ps-0"
-                        placeholder="Search by name or #ID..."
-                        oninput="filterOrdersBySearch(this.value)"
-                        autocomplete="off"
-                    >
+                    <input type="search" id="orders-search" class="form-control border-start-0 ps-0"
+                           placeholder="Search by name or #ID..."
+                           oninput="filterOrdersBySearch(this.value)" autocomplete="off">
                 </div>
             </div>
 
             <div id="orders-list">
                 <p class="text-muted">Loading orders...</p>
             </div>
-        </div>
+        </section>
 
-        <!-- ── MENU PANEL ── -->
-        <div class="tab-pane fade" id="menu-panel" role="tabpanel">
-            <div class="d-flex flex-wrap align-items-center gap-2 mb-3">
-                <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#addFoodModal">
-                    + Add Food
-                </button>
-                <div class="input-group ms-auto" style="max-width:280px;">
-                    <span class="input-group-text bg-white border-end-0">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" fill="currentColor" class="text-muted" viewBox="0 0 16 16">
-                            <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.099zm-5.242 1.156a5.5 5.5 0 1 1 0-11 5.5 5.5 0 0 1 0 11z"/>
-                        </svg>
-                    </span>
-                    <input
-                        type="search"
-                        id="menu-search-owner"
-                        class="form-control border-start-0 ps-0"
-                        placeholder="Search menu items..."
-                        oninput="filterMenuItems(this.value)"
-                        autocomplete="off"
-                    >
+        <!-- Panel: Menu Management -->
+        <section id="owner-panel-menu" class="student-panel">
+
+            <div class="panel-header">
+                <h2 class="panel-title">🍽️ Menu Management</h2>
+                <div class="d-flex gap-2 align-items-center flex-wrap">
+                    <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#addFoodModal">
+                        + Add Food
+                    </button>
+                    <div class="input-group" style="max-width:280px;">
+                        <span class="input-group-text bg-white border-end-0">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" fill="currentColor"
+                                 class="text-muted" viewBox="0 0 16 16">
+                                <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.099zm-5.242 1.156a5.5 5.5 0 1 1 0-11 5.5 5.5 0 0 1 0 11z"/>
+                            </svg>
+                        </span>
+                        <input type="search" id="menu-search-owner" class="form-control border-start-0 ps-0"
+                               placeholder="Search menu items..."
+                               oninput="filterMenuItems(this.value)" autocomplete="off">
+                    </div>
                 </div>
             </div>
+
             <div class="card">
                 <div class="card-body">
                     <div id="menu-list">
@@ -102,9 +214,38 @@
                     </div>
                 </div>
             </div>
-        </div>
+        </section>
 
-    </div>
+        <!-- Panel: Students -->
+        <section id="owner-panel-students" class="student-panel">
+
+            <div class="panel-header">
+                <h2 class="panel-title">👤 Students</h2>
+                <div class="input-group" style="max-width:300px;">
+                    <span class="input-group-text bg-white border-end-0">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" fill="currentColor"
+                             class="text-muted" viewBox="0 0 16 16">
+                            <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.099zm-5.242 1.156a5.5 5.5 0 1 1 0-11 5.5 5.5 0 0 1 0 11z"/>
+                        </svg>
+                    </span>
+                    <input type="search" id="students-search" class="form-control border-start-0 ps-0"
+                           placeholder="Search by name, email or phone..."
+                           oninput="filterStudents(this.value)" autocomplete="off">
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-body p-0">
+                    <div id="students-list">
+                        <p class="text-muted p-3">Loading students...</p>
+                    </div>
+                </div>
+            </div>
+
+        </section>
+
+    </main>
+
 </div>
 
 <!-- ── REJECT REASON MODAL ── -->
@@ -257,6 +398,97 @@
         </div>
     </div>
 </div>
+
+<!-- ── Sidebar / Panel JS (inline, same pattern as student) ── -->
+<script>
+    /* ── Sidebar open / close ─────────────────────────────── */
+    function openOwnerSidebar() {
+        const sidebar  = document.getElementById('owner-sidebar');
+        const backdrop = document.getElementById('owner-sidebar-backdrop');
+        const toggle   = document.getElementById('owner-sidebar-toggle');
+        sidebar.classList.add('sidebar-open');
+        backdrop.classList.add('sidebar-backdrop-show');
+        toggle.setAttribute('aria-expanded', 'true');
+        document.body.style.overflow = 'hidden';
+    }
+
+    function closeOwnerSidebar() {
+        const sidebar  = document.getElementById('owner-sidebar');
+        const backdrop = document.getElementById('owner-sidebar-backdrop');
+        const toggle   = document.getElementById('owner-sidebar-toggle');
+        sidebar.classList.remove('sidebar-open');
+        backdrop.classList.remove('sidebar-backdrop-show');
+        toggle.setAttribute('aria-expanded', 'false');
+        document.body.style.overflow = '';
+    }
+
+    /* ── Panel switcher ───────────────────────────────────── */
+    function showOwnerPanel(name) {
+        document.querySelectorAll('.student-panel').forEach(p => p.classList.remove('active-panel'));
+        const target = document.getElementById('owner-panel-' + name);
+        if (target) target.classList.add('active-panel');
+
+        document.querySelectorAll('#owner-sidebar .sidebar-nav-item').forEach(b => {
+            b.classList.remove('active');
+            b.removeAttribute('aria-current');
+        });
+        const navBtn = document.getElementById('owner-nav-' + name);
+        if (navBtn) { navBtn.classList.add('active'); navBtn.setAttribute('aria-current', 'page'); }
+
+        closeOwnerSidebar();
+
+        // Lazy-load on first switch
+        if (name === 'menu') loadMenuItems();
+        if (name === 'students') loadStudents();
+    }
+
+    /* ── Refresh button ───────────────────────────────────── */
+    function refreshCurrentPanel() {
+        if (document.getElementById('owner-panel-orders').classList.contains('active-panel')) {
+            document.getElementById('orders-list').innerHTML = '<p class="text-muted">Refreshing...</p>';
+            loadOrders();
+        } else if (document.getElementById('owner-panel-menu').classList.contains('active-panel')) {
+            loadMenuItems();
+        } else if (document.getElementById('owner-panel-students').classList.contains('active-panel')) {
+            document.getElementById('students-list').innerHTML = '<p class="text-muted p-3">Refreshing...</p>';
+            loadStudents();
+        }
+    }
+
+    /* ── Profile Dropdown ─────────────────────────────────── */
+    function toggleOwnerProfileDropdown() {
+        const menu = document.getElementById('owner-profile-dropdown-menu');
+        const btn  = document.getElementById('owner-profile-avatar-btn');
+        const isOpen = menu.classList.contains('dropdown-open');
+        if (isOpen) {
+            closeOwnerProfileDropdown();
+        } else {
+            menu.classList.add('dropdown-open');
+            menu.setAttribute('aria-hidden', 'false');
+            btn.setAttribute('aria-expanded', 'true');
+        }
+    }
+
+    function closeOwnerProfileDropdown() {
+        const menu = document.getElementById('owner-profile-dropdown-menu');
+        const btn  = document.getElementById('owner-profile-avatar-btn');
+        if (!menu) return;
+        menu.classList.remove('dropdown-open');
+        menu.setAttribute('aria-hidden', 'true');
+        btn.setAttribute('aria-expanded', 'false');
+    }
+
+    // Click outside → close dropdown
+    document.addEventListener('click', e => {
+        const wrap = document.getElementById('owner-profile-dropdown-wrap');
+        if (wrap && !wrap.contains(e.target)) closeOwnerProfileDropdown();
+    });
+
+    // ESC → close sidebar + dropdown
+    document.addEventListener('keydown', e => {
+        if (e.key === 'Escape') { closeOwnerSidebar(); closeOwnerProfileDropdown(); }
+    });
+</script>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/js/bootstrap.bundle.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>

@@ -5,6 +5,7 @@
 //   1. Init
 //   2. Orders -- load, render, filter, status update, reject
 //   3. Menu   -- load, display, add, edit, delete, toggle
+//   4. Students -- load, render, filter
 // ============================================================
 
 // ── Globals ──────────────────────────────────────────────────
@@ -18,6 +19,7 @@ let activeSearch   = '';   // search query for orders
 let ownerProfile   = null; // current logged-in owner
 let menuItemsData  = new Map(); // id -> full item object (used for edit/image lookups)
 let allMenuItemsArr = [];  // flat array cache for menu search
+let allStudentsArr  = [];  // flat array cache for student search
 
 // ── 1. INIT ──────────────────────────────────────────────────
 
@@ -34,6 +36,10 @@ async function initializeApp() {
     // Auth guard: must be an owner
     ownerProfile = await requireOwner();
     if (!ownerProfile) return; // requireOwner redirects to login
+
+    // Populate owner name in sidebar profile dropdown
+    const nameEl = document.getElementById('owner-profile-name');
+    if (nameEl && ownerProfile.name) nameEl.textContent = ownerProfile.name;
 
     // Init modals
     addFoodModal = new bootstrap.Modal(document.getElementById('addFoodModal'));
@@ -108,8 +114,9 @@ function refreshOrders() {
 }
 
 function updatePendingBadge() {
-    const count  = allOrders.filter(o => o.status === 'pending').length;
-    const badge  = document.getElementById('pending-badge');
+    const count = allOrders.filter(o => o.status === 'pending').length;
+    const badge = document.getElementById('pending-badge');
+    if (!badge) return;
     if (count > 0) {
         badge.textContent = count;
         badge.classList.remove('d-none');
@@ -471,6 +478,138 @@ function displayMenuItems(items) {
 function escapeHtml(text) {
     const map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' };
     return String(text).replace(/[&<>"']/g, m => map[m]);
+}
+
+// ── 4. STUDENTS ───────────────────────────────────────────────
+
+async function loadStudents() {
+    const container = document.getElementById('students-list');
+    if (!container) return;
+
+    container.innerHTML = `
+        <div class="text-center py-4 text-muted">
+            <div class="spinner-border spinner-border-sm me-2" role="status"></div>
+            Loading students...
+        </div>`;
+
+    // Fetch students + their order count in one query via Supabase embedded select
+    const { data, error } = await supabaseClient
+        .from('users')
+        .select(`
+            id,
+            name,
+            email,
+            phone_number,
+            created_at,
+            orders ( id )
+        `)
+        .eq('role', 'student')
+        .order('created_at', { ascending: false });
+
+    if (error) {
+        container.innerHTML = `<p class="text-danger p-3"><strong>Error:</strong> ${escapeHtml(error.message)}</p>`;
+        return;
+    }
+
+    allStudentsArr = (data || []).map(s => ({
+        ...s,
+        order_count: Array.isArray(s.orders) ? s.orders.length : 0
+    }));
+
+    // Update sidebar count badge
+    const badge = document.getElementById('students-count-badge');
+    if (badge) {
+        badge.textContent = allStudentsArr.length;
+        if (allStudentsArr.length > 0) badge.classList.remove('d-none');
+        else badge.classList.add('d-none');
+    }
+
+    renderStudents(allStudentsArr);
+}
+
+function filterStudents(query) {
+    const q = query.trim().toLowerCase();
+    if (!q) { renderStudents(allStudentsArr); return; }
+    const filtered = allStudentsArr.filter(s =>
+        (s.name  || '').toLowerCase().includes(q) ||
+        (s.email || '').toLowerCase().includes(q) ||
+        (s.phone_number || '').toLowerCase().includes(q)
+    );
+    renderStudents(filtered, q);
+}
+
+function renderStudents(students, query = '') {
+    const container = document.getElementById('students-list');
+    if (!container) return;
+
+    if (!students || students.length === 0) {
+        container.innerHTML = query
+            ? `<div class="p-4 text-center text-muted">
+                   <div style="font-size:2rem;">🔍</div>
+                   <p class="mb-0 mt-2">No students match "${escapeHtml(query)}".</p>
+               </div>`
+            : `<div class="p-4 text-center text-muted">
+                   <div style="font-size:2.5rem;">👤</div>
+                   <p class="mb-0 mt-2">No registered students yet.</p>
+               </div>`;
+        return;
+    }
+
+    const palettes = [
+        '#3b82f6','#8b5cf6','#10b981','#f59e0b','#ef4444','#06b6d4','#f97316'
+    ];
+
+    const rows = students.map((s, idx) => {
+        const initials = (s.name || '?').split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
+        const joinDate = new Date(s.created_at).toLocaleDateString('en-GB', {
+            day: '2-digit', month: 'short', year: 'numeric'
+        });
+        const phone  = s.phone_number
+            ? escapeHtml(s.phone_number)
+            : '<span class="text-muted small">—</span>';
+        const orders = s.order_count > 0
+            ? `<span class="badge bg-primary bg-opacity-75">${s.order_count}</span>`
+            : '<span class="text-muted small">0</span>';
+        const bg = palettes[idx % palettes.length];
+
+        return `
+        <tr>
+            <td class="ps-3">
+                <div style="
+                    width:36px;height:36px;border-radius:50%;
+                    background:${bg};color:#fff;
+                    display:flex;align-items:center;justify-content:center;
+                    font-size:0.75rem;font-weight:700;flex-shrink:0;
+                ">${initials}</div>
+            </td>
+            <td class="fw-semibold">${escapeHtml(s.name || '—')}</td>
+            <td class="text-muted small">${escapeHtml(s.email || '—')}</td>
+            <td class="text-muted small">${phone}</td>
+            <td class="text-center">${orders}</td>
+            <td class="text-muted small">${joinDate}</td>
+        </tr>`;
+    }).join('');
+
+    container.innerHTML = `
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th class="ps-3" style="width:52px"></th>
+                        <th>Name</th>
+                        <th>Email</th>
+                        <th>Phone</th>
+                        <th class="text-center">Orders</th>
+                        <th>Joined</th>
+                    </tr>
+                </thead>
+                <tbody>${rows}</tbody>
+            </table>
+        </div>
+        <div class="px-3 py-2 text-muted small border-top">
+            ${students.length} student${students.length !== 1 ? 's' : ''} registered
+        </div>
+    `;
 }
 
 // ── Category badge helper ─────────────────────────────────────

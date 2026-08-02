@@ -211,6 +211,29 @@ USING (
 -- ============================================================
 
 -- ============================================================
+-- Allow owner to read ALL student profiles
+-- Required for the Owner Dashboard > Students panel.
+-- Run this in your Supabase SQL editor.
+-- ============================================================
+
+DROP POLICY IF EXISTS "Allow owner to read all students" ON public.users;
+
+CREATE POLICY "Allow owner to read all students"
+ON public.users
+FOR SELECT
+USING (
+  auth.role() = 'authenticated'
+  AND EXISTS (
+    SELECT 1
+    FROM public.users AS me
+    WHERE me.auth_user_id = auth.uid()
+      AND me.role = 'owner'
+  )
+);
+
+-- ============================================================
+
+-- ============================================================
 -- Payments Table RLS Policies
 -- Students must be able to INSERT payment records after ordering.
 -- Run these in Supabase SQL Editor.
