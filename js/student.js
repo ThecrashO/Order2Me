@@ -880,10 +880,10 @@ async function initStudentPage() {
     currentStudentProfile = await requireStudent();
     if (!currentStudentProfile) return; // requireStudent redirects to login
 
-    // Show greeting in navbar
-    const greetingEl = document.getElementById('student-greeting');
-    if (greetingEl && currentStudentProfile.name) {
-        greetingEl.textContent = 'Hi, ' + currentStudentProfile.name;
+    // Populate profile dropdown name
+    const profileNameEl = document.getElementById('profile-name');
+    if (profileNameEl && currentStudentProfile.name) {
+        profileNameEl.textContent = currentStudentProfile.name;
     }
 
     // Load owner phone number from DB (used for KBZPay / WavePay deep links)

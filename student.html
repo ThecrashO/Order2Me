@@ -14,66 +14,294 @@
 <body>
 
     <nav class="navbar navbar-dark bg-primary">
-        <div class="container">
-            <span class="navbar-brand">
-                Order2Me - Student
-            </span>
-            <div class="d-flex align-items-center gap-2">
-                <span id="student-greeting" class="text-white small"></span>
-                <button class="btn btn-outline-light btn-sm" onclick="signOut()">Sign Out</button>
+        <div class="container-fluid px-3">
+            <!-- Hamburger toggle -->
+            <button id="sidebar-toggle" class="sidebar-hamburger" onclick="openSidebar()" aria-label="Open navigation" aria-expanded="false" aria-controls="student-sidebar">
+                <span></span>
+                <span></span>
+                <span></span>
+            </button>
+            <span class="navbar-brand ms-2">Order2Me - Student</span>
+
+            <!-- Profile dropdown -->
+            <div class="profile-dropdown ms-auto" id="profile-dropdown-wrap">
+                <button class="profile-avatar-btn" id="profile-avatar-btn"
+                    onclick="toggleProfileDropdown()"
+                    aria-haspopup="true" aria-expanded="false"
+                    aria-controls="profile-dropdown-menu"
+                    aria-label="Open profile menu">
+                    <!-- User silhouette icon -->
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                        <circle cx="12" cy="7" r="4"/>
+                    </svg>
+                    <span class="profile-avatar-caret" aria-hidden="true">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2.5"
+                            stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="6 9 12 15 18 9"/>
+                        </svg>
+                    </span>
+                </button>
+
+                <!-- Dropdown panel -->
+                <div class="profile-dropdown-menu" id="profile-dropdown-menu" role="menu" aria-hidden="true">
+
+                    <!-- User info header -->
+                    <div class="profile-dropdown-header">
+                        <div class="profile-dropdown-avatar">
+                            <svg width="26" height="26" viewBox="0 0 24 24" fill="none"
+                                stroke="currentColor" stroke-width="1.8"
+                                stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                                <circle cx="12" cy="7" r="4"/>
+                            </svg>
+                        </div>
+                        <div class="profile-dropdown-userinfo">
+                            <div class="profile-dropdown-name" id="profile-name">—</div>
+                            <div class="profile-dropdown-role">Student</div>
+                        </div>
+                    </div>
+
+                    <div class="profile-dropdown-divider"></div>
+
+                    <!-- Menu items -->
+                    <button class="profile-dropdown-item" role="menuitem" onclick="openProfileInfo()">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2"
+                            stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                            <circle cx="12" cy="7" r="4"/>
+                        </svg>
+                        My Profile
+                    </button>
+                    <button class="profile-dropdown-item" role="menuitem" onclick="openSettings()">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2"
+                            stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <circle cx="12" cy="12" r="3"/>
+                            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+                        </svg>
+                        Settings
+                    </button>
+
+                    <div class="profile-dropdown-divider"></div>
+
+                    <!-- Sign out -->
+                    <button class="profile-dropdown-item profile-dropdown-signout" role="menuitem" onclick="signOut()">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2"
+                            stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+                            <polyline points="16 17 21 12 16 7"/>
+                            <line x1="21" y1="12" x2="9" y2="12"/>
+                        </svg>
+                        Sign Out
+                    </button>
+                </div>
             </div>
         </div>
     </nav>
 
-    <div class="container py-3 py-md-5">
+    <!-- Sidebar backdrop (click outside to close) -->
+    <div id="sidebar-backdrop" class="sidebar-backdrop" onclick="closeSidebar()" aria-hidden="true"></div>
 
-        <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-4">
-            <h2 class="mb-0">Today's Menu</h2>
-            <div class="input-group" style="max-width:320px;">
-                <span class="input-group-text bg-white border-end-0">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="text-muted" viewBox="0 0 16 16">
-                        <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.099zm-5.242 1.156a5.5 5.5 0 1 1 0-11 5.5 5.5 0 0 1 0 11z"/>
+    <!-- Sidebar + Main layout wrapper -->
+    <div class="student-layout">
+
+        <!-- ── Sidebar (fixed overlay) ── -->
+        <aside class="student-sidebar" id="student-sidebar" aria-label="Navigation menu" role="dialog" aria-modal="true">
+
+            <!-- Sidebar header with close button -->
+            <div class="sidebar-header">
+                <span class="sidebar-logo">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/>
+                        <line x1="3" y1="6" x2="21" y2="6"/>
+                        <path d="M16 10a4 4 0 0 1-8 0"/>
                     </svg>
+                    Order2Me
                 </span>
-                <input
-                    type="search"
-                    id="menu-search"
-                    class="form-control border-start-0 ps-0"
-                    placeholder="Search menu..."
-                    oninput="filterMenu(this.value)"
-                    autocomplete="off"
-                >
+                <button class="sidebar-close-btn" onclick="closeSidebar()" aria-label="Close sidebar">&times;</button>
             </div>
-        </div>
 
-        <!-- Category Filter Bar -->
-        <div class="cat-filter-strip mb-3" id="category-filter-bar">
-            <button class="btn btn-primary category-filter-btn active" data-category="all">🍽️ All</button>
-            <button class="btn btn-outline-primary category-filter-btn" data-category="food">🍽️ Food</button>
-            <button class="btn btn-outline-info category-filter-btn" data-category="drink">🥤 Drink</button>
-            <button class="btn btn-outline-success category-filter-btn" data-category="salad">🥗 Salad</button>
-            <button class="btn btn-outline-warning category-filter-btn" data-category="snack">🍿 Snack</button>
-            <button class="btn btn-outline-danger category-filter-btn" data-category="dessert">🍰 Dessert</button>
-            <button class="btn btn-outline-secondary category-filter-btn" data-category="other">📦 Other</button>
-        </div>
-
-        <div class="row" id="menu-container">
-
-        </div>
-
-        <div class="mt-5">
-            <div class="d-flex justify-content-between align-items-center mb-3">
-                <h2>Your Orders</h2>
-                <button id="refresh-orders-btn" class="btn btn-sm btn-outline-secondary" onclick="loadStudentOrders()">
-                    Refresh Orders
+            <nav class="sidebar-nav" aria-label="Student navigation">
+                <button class="sidebar-nav-item active" id="nav-menu" onclick="showPanel('menu')" aria-current="page">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <path d="M3 12h18M3 6h18M3 18h18"/>
+                    </svg>
+                    <span>Today's Menu</span>
                 </button>
-            </div>
-            <div id="orders-container">
-                <p class="text-muted">Loading your orders...</p>
-            </div>
-        </div>
+                <button class="sidebar-nav-item" id="nav-orders" onclick="showPanel('orders')">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/>
+                        <rect x="9" y="3" width="6" height="4" rx="1"/>
+                        <path d="M9 12h6M9 16h4"/>
+                    </svg>
+                    <span>Your Orders</span>
+                </button>
+            </nav>
+        </aside>
+
+        <!-- ── Main content ── -->
+        <main class="student-main">
+
+            <!-- Panel: Menu -->
+            <section id="panel-menu" class="student-panel active-panel">
+
+                <div class="panel-header">
+                    <h2 class="panel-title">Today's Menu</h2>
+                    <div class="input-group" style="max-width:300px;">
+                        <span class="input-group-text bg-white border-end-0">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" fill="currentColor" class="text-muted" viewBox="0 0 16 16">
+                                <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.099zm-5.242 1.156a5.5 5.5 0 1 1 0-11 5.5 5.5 0 0 1 0 11z"/>
+                            </svg>
+                        </span>
+                        <input
+                            type="search"
+                            id="menu-search"
+                            class="form-control border-start-0 ps-0"
+                            placeholder="Search menu..."
+                            oninput="filterMenu(this.value)"
+                            autocomplete="off"
+                        >
+                    </div>
+                </div>
+
+                <!-- Category Filter Bar -->
+                <div class="cat-filter-strip mb-3" id="category-filter-bar">
+                    <button class="btn btn-primary category-filter-btn active" data-category="all">🍽️ All</button>
+                    <button class="btn btn-outline-primary category-filter-btn" data-category="food">🍽️ Food</button>
+                    <button class="btn btn-outline-info category-filter-btn" data-category="drink">🥤 Drink</button>
+                    <button class="btn btn-outline-success category-filter-btn" data-category="salad">🥗 Salad</button>
+                    <button class="btn btn-outline-warning category-filter-btn" data-category="snack">🍿 Snack</button>
+                    <button class="btn btn-outline-danger category-filter-btn" data-category="dessert">🍰 Dessert</button>
+                    <button class="btn btn-outline-secondary category-filter-btn" data-category="other">📦 Other</button>
+                </div>
+
+                <div class="row" id="menu-container"></div>
+
+            </section>
+
+            <!-- Panel: Your Orders -->
+            <section id="panel-orders" class="student-panel">
+
+                <div class="panel-header">
+                    <h2 class="panel-title">Your Orders</h2>
+                    <button id="refresh-orders-btn" class="btn btn-sm btn-outline-secondary" onclick="loadStudentOrders()">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-right:4px;" aria-hidden="true">
+                            <path d="M1 4v6h6"/><path d="M23 20v-6h-6"/>
+                            <path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4-4.64 4.36A9 9 0 0 1 3.51 15"/>
+                        </svg>
+                        Refresh
+                    </button>
+                </div>
+
+                <div id="orders-container">
+                    <p class="text-muted">Loading your orders...</p>
+                </div>
+
+            </section>
+
+        </main>
 
     </div>
+
+    <script>
+        /* ── Sidebar open / close ─────────────────────────────── */
+        function openSidebar() {
+            const sidebar   = document.getElementById('student-sidebar');
+            const backdrop  = document.getElementById('sidebar-backdrop');
+            const toggle    = document.getElementById('sidebar-toggle');
+            sidebar.classList.add('sidebar-open');
+            backdrop.classList.add('sidebar-backdrop-show');
+            toggle.setAttribute('aria-expanded', 'true');
+            document.body.style.overflow = 'hidden'; // prevent background scroll
+        }
+
+        function closeSidebar() {
+            const sidebar   = document.getElementById('student-sidebar');
+            const backdrop  = document.getElementById('sidebar-backdrop');
+            const toggle    = document.getElementById('sidebar-toggle');
+            sidebar.classList.remove('sidebar-open');
+            backdrop.classList.remove('sidebar-backdrop-show');
+            toggle.setAttribute('aria-expanded', 'false');
+            document.body.style.overflow = '';
+        }
+
+        // Close on ESC key
+        document.addEventListener('keydown', e => {
+            if (e.key === 'Escape') closeSidebar();
+        });
+
+        /* ── Panel switcher ───────────────────────────────────── */
+        function showPanel(name) {
+            // Switch panels
+            document.querySelectorAll('.student-panel').forEach(p => p.classList.remove('active-panel'));
+            const target = document.getElementById('panel-' + name);
+            if (target) target.classList.add('active-panel');
+
+            // Update nav active state
+            document.querySelectorAll('.sidebar-nav-item').forEach(b => {
+                b.classList.remove('active');
+                b.removeAttribute('aria-current');
+            });
+            const navBtn = document.getElementById('nav-' + name);
+            if (navBtn) { navBtn.classList.add('active'); navBtn.setAttribute('aria-current', 'page'); }
+
+            // Close sidebar after picking on smaller screens
+            closeSidebar();
+
+            // Load orders on demand
+            if (name === 'orders') loadStudentOrders();
+        }
+
+        /* ── Profile Dropdown ─────────────────────────────────── */
+        function toggleProfileDropdown() {
+            const menu = document.getElementById('profile-dropdown-menu');
+            const btn  = document.getElementById('profile-avatar-btn');
+            const isOpen = menu.classList.contains('dropdown-open');
+            if (isOpen) {
+                closeProfileDropdown();
+            } else {
+                menu.classList.add('dropdown-open');
+                menu.setAttribute('aria-hidden', 'false');
+                btn.setAttribute('aria-expanded', 'true');
+            }
+        }
+
+        function closeProfileDropdown() {
+            const menu = document.getElementById('profile-dropdown-menu');
+            const btn  = document.getElementById('profile-avatar-btn');
+            if (!menu) return;
+            menu.classList.remove('dropdown-open');
+            menu.setAttribute('aria-hidden', 'true');
+            btn.setAttribute('aria-expanded', 'false');
+        }
+
+        // Click outside → close dropdown
+        document.addEventListener('click', e => {
+            const wrap = document.getElementById('profile-dropdown-wrap');
+            if (wrap && !wrap.contains(e.target)) closeProfileDropdown();
+        });
+
+        // ESC closes both sidebar and dropdown
+        document.addEventListener('keydown', e => {
+            if (e.key === 'Escape') { closeSidebar(); closeProfileDropdown(); }
+        });
+
+        // Stub handlers — replace with real modals/navigation as needed
+        function openProfileInfo() {
+            closeProfileDropdown();
+            alert('Profile details coming soon!');
+        }
+        function openSettings() {
+            closeProfileDropdown();
+            alert('Settings coming soon!');
+        }
+    </script>
 
     <!-- ① Cart Modal -->
     <div class="modal fade" id="cartModal" tabindex="-1" aria-hidden="true">
