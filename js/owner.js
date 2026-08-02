@@ -525,11 +525,11 @@ function renderStudents(students, query = '') {
 
     if (!students || students.length === 0) {
         container.innerHTML = query
-            ? `<div class="p-4 text-center text-muted">
-                   <div style="font-size:2rem;">🔍</div>
-                   <p class="mb-0 mt-2">No students match "${escapeHtml(query)}".</p>
+            ? `<div class="p-5 text-center text-muted">
+                   <div style="font-size:2.5rem;">🔍</div>
+                   <p class="mb-0 mt-2">No students match "<strong>${escapeHtml(query)}</strong>".</p>
                </div>`
-            : `<div class="p-4 text-center text-muted">
+            : `<div class="p-5 text-center text-muted">
                    <div style="font-size:2.5rem;">👤</div>
                    <p class="mb-0 mt-2">No registered students yet.</p>
                </div>`;
@@ -537,58 +537,70 @@ function renderStudents(students, query = '') {
     }
 
     const palettes = [
-        '#3b82f6','#8b5cf6','#10b981','#f59e0b','#ef4444','#06b6d4','#f97316'
+        { bg: '#3b82f6', light: '#eff6ff' },
+        { bg: '#8b5cf6', light: '#f5f3ff' },
+        { bg: '#10b981', light: '#ecfdf5' },
+        { bg: '#f59e0b', light: '#fffbeb' },
+        { bg: '#ef4444', light: '#fef2f2' },
+        { bg: '#06b6d4', light: '#ecfeff' },
+        { bg: '#f97316', light: '#fff7ed' },
     ];
 
-    const rows = students.map((s, idx) => {
+    const cards = students.map((s, idx) => {
         const initials = (s.name || '?').split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
         const joinDate = new Date(s.created_at).toLocaleDateString('en-GB', {
             day: '2-digit', month: 'short', year: 'numeric'
         });
-        const phone  = s.phone_number
-            ? escapeHtml(s.phone_number)
-            : '<span class="text-muted small">—</span>';
-        const orders = s.order_count > 0
-            ? `<span class="badge bg-primary bg-opacity-75">${s.order_count}</span>`
-            : '<span class="text-muted small">0</span>';
-        const bg = palettes[idx % palettes.length];
+        const { bg, light } = palettes[idx % palettes.length];
+        const hasOrders = s.order_count > 0;
 
         return `
-        <tr>
-            <td class="ps-3">
-                <div style="
-                    width:36px;height:36px;border-radius:50%;
-                    background:${bg};color:#fff;
-                    display:flex;align-items:center;justify-content:center;
-                    font-size:0.75rem;font-weight:700;flex-shrink:0;
-                ">${initials}</div>
-            </td>
-            <td class="fw-semibold">${escapeHtml(s.name || '—')}</td>
-            <td class="text-muted small">${escapeHtml(s.email || '—')}</td>
-            <td class="text-muted small">${phone}</td>
-            <td class="text-center">${orders}</td>
-            <td class="text-muted small">${joinDate}</td>
-        </tr>`;
+        <div class="col-12 col-sm-6 col-lg-4">
+            <div class="card student-card h-100 shadow-sm">
+                <div class="card-body p-3">
+
+                    <!-- Avatar + Name row -->
+                    <div class="d-flex align-items-center gap-3 mb-3">
+                        <div class="student-avatar" style="background:${bg};">
+                            ${initials}
+                        </div>
+                        <div class="min-w-0">
+                            <div class="fw-bold student-card-name">${escapeHtml(s.name || '—')}</div>
+                            <div class="student-card-joined text-muted">Joined ${joinDate}</div>
+                        </div>
+                    </div>
+
+                    <!-- Info rows -->
+                    <div class="student-card-info">
+                        <div class="student-info-row">
+                            <span class="student-info-icon">✉️</span>
+                            <span class="text-muted small text-truncate">${escapeHtml(s.email || '—')}</span>
+                        </div>
+                        <div class="student-info-row">
+                            <span class="student-info-icon">📞</span>
+                            <span class="text-muted small">${s.phone_number ? escapeHtml(s.phone_number) : '<em class="text-muted">No phone</em>'}</span>
+                        </div>
+                    </div>
+
+                    <!-- Orders badge -->
+                    <div class="student-orders-row mt-3 pt-2 border-top d-flex align-items-center justify-content-between">
+                        <span class="text-muted small">Total Orders</span>
+                        <span class="badge ${hasOrders ? 'bg-primary' : 'bg-secondary bg-opacity-50 text-secondary'} rounded-pill px-3">
+                            ${s.order_count || 0} order${s.order_count !== 1 ? 's' : ''}
+                        </span>
+                    </div>
+
+                </div>
+            </div>
+        </div>`;
     }).join('');
 
     container.innerHTML = `
-        <div class="table-responsive">
-            <table class="table table-hover align-middle mb-0">
-                <thead class="table-light">
-                    <tr>
-                        <th class="ps-3" style="width:52px"></th>
-                        <th>Name</th>
-                        <th>Email</th>
-                        <th>Phone</th>
-                        <th class="text-center">Orders</th>
-                        <th>Joined</th>
-                    </tr>
-                </thead>
-                <tbody>${rows}</tbody>
-            </table>
-        </div>
-        <div class="px-3 py-2 text-muted small border-top">
-            ${students.length} student${students.length !== 1 ? 's' : ''} registered
+        <div class="p-3">
+            <div class="row g-3">${cards}</div>
+            <p class="text-muted small mt-3 mb-0 text-end">
+                ${students.length} student${students.length !== 1 ? 's' : ''} registered
+            </p>
         </div>
     `;
 }
