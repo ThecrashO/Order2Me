@@ -25,7 +25,12 @@
             <span></span>
             <span></span>
         </button>
-        <span class="navbar-brand ms-2">Order2Me — Owner</span>
+        <div class="navbar-brand ms-2 d-flex align-items-center gap-2">
+            <span class="o2m-logo-nav" aria-hidden="true">
+                <img src="images/logo.png" alt="Order2Me logo" class="o2m-logo-image">
+            </span>
+            <span class="navbar-role-text">Owner</span>
+        </div>
 
         <!-- Navbar right: refresh + profile dropdown -->
         <div class="d-flex align-items-center gap-2 ms-auto">
@@ -110,7 +115,9 @@
                     <line x1="3" y1="6" x2="21" y2="6"/>
                     <path d="M16 10a4 4 0 0 1-8 0"/>
                 </svg>
-                Order2Me
+                <span class="o2m-logo-sidebar" aria-hidden="true">
+                    <img src="images/logo.png" alt="Order2Me logo" class="o2m-logo-image">
+                </span>
             </span>
             <button class="sidebar-close-btn" onclick="closeOwnerSidebar()" aria-label="Close sidebar">&times;</button>
         </div>

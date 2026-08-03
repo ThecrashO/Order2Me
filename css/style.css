@@ -40,17 +40,17 @@ body::before {
 }
 
 .card{
-    border: 1px solid rgba(148,163,184,.18);
+    border: 1px solid rgba(249,115,22,.25);
     border-radius: 18px;
-    background: rgba(255,255,255,0.88);
+    background: linear-gradient(180deg, #fffefb 0%, #fff7ed 100%);
     backdrop-filter: blur(10px);
-    box-shadow: 0 14px 40px rgba(15, 23, 42, 0.08);
+    box-shadow: 0 14px 40px rgba(249, 115, 22, 0.12);
     transition: transform 0.2s, box-shadow 0.2s;
 }
 
 .card:hover {
     transform: translateY(-5px);
-    box-shadow: 0 18px 34px rgba(15, 23, 42, 0.12) !important;
+    box-shadow: 0 18px 34px rgba(249, 115, 22, 0.18) !important;
 }
 
 .btn{
@@ -93,6 +93,48 @@ body::before {
     letter-spacing: 0.01em;
 }
 
+.brand-logo {
+    width: clamp(120px, 22vw, 165px);
+    aspect-ratio: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 12px;
+    border-radius: 50%;
+    overflow: hidden;
+    background: radial-gradient(circle at top, rgba(255,255,255,0.96), rgba(249,115,22,0.18));
+    box-shadow: 0 0 0 8px rgba(249,115,22,0.14), 0 18px 42px rgba(249, 115, 22, 0.24);
+}
+
+.brand-logo .o2m-logo-image {
+    width: 100%;
+    height: auto;
+    display: block;
+    object-fit: contain;
+}
+
+.o2m-logo-nav,
+.o2m-logo-sidebar {
+    width: 40px;
+    height: 40px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 4px;
+    border-radius: 50%;
+    overflow: hidden;
+    background: radial-gradient(circle at top, rgba(255,255,255,0.95), rgba(249,115,22,0.14));
+    box-shadow: 0 0 0 4px rgba(255,255,255,0.12), 0 8px 20px rgba(249, 115, 22, 0.18);
+}
+
+.o2m-logo-nav .o2m-logo-image,
+.o2m-logo-sidebar .o2m-logo-image {
+    width: 34px;
+    height: 34px;
+    display: block;
+    object-fit: contain;
+}
+
 /* Menu Management Styles */
 .table {
     font-size: 0.95rem;
@@ -115,7 +157,8 @@ body::before {
 /* ── Owner Menu Card Grid ─────────────────────────────────── */
 .owner-menu-card {
     border-radius: 14px;
-    border: none;
+    border: 1px solid rgba(249,115,22,.18);
+    background: linear-gradient(180deg, #fffdfb 0%, #fff7ed 100%);
     transition: transform 0.18s ease, box-shadow 0.18s ease;
 }
 
@@ -176,7 +219,8 @@ body::before {
 /* ── Student Card Grid ───────────────────────────────────── */
 .student-card {
     border-radius: 14px;
-    border: none;
+    border: 1px solid rgba(249,115,22,.18);
+    background: linear-gradient(180deg, #fffdfb 0%, #fff7ed 100%);
     transition: transform 0.18s ease, box-shadow 0.18s ease;
 }
 
@@ -786,15 +830,22 @@ body::before {
 }
 
 .auth-brand-mark {
-    width: 52px;
-    height: 52px;
-    border-radius: 16px;
-    background: linear-gradient(135deg, var(--brand), #ef4444);
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
     display: grid;
     place-items: center;
-    color: #fff;
-    font-size: 1.35rem;
+    overflow: hidden;
+    padding: 4px;
+    background: radial-gradient(circle at top, rgba(255,255,255,0.96), rgba(249,115,22,0.18));
     box-shadow: 0 10px 28px rgba(249,115,22,.32);
+}
+
+.auth-brand-mark .o2m-logo-image {
+    width: 100%;
+    height: 100%;
+    display: block;
+    object-fit: contain;
 }
 
 /* ── Mobile tweaks ────────────────────────────────────────── */
