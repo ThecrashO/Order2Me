@@ -242,6 +242,8 @@
 
         /* ── Panel switcher ───────────────────────────────────── */
         function showPanel(name) {
+            if (!['menu', 'orders'].includes(name)) return;
+
             // Switch panels
             document.querySelectorAll('.student-panel').forEach(p => p.classList.remove('active-panel'));
             const target = document.getElementById('panel-' + name);
@@ -255,11 +257,19 @@
             const navBtn = document.getElementById('nav-' + name);
             if (navBtn) { navBtn.classList.add('active'); navBtn.setAttribute('aria-current', 'page'); }
 
+            // Persist current panel in the URL so refresh keeps the same view
+            history.replaceState(null, '', location.pathname + '#' + name);
+
             // Close sidebar after picking on smaller screens
             closeSidebar();
 
             // Load orders on demand
             if (name === 'orders') loadStudentOrders();
+        }
+
+        const savedStudentPanel = window.location.hash.replace('#', '').trim();
+        if (savedStudentPanel === 'menu' || savedStudentPanel === 'orders') {
+            showPanel(savedStudentPanel);
         }
 
         /* ── Profile Dropdown ─────────────────────────────────── */

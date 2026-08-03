@@ -428,6 +428,8 @@
 
     /* ── Panel switcher ───────────────────────────────────── */
     function showOwnerPanel(name) {
+        if (!['orders', 'menu', 'students'].includes(name)) return;
+
         document.querySelectorAll('.student-panel').forEach(p => p.classList.remove('active-panel'));
         const target = document.getElementById('owner-panel-' + name);
         if (target) target.classList.add('active-panel');
@@ -439,11 +441,17 @@
         const navBtn = document.getElementById('owner-nav-' + name);
         if (navBtn) { navBtn.classList.add('active'); navBtn.setAttribute('aria-current', 'page'); }
 
+        history.replaceState(null, '', location.pathname + '#' + name);
         closeOwnerSidebar();
 
         // Lazy-load on first switch
         if (name === 'menu') loadMenuItems();
         if (name === 'students') loadStudents();
+    }
+
+    const savedOwnerPanel = window.location.hash.replace('#', '').trim();
+    if (savedOwnerPanel === 'orders' || savedOwnerPanel === 'menu' || savedOwnerPanel === 'students') {
+        showOwnerPanel(savedOwnerPanel);
     }
 
     /* ── Refresh button ───────────────────────────────────── */
