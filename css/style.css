@@ -5,6 +5,8 @@
     --brand:       #f97316;
     --brand-dark:  #ea580c;
     --brand-light: rgba(249,115,22,.12);
+    --brand-soft:  #fff7ed;
+    --brand-surface:#fffaf6;
     --navy:        #0f172a;
     --navy-mid:    #1e3a5f;
     --surface:     #f8fafc;
@@ -17,32 +19,78 @@
 }
 
 body {
-    background: var(--surface);
+    min-height: 100vh;
+    background:
+        radial-gradient(circle at top left, rgba(249,115,22,.16), transparent 20%),
+        radial-gradient(circle at bottom right, rgba(251,146,60,.12), transparent 28%),
+        linear-gradient(135deg, #fffaf5 0%, #ffffff 48%, #f8fafc 100%);
     font-family: 'Inter', sans-serif;
+    color: var(--text-main);
+}
+
+body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: linear-gradient(rgba(249,115,22,.03) 1px, transparent 1px), linear-gradient(90deg, rgba(249,115,22,.03) 1px, transparent 1px);
+    background-size: 24px 24px;
+    pointer-events: none;
+    z-index: -1;
+    opacity: 0.55;
 }
 
 .card{
-    border:none;
-    border-radius:12px;
+    border: 1px solid rgba(148,163,184,.18);
+    border-radius: 18px;
+    background: rgba(255,255,255,0.88);
+    backdrop-filter: blur(10px);
+    box-shadow: 0 14px 40px rgba(15, 23, 42, 0.08);
     transition: transform 0.2s, box-shadow 0.2s;
 }
 
 .card:hover {
     transform: translateY(-5px);
-    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1) !important;
+    box-shadow: 0 18px 34px rgba(15, 23, 42, 0.12) !important;
 }
 
 .btn{
-    border-radius:8px;
-    font-weight: 500;
+    border-radius: 10px;
+    font-weight: 600;
+    transition: transform 0.18s ease, box-shadow 0.18s ease, filter 0.18s ease;
+}
+
+.btn:hover {
+    transform: translateY(-1px);
+    filter: saturate(1.05);
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, var(--brand), var(--brand-dark));
+    border: none;
+    box-shadow: 0 10px 20px rgba(249,115,22,.22);
 }
 
 .btn-primary:hover {
-    transform: scale(1.02);
+    transform: translateY(-2px) scale(1.01);
+}
+
+.btn-success {
+    box-shadow: 0 10px 20px rgba(16, 185, 129, .18);
 }
 
 .navbar {
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 8px 30px rgba(15,23,42,.08);
+}
+
+.navbar.navbar-dark.bg-primary,
+.navbar.navbar-dark.bg-dark {
+    background: linear-gradient(135deg, #1d4ed8 0%, #f97316 100%) !important;
+    border-bottom: 1px solid rgba(255,255,255,.15);
+}
+
+.navbar-brand {
+    font-weight: 800;
+    letter-spacing: 0.01em;
 }
 
 /* Menu Management Styles */
@@ -233,10 +281,29 @@ body {
 }
 
 /* Form Control Styles */
+.form-control,
+.form-select,
+.form-check-input {
+    border-radius: 12px;
+    border: 1px solid rgba(148,163,184,.4);
+    box-shadow: none;
+}
+
 .form-control:focus,
+.form-select:focus,
 .form-check-input:focus {
     border-color: var(--brand);
     box-shadow: 0 0 0 0.25rem rgba(249,115,22,.22);
+}
+
+.input-group-text {
+    border-radius: 12px 0 0 12px;
+    background: rgba(255,255,255,.9);
+    border-color: rgba(148,163,184,.4);
+}
+
+.input-group .form-control {
+    border-radius: 0 12px 12px 0;
 }
 
 /* Card Title Styles */
@@ -434,7 +501,9 @@ body {
 
 /* Layout wrapper: main fills full width; sidebar overlays it */
 .student-layout {
-    background: #f1f5f9;
+    background:
+        radial-gradient(circle at top left, rgba(249,115,22,.10), transparent 20%),
+        linear-gradient(180deg, rgba(255,247,237,.9), rgba(248,250,252,.96));
     min-height: calc(100vh - 56px);
 }
 
@@ -623,6 +692,18 @@ body {
     min-height: calc(100vh - 56px);
 }
 
+.student-main .student-panel > .card,
+.student-main .student-panel > .panel-header,
+.student-main .student-panel > .cat-filter-strip,
+.student-main .student-panel .card {
+    position: relative;
+    z-index: 1;
+}
+
+.student-main .student-panel {
+    background: transparent;
+}
+
 /* ── Panels (show/hide) ───────────────────────────────────── */
 .student-panel {
     display: none;
@@ -646,13 +727,74 @@ body {
     flex-wrap: wrap;
     gap: 0.75rem;
     margin-bottom: 1.25rem;
+    padding: 0.9rem 1rem;
+    background: rgba(255,255,255,0.7);
+    border: 1px solid rgba(148,163,184,.2);
+    border-radius: 16px;
+    box-shadow: 0 10px 24px rgba(15,23,42,.05);
 }
 
 .panel-title {
     font-size: 1.35rem;
-    font-weight: 700;
+    font-weight: 800;
     color: #1e293b;
     margin: 0;
+}
+
+/* Auth page design */
+.auth-shell {
+    min-height: 100vh;
+    display: grid;
+    place-items: center;
+    padding: 2rem 1rem;
+}
+
+.auth-card {
+    border-radius: 24px !important;
+    overflow: hidden;
+    background: linear-gradient(180deg, rgba(255,255,255,.98), rgba(255,250,245,.98));
+}
+
+.auth-card .card-body {
+    padding: 2rem;
+}
+
+.auth-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    padding: 0.35rem 0.85rem;
+    border-radius: 999px;
+    background: rgba(249,115,22,.12);
+    color: var(--brand-dark);
+    font-size: 0.72rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-bottom: 1rem;
+}
+
+.auth-title {
+    font-weight: 800;
+    color: #0f172a;
+    margin-bottom: 0.4rem;
+}
+
+.auth-subtitle {
+    color: var(--text-muted);
+    margin-bottom: 1.3rem;
+}
+
+.auth-brand-mark {
+    width: 52px;
+    height: 52px;
+    border-radius: 16px;
+    background: linear-gradient(135deg, var(--brand), #ef4444);
+    display: grid;
+    place-items: center;
+    color: #fff;
+    font-size: 1.35rem;
+    box-shadow: 0 10px 28px rgba(249,115,22,.32);
 }
 
 /* ── Mobile tweaks ────────────────────────────────────────── */
@@ -663,6 +805,10 @@ body {
 
     .panel-title {
         font-size: 1.1rem;
+    }
+
+    .auth-card .card-body {
+        padding: 1.3rem;
     }
 
     .student-sidebar {
@@ -682,8 +828,12 @@ body {
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
     scroll-snap-type: x mandatory;
-    padding-bottom: 6px;     /* room for scrollbar */
+    padding: 0.35rem 0.2rem 0.55rem;
     scrollbar-width: none;   /* Firefox */
+    background: rgba(255,255,255,.55);
+    border: 1px solid rgba(148,163,184,.18);
+    border-radius: 16px;
+    box-shadow: 0 8px 16px rgba(15,23,42,.04);
 }
 
 .cat-filter-strip::-webkit-scrollbar {
@@ -1351,4 +1501,4 @@ body {
 }
 
 /* Badge tweaks */
-.badge.bg-primary { background-color: var(--brand) !important; }
+.badge.bg-primary { background-color: var(--brand) !important; }

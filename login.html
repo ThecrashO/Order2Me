@@ -8,26 +8,35 @@
     <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-<div class="container py-5">
-    <div class="row justify-content-center">
-        <div class="col-md-6">
-            <div class="card shadow-sm">
-                <div class="card-body">
-                    <h3 class="card-title mb-4 text-center">Login to Order2Me</h3>
-                    <form id="login-form">
-                        <div class="mb-3">
-                            <label for="login-email" class="form-label">Email</label>
-                            <input type="email" id="login-email" class="form-control" required>
+<div class="auth-shell">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-md-6 col-lg-5">
+                <div class="card auth-card shadow-lg">
+                    <div class="card-body">
+                        <div class="d-flex align-items-center gap-3 mb-3">
+                            <div class="auth-brand-mark" aria-hidden="true">🍽️</div>
+                            <div>
+                                <div class="auth-badge">Fresh ordering</div>
+                                <h3 class="auth-title mb-0">Welcome back</h3>
+                            </div>
                         </div>
-                        <div class="mb-3">
-                            <label for="login-password" class="form-label">Password</label>
-                            <input type="password" id="login-password" class="form-control" required>
+                        <p class="auth-subtitle">Sign in to continue fast, smooth canteen ordering.</p>
+                        <form id="login-form">
+                            <div class="mb-3">
+                                <label for="login-email" class="form-label">Email</label>
+                                <input type="email" id="login-email" class="form-control" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="login-password" class="form-label">Password</label>
+                                <input type="password" id="login-password" class="form-control" required>
+                            </div>
+                            <div id="login-status" class="text-danger mb-3"></div>
+                            <button type="submit" class="btn btn-primary w-100">Sign In</button>
+                        </form>
+                        <div class="text-center mt-3">
+                            <a href="signup.html">Create student account</a>
                         </div>
-                        <div id="login-status" class="text-danger mb-3"></div>
-                        <button type="submit" class="btn btn-primary w-100">Sign In</button>
-                    </form>
-                    <div class="text-center mt-3">
-                        <a href="signup.html">Create student account</a>
                     </div>
                 </div>
             </div>
