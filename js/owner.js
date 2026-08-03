@@ -789,7 +789,11 @@ async function deleteItem(id) {
         .delete()
         .eq('id', id);
 
-    if (error) { console.error('Error deleting food:', error); return; }
+    if (error) {
+        console.error('Error deleting food:', error);
+        alert('Failed to delete menu item: ' + error.message);
+        return;
+    }
 
     loadMenuItems();
 }

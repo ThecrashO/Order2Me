@@ -1,5 +1,24 @@
-body{
-    background:#f8f9fa;
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+
+/* ── Design Tokens ─────────────────────────────────────────── */
+:root {
+    --brand:       #f97316;
+    --brand-dark:  #ea580c;
+    --brand-light: rgba(249,115,22,.12);
+    --navy:        #0f172a;
+    --navy-mid:    #1e3a5f;
+    --surface:     #f8fafc;
+    --card-bg:     #ffffff;
+    --border:      #e2e8f0;
+    --text-main:   #1e293b;
+    --text-muted:  #64748b;
+    --success:     #10b981;
+    --danger:      #ef4444;
+}
+
+body {
+    background: var(--surface);
+    font-family: 'Inter', sans-serif;
 }
 
 .card{
@@ -216,8 +235,8 @@ body{
 /* Form Control Styles */
 .form-control:focus,
 .form-check-input:focus {
-    border-color: #0d6efd;
-    box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+    border-color: var(--brand);
+    box-shadow: 0 0 0 0.25rem rgba(249,115,22,.22);
 }
 
 /* Card Title Styles */
@@ -325,7 +344,7 @@ body{
     width: 42px;
     height: 42px;
     border-radius: 50%;
-    background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+    background: linear-gradient(135deg, var(--brand), var(--brand-dark));
     display: flex;
     align-items: center;
     justify-content: center;
@@ -545,10 +564,10 @@ body{
 }
 
 .sidebar-nav-item.active {
-    background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+    background: linear-gradient(135deg, var(--brand), var(--brand-dark));
     color: #fff;
     font-weight: 700;
-    box-shadow: 0 4px 16px rgba(59, 130, 246, 0.45);
+    box-shadow: 0 4px 16px rgba(249,115,22,.4);
     transform: translateX(3px);
 }
 
@@ -1163,7 +1182,7 @@ body{
 .drawer-item-subtotal {
     font-weight: 700;
     font-size: 0.88rem;
-    color: #0d6efd;
+    color: var(--brand);
     white-space: nowrap;
     min-width: 70px;
     text-align: right;
@@ -1237,17 +1256,17 @@ body{
     border-radius: 12px;
     font-size: 0.95rem;
     font-weight: 700;
-    background: linear-gradient(135deg, #0d6efd, #0047c8);
+    background: linear-gradient(135deg, var(--brand), var(--brand-dark));
     color: #fff;
     border: none;
     cursor: pointer;
     transition: transform 0.15s, box-shadow 0.15s;
-    box-shadow: 0 4px 14px rgba(13, 110, 253, 0.35);
+    box-shadow: 0 4px 14px rgba(249,115,22,.35);
 }
 
 #drawer-checkout-btn:hover {
     transform: translateY(-1px);
-    box-shadow: 0 6px 20px rgba(13, 110, 253, 0.45);
+    box-shadow: 0 6px 20px rgba(249,115,22,.45);
 }
 
 #drawer-checkout-btn:active {
@@ -1268,3 +1287,68 @@ body{
         border-radius: 0;
     }
 }
+
+/* ============================================================
+   Global Brand Overrides — Orange + Navy system
+   ============================================================ */
+
+/* Student navbar — orange gradient */
+.navbar.bg-primary {
+    background: linear-gradient(135deg, var(--brand) 0%, var(--brand-dark) 100%) !important;
+    box-shadow: 0 2px 16px rgba(249,115,22,.28);
+}
+
+/* Owner navbar — deep navy */
+.navbar.bg-dark {
+    background: linear-gradient(135deg, var(--navy) 0%, #1e293b 100%) !important;
+    box-shadow: 0 2px 16px rgba(0,0,0,.3);
+    border-bottom: 1px solid rgba(249,115,22,.15);
+}
+
+/* Bootstrap btn-primary → brand orange */
+.btn-primary {
+    --bs-btn-bg:                 var(--brand);
+    --bs-btn-border-color:       var(--brand);
+    --bs-btn-hover-bg:           var(--brand-dark);
+    --bs-btn-hover-border-color: var(--brand-dark);
+    --bs-btn-active-bg:          var(--brand-dark);
+    --bs-btn-active-border-color:var(--brand-dark);
+    --bs-btn-focus-shadow-rgb:   249,115,22;
+}
+
+/* Bootstrap btn-success → emerald */
+.btn-success {
+    --bs-btn-bg:                 #10b981;
+    --bs-btn-border-color:       #10b981;
+    --bs-btn-hover-bg:           #059669;
+    --bs-btn-hover-border-color: #059669;
+    --bs-btn-active-bg:          #059669;
+}
+
+/* Bootstrap btn-outline-primary → orange */
+.btn-outline-primary {
+    --bs-btn-color:              var(--brand);
+    --bs-btn-border-color:       var(--brand);
+    --bs-btn-hover-bg:           var(--brand);
+    --bs-btn-hover-border-color: var(--brand);
+    --bs-btn-active-bg:          var(--brand-dark);
+}
+
+/* Navbar brand */
+.navbar-brand {
+    font-weight: 700;
+    letter-spacing: 0.01em;
+}
+
+/* Card border tweak */
+.card {
+    border-color: var(--border);
+}
+
+/* Table hover — subtle orange tint */
+.table-hover tbody tr:hover {
+    background-color: rgba(249,115,22,.04) !important;
+}
+
+/* Badge tweaks */
+.badge.bg-primary { background-color: var(--brand) !important; }
