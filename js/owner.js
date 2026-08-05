@@ -13,6 +13,82 @@ let addFoodModal;
 let editFoodModal;
 let rejectModal;
 
+function playNotificationSound(type = 'info') {
+    try {
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        if (!AudioCtx) return;
+
+        const audioCtx = new AudioCtx();
+        const oscillator = audioCtx.createOscillator();
+        const gainNode = audioCtx.createGain();
+
+        oscillator.type = type === 'danger' ? 'square' : 'sine';
+        oscillator.frequency.value = type === 'success' ? 740 : type === 'warning' ? 620 : 660;
+        gainNode.gain.value = 0.03;
+
+        oscillator.connect(gainNode);
+        gainNode.connect(audioCtx.destination);
+        oscillator.start();
+        oscillator.stop(audioCtx.currentTime + 0.12);
+    } catch (error) {
+        console.debug('Notification sound unavailable:', error);
+    }
+}
+
+function maybeBrowserNotification(title, message) {
+    if (!('Notification' in window)) return;
+    const shouldUseBrowserNotify = document.visibilityState === 'hidden' || !document.hasFocus();
+    if (!shouldUseBrowserNotify) return;
+
+    if (Notification.permission === 'granted') {
+        new Notification(title, {
+            body: message,
+            icon: 'images/logo.png'
+        });
+    } else if (Notification.permission === 'default') {
+        Notification.requestPermission().then(permission => {
+            if (permission === 'granted') {
+                new Notification(title, {
+                    body: message,
+                    icon: 'images/logo.png'
+                });
+            }
+        }).catch(() => {});
+    }
+}
+
+function showToast(message, type = 'info') {
+    const container = document.getElementById('app-toast-container');
+    if (!container) return;
+
+    playNotificationSound(type);
+    maybeBrowserNotification('Order2Me', message);
+
+    const typeMap = {
+        success: 'text-bg-success',
+        danger: 'text-bg-danger',
+        warning: 'text-bg-warning text-dark',
+        info: 'text-bg-primary'
+    };
+
+    const toast = document.createElement('div');
+    toast.className = `toast align-items-center border-0 ${typeMap[type] || typeMap.info}`;
+    toast.setAttribute('role', 'alert');
+    toast.setAttribute('aria-live', 'assertive');
+    toast.setAttribute('aria-atomic', 'true');
+    toast.innerHTML = `
+        <div class="d-flex">
+            <div class="toast-body text-white">${message}</div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+        </div>
+    `;
+
+    container.appendChild(toast);
+    const bsToast = new bootstrap.Toast(toast, { delay: 3200 });
+    bsToast.show();
+    toast.addEventListener('hidden.bs.toast', () => toast.remove());
+}
+
 let allOrders      = [];   // cache for client-side filtering
 let activeFilter   = 'all';
 let activeSearch   = '';   // search query for orders
@@ -273,7 +349,7 @@ async function updateStatus(orderId, newStatus) {
 
     if (error) {
         console.error('Error updating status:', error);
-        alert('Failed to update status: ' + error.message);
+        showToast('Failed to update status: ' + error.message, 'danger');
         return;
     }
 
@@ -282,6 +358,7 @@ async function updateStatus(orderId, newStatus) {
     if (order) order.status = newStatus;
     updatePendingBadge();
     renderOrders();
+    showToast(`Order #${orderId} updated to ${newStatus}.`, 'success');
     console.log(`Order ${orderId} updated to ${newStatus}`);
 }
 
@@ -329,11 +406,12 @@ async function confirmReject() {
 
     if (error) {
         console.error('Error rejecting order:', error);
-        alert('Failed to reject order: ' + error.message);
+        showToast('Failed to reject order: ' + error.message, 'danger');
         return;
     }
 
     console.log(`Order ${orderId} rejected. Reason: ${finalReason}`);
+    showToast(`Order #${orderId} rejected successfully.`, 'success');
     rejectModal.hide();
 
     const order = allOrders.find(o => o.id === Number(orderId));
@@ -658,7 +736,7 @@ async function uploadMenuItemImage(file, itemId) {
 
     if (uploadError) {
         console.error('Menu image upload error:', uploadError);
-        alert(`Image upload failed: ${uploadError.message}\n\nMake sure the "menu-images" storage bucket exists in Supabase Dashboard > Storage and is set to Public.`);
+        showToast('Image upload failed: ' + uploadError.message, 'danger');
         return null;
     }
 
@@ -689,7 +767,11 @@ async function handleAddFood() {
         .select()
         .single();
 
-    if (error) { console.error('Error adding food:', error); return; }
+    if (error) {
+        console.error('Error adding food:', error);
+        showToast('Failed to add food item.', 'danger');
+        return;
+    }
 
     // Upload image if provided
     if (imageFile) {
@@ -706,6 +788,7 @@ async function handleAddFood() {
     document.getElementById('add-image-preview-wrap').classList.add('d-none');
     addFoodModal.hide();
     loadMenuItems();
+    showToast('Food item added successfully.', 'success');
 }
 
 function openEditModal(id, name, description, price, isAvailable, imageUrl, category) {
@@ -760,10 +843,15 @@ async function handleEditFood() {
         .update({ name, description, price, is_available: isAvailable, image_url: imageUrl, category })
         .eq('id', itemId);
 
-    if (error) { console.error('Error editing food:', error); return; }
+    if (error) {
+        console.error('Error editing food:', error);
+        showToast('Failed to update food item.', 'danger');
+        return;
+    }
 
     editFoodModal.hide();
     loadMenuItems();
+    showToast('Food item updated successfully.', 'success');
 }
 
 async function toggleAvailability(event) {
@@ -791,11 +879,12 @@ async function deleteItem(id) {
 
     if (error) {
         console.error('Error deleting food:', error);
-        alert('Failed to delete menu item: ' + error.message);
+        showToast('Failed to delete menu item: ' + error.message, 'danger');
         return;
     }
 
     loadMenuItems();
+    showToast('Menu item deleted successfully.', 'success');
 }
 
 // ── Image Lightbox ───────────────────────────────────────────

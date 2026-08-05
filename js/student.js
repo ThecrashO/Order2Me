@@ -13,6 +13,82 @@
 // ── Owner payment number — fetched from DB at runtime ────────
 let ownerPhoneNumber = null; // loaded in initStudentPage()
 
+function playNotificationSound(type = 'info') {
+    try {
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        if (!AudioCtx) return;
+
+        const audioCtx = new AudioCtx();
+        const oscillator = audioCtx.createOscillator();
+        const gainNode = audioCtx.createGain();
+
+        oscillator.type = type === 'danger' ? 'square' : 'sine';
+        oscillator.frequency.value = type === 'success' ? 740 : type === 'warning' ? 620 : 660;
+        gainNode.gain.value = 0.03;
+
+        oscillator.connect(gainNode);
+        gainNode.connect(audioCtx.destination);
+        oscillator.start();
+        oscillator.stop(audioCtx.currentTime + 0.12);
+    } catch (error) {
+        console.debug('Notification sound unavailable:', error);
+    }
+}
+
+function maybeBrowserNotification(title, message) {
+    if (!('Notification' in window)) return;
+    const shouldUseBrowserNotify = document.visibilityState === 'hidden' || !document.hasFocus();
+    if (!shouldUseBrowserNotify) return;
+
+    if (Notification.permission === 'granted') {
+        new Notification(title, {
+            body: message,
+            icon: 'images/logo.png'
+        });
+    } else if (Notification.permission === 'default') {
+        Notification.requestPermission().then(permission => {
+            if (permission === 'granted') {
+                new Notification(title, {
+                    body: message,
+                    icon: 'images/logo.png'
+                });
+            }
+        }).catch(() => {});
+    }
+}
+
+function showToast(message, type = 'info') {
+    const container = document.getElementById('app-toast-container');
+    if (!container) return;
+
+    playNotificationSound(type);
+    maybeBrowserNotification('Order2Me', message);
+
+    const typeMap = {
+        success: 'text-bg-success',
+        danger: 'text-bg-danger',
+        warning: 'text-bg-warning text-dark',
+        info: 'text-bg-primary'
+    };
+
+    const toast = document.createElement('div');
+    toast.className = `toast align-items-center border-0 ${typeMap[type] || typeMap.info}`;
+    toast.setAttribute('role', 'alert');
+    toast.setAttribute('aria-live', 'assertive');
+    toast.setAttribute('aria-atomic', 'true');
+    toast.innerHTML = `
+        <div class="d-flex">
+            <div class="toast-body text-white">${escapeHtml(message)}</div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+        </div>
+    `;
+
+    container.appendChild(toast);
+    const bsToast = new bootstrap.Toast(toast, { delay: 3200 });
+    bsToast.show();
+    toast.addEventListener('hidden.bs.toast', () => toast.remove());
+}
+
 // ── State ────────────────────────────────────────────────────
 let currentStudentProfile = null;
 let cart                  = [];
@@ -493,7 +569,7 @@ document.addEventListener('keydown', e => {
 
 function openCheckout() {
     if (cart.length === 0) {
-        alert('Your cart is empty.');
+        showToast('Your cart is empty.', 'warning');
         return;
     }
 
@@ -589,7 +665,7 @@ function selectPaymentMethod(method) {
 // Copy owner phone number to clipboard
 function copyOwnerNumber(btnEl) {
     if (!ownerPhoneNumber) {
-        alert('Phone number not available yet. Please wait a moment and try again.');
+        showToast('Phone number not available yet. Please wait a moment and try again.', 'warning');
         return;
     }
     navigator.clipboard.writeText(ownerPhoneNumber).then(() => {
@@ -873,6 +949,172 @@ async function fetchOwnerPhone() {
     const waveEl = document.getElementById('wave-display-number');
     if (kbzEl)  kbzEl.textContent  = displayNum;
     if (waveEl) waveEl.textContent = displayNum;
+}
+
+function setProfileAlert(el, type, message) {
+    if (!el) return;
+    el.className = `alert alert-${type} small d-block`;
+    el.textContent = message;
+}
+
+function clearProfileAlert(el) {
+    if (!el) return;
+    el.className = 'alert small d-none';
+    el.textContent = '';
+}
+
+function setProfileLoadingState(show) {
+    const loadingEl = document.getElementById('profile-view-loading');
+    const contentEl = document.getElementById('profile-view-content');
+    if (loadingEl) loadingEl.classList.toggle('d-none', !show);
+    if (contentEl) contentEl.classList.toggle('d-none', show);
+}
+
+async function loadStudentProfileView() {
+    const loadingEl = document.getElementById('profile-view-loading');
+    const contentEl = document.getElementById('profile-view-content');
+    const statusEl = document.getElementById('profile-view-status');
+
+    if (!currentStudentProfile) return;
+
+    setProfileLoadingState(true);
+    clearProfileAlert(statusEl);
+    if (contentEl) contentEl.classList.add('d-none');
+
+    try {
+        const { data, error } = await supabaseClient
+            .from('users')
+            .select('id, name, email, phone_number, role')
+            .eq('id', currentStudentProfile.id)
+            .single();
+
+        if (error) throw error;
+
+        currentStudentProfile = data;
+        const nameEl = document.getElementById('profile-view-name');
+        const phoneEl = document.getElementById('profile-view-phone');
+        const emailEl = document.getElementById('profile-view-email');
+        if (nameEl) nameEl.textContent = data.name || '—';
+        if (phoneEl) phoneEl.textContent = data.phone_number || '—';
+        if (emailEl) emailEl.textContent = data.email || '—';
+
+        const profileNameEl = document.getElementById('profile-name');
+        if (profileNameEl) profileNameEl.textContent = data.name || '—';
+
+        setProfileLoadingState(false);
+        if (contentEl) contentEl.classList.remove('d-none');
+    } catch (error) {
+        console.error('Error loading student profile view:', error);
+        setProfileLoadingState(false);
+        if (contentEl) contentEl.classList.add('d-none');
+        setProfileAlert(statusEl, 'danger', error?.message || 'Unable to load your profile right now.');
+    }
+}
+
+function openEditProfileDialog() {
+    const editModalEl = document.getElementById('profileEditModal');
+    if (!editModalEl) return;
+
+    const nameInput = document.getElementById('profile-name-input');
+    const phoneInput = document.getElementById('profile-phone-input');
+    const emailInput = document.getElementById('profile-email-readonly');
+    const statusEl = document.getElementById('profile-edit-status');
+
+    if (nameInput) nameInput.value = currentStudentProfile?.name || '';
+    if (phoneInput) phoneInput.value = currentStudentProfile?.phone_number || '';
+    if (emailInput) emailInput.value = currentStudentProfile?.email || '';
+    clearProfileAlert(statusEl);
+
+    const viewModalInstance = bootstrap.Modal.getInstance(document.getElementById('profileViewModal'));
+    if (viewModalInstance) viewModalInstance.hide();
+
+    const editModalInstance = bootstrap.Modal.getOrCreateInstance(editModalEl);
+    editModalInstance.show();
+}
+
+function validateStudentProfileInputs(name, phone) {
+    if (!name || !name.trim()) {
+        return 'Name cannot be empty.';
+    }
+
+    if (!phone || !phone.trim()) {
+        return 'Phone Number cannot be empty.';
+    }
+
+    const phonePattern = /^\+?[0-9()\-\s]{7,20}$/;
+    if (!phonePattern.test(phone.trim())) {
+        return 'Phone Number must be a valid format.';
+    }
+
+    return null;
+}
+
+async function saveStudentProfile() {
+    if (!currentStudentProfile) return;
+
+    const nameInput = document.getElementById('profile-name-input');
+    const phoneInput = document.getElementById('profile-phone-input');
+    const statusEl = document.getElementById('profile-edit-status');
+    const saveBtn = document.getElementById('profile-save-btn');
+
+    const name = nameInput?.value.trim() || '';
+    const phone = phoneInput?.value.trim() || '';
+
+    const validationError = validateStudentProfileInputs(name, phone);
+    if (validationError) {
+        setProfileAlert(statusEl, 'danger', validationError);
+        return;
+    }
+
+    if (saveBtn) {
+        saveBtn.disabled = true;
+        saveBtn.textContent = 'Saving...';
+    }
+
+    setProfileAlert(statusEl, 'info', 'Saving your profile changes...');
+
+    try {
+        const { data, error } = await supabaseClient
+            .from('users')
+            .update({
+                name,
+                phone_number: phone
+            })
+            .eq('id', currentStudentProfile.id)
+            .select('id, name, email, phone_number, role')
+            .single();
+
+        if (error) throw error;
+
+        currentStudentProfile = data;
+        const profileNameEl = document.getElementById('profile-name');
+        if (profileNameEl) profileNameEl.textContent = data.name || '—';
+
+        const editModalInstance = bootstrap.Modal.getInstance(document.getElementById('profileEditModal'));
+        if (editModalInstance) editModalInstance.hide();
+
+        await loadStudentProfileView();
+
+        const viewModalEl = document.getElementById('profileViewModal');
+        const viewModalStatusEl = document.getElementById('profile-view-status');
+        const viewModalInstance = bootstrap.Modal.getOrCreateInstance(viewModalEl);
+        if (viewModalEl) viewModalInstance.show();
+
+        setProfileAlert(viewModalStatusEl, 'success', 'Profile updated successfully.');
+        showToast('Profile updated successfully.', 'success');
+        if (saveBtn) {
+            saveBtn.disabled = false;
+            saveBtn.textContent = 'Save Changes';
+        }
+    } catch (error) {
+        console.error('Error updating student profile:', error);
+        setProfileAlert(statusEl, 'danger', error?.message || 'Unable to update your profile. Please try again.');
+        showToast(error?.message || 'Unable to update your profile. Please try again.', 'danger');
+        if (saveBtn) {
+            saveBtn.disabled = false;
+            saveBtn.textContent = 'Save Changes';
+        }
+    }
 }
 
 // -- Init -----------------------------------------------------

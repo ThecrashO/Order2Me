@@ -220,6 +220,8 @@
 
     </div>
 
+    <div class="toast-container position-fixed bottom-0 end-0 p-3" id="app-toast-container" aria-live="polite" aria-atomic="true"></div>
+
     <script>
         /* ── Sidebar open / close ─────────────────────────────── */
         function openSidebar() {
@@ -313,16 +315,138 @@
             if (e.key === 'Escape') { closeSidebar(); closeProfileDropdown(); }
         });
 
-        // Stub handlers — replace with real modals/navigation as needed
-        function openProfileInfo() {
+        // Open the real student profile details modal
+        async function openProfileInfo() {
             closeProfileDropdown();
-            alert('Profile details coming soon!');
+            const modalEl = document.getElementById('profileViewModal');
+            if (!modalEl) return;
+
+            const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+            try {
+                await loadStudentProfileView();
+                modal.show();
+            } catch (error) {
+                console.error('Failed to open profile view:', error);
+            }
         }
+
         function openSettings() {
             closeProfileDropdown();
-            alert('Settings coming soon!');
+            const modalEl = document.getElementById('settingsModal');
+            if (!modalEl) return;
+            const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+            modal.show();
         }
     </script>
+
+    <!-- Settings Modal -->
+    <div class="modal fade" id="settingsModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
+                <div class="modal-header border-0 px-4 pt-4 pb-3" style="background:linear-gradient(135deg,#f8fafc,#eef2ff);">
+                    <div>
+                        <h5 class="modal-title mb-0">Settings</h5>
+                        <div class="small text-muted">Manage your app preferences</div>
+                    </div>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body px-4 py-4" style="background:linear-gradient(180deg,#ffffff 0%, #f8fafc 100%);">
+                    <div class="alert alert-info small mb-0">
+                        Settings page is coming soon. You can keep using the current dashboard features for now.
+                    </div>
+                </div>
+                <div class="modal-footer border-0 px-4 pb-4 pt-0">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Profile View Modal -->
+    <div class="modal fade" id="profileViewModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
+                <div class="modal-header border-0 px-4 pt-4 pb-3" style="background:linear-gradient(135deg,#fff7ed,#fffaf6);">
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="rounded-circle d-flex align-items-center justify-content-center text-white fw-bold"
+                             style="width:46px;height:46px;background:linear-gradient(135deg,#f97316,#f43f5e);">
+                            👤
+                        </div>
+                        <div>
+                            <h5 class="modal-title mb-0">My Profile</h5>
+                            <div class="small text-muted">Account details</div>
+                        </div>
+                    </div>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body px-4 py-4" style="background:linear-gradient(180deg,#ffffff 0%, #fffaf6 100%);">
+                    <div id="profile-view-status" class="alert small d-none"></div>
+                    <div class="text-center py-2 d-none" id="profile-view-loading">
+                        <div class="spinner-border text-primary" role="status" aria-hidden="true"></div>
+                        <div class="small text-muted mt-2">Loading profile...</div>
+                    </div>
+
+                    <div id="profile-view-content" class="d-none">
+                        <div class="card border-0 rounded-4 shadow-sm" style="background:rgba(249,115,22,0.06);">
+                            <div class="card-body p-4">
+                                <div class="mb-3">
+                                    <div class="small text-uppercase text-muted fw-semibold mb-1">User Name</div>
+                                    <div id="profile-view-name" class="fw-bold fs-5 text-dark"></div>
+                                </div>
+                                <div class="mb-3">
+                                    <div class="small text-uppercase text-muted fw-semibold mb-1">Phone Number</div>
+                                    <div id="profile-view-phone" class="fw-semibold text-dark"></div>
+                                </div>
+                                <div>
+                                    <div class="small text-uppercase text-muted fw-semibold mb-1">Email Address</div>
+                                    <div id="profile-view-email" class="fw-semibold text-dark"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer border-0 px-4 pb-4 pt-0" style="background:linear-gradient(180deg,#fffaf6 0%, #ffffff 100%);">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-primary" id="profile-open-edit-btn" onclick="openEditProfileDialog()">Edit Profile</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Profile Edit Modal -->
+    <div class="modal fade" id="profileEditModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
+                <div class="modal-header border-0 px-4 pt-4 pb-3" style="background:linear-gradient(135deg,#eef6ff,#f8fbff);">
+                    <div>
+                        <h5 class="modal-title mb-0">Edit Profile</h5>
+                        <div class="small text-muted">Update your public contact info</div>
+                    </div>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body px-4 py-4" style="background:linear-gradient(180deg,#ffffff 0%, #f8fbff 100%);">
+                    <div id="profile-edit-status" class="alert small d-none"></div>
+                    <div class="mb-3">
+                        <label for="profile-name-input" class="form-label fw-semibold">Name</label>
+                        <input id="profile-name-input" type="text" class="form-control" placeholder="Your name">
+                    </div>
+                    <div class="mb-3">
+                        <label for="profile-phone-input" class="form-label fw-semibold">Phone Number</label>
+                        <input id="profile-phone-input" type="text" class="form-control" placeholder="09xxxxxxxxx">
+                    </div>
+                    <div class="rounded-3 p-3 mt-3 border" style="background:rgba(148,163,184,0.08);">
+                        <label for="profile-email-readonly" class="form-label fw-semibold">Email Address</label>
+                        <input id="profile-email-readonly" type="email" class="form-control" readonly>
+                        <div class="form-text text-muted mt-1">Email is read-only and cannot be changed here.</div>
+                    </div>
+                </div>
+                <div class="modal-footer border-0 px-4 pb-4 pt-0" style="background:linear-gradient(180deg,#f8fbff 0%, #ffffff 100%);">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" id="profile-save-btn" onclick="saveStudentProfile()">Save Changes</button>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <!-- ① Cart Modal -->
     <div class="modal fade" id="cartModal" tabindex="-1" aria-hidden="true">
