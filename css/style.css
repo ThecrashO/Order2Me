@@ -115,24 +115,26 @@ body::before {
 
 .o2m-logo-nav,
 .o2m-logo-sidebar {
-    width: 40px;
-    height: 40px;
+    width: clamp(36px, 4vw, 48px);
+    height: clamp(36px, 4vw, 48px);
     display: inline-flex;
     align-items: center;
     justify-content: center;
     padding: 4px;
-    border-radius: 50%;
+    border-radius: 50% !important;
     overflow: hidden;
     background: radial-gradient(circle at top, rgba(255,255,255,0.95), rgba(249,115,22,0.14));
     box-shadow: 0 0 0 4px rgba(255,255,255,0.12), 0 8px 20px rgba(249, 115, 22, 0.18);
+    clip-path: circle(50% at center);
 }
 
 .o2m-logo-nav .o2m-logo-image,
 .o2m-logo-sidebar .o2m-logo-image {
-    width: 34px;
-    height: 34px;
+    width: 100%;
+    height: 100%;
     display: block;
-    object-fit: contain;
+    object-fit: cover;
+    border-radius: 50%;
 }
 
 /* Menu Management Styles */
