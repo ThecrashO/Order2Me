@@ -82,6 +82,32 @@
                         </div>
                     </div>
                     <div class="profile-dropdown-divider"></div>
+                    <button class="profile-dropdown-item" role="menuitem" onclick="openOwnerProfileInfo()">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2"
+                            stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                            <circle cx="12" cy="7" r="4"/>
+                        </svg>
+                        My Profile
+                    </button>
+                    <button class="profile-dropdown-item" role="menuitem" onclick="openOwnerSettings()">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2"
+                            stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <path d="M12 2v4"/>
+                            <path d="M12 18v4"/>
+                            <path d="M4.93 4.93l2.83 2.83"/>
+                            <path d="M16.24 16.24l2.83 2.83"/>
+                            <path d="M2 12h4"/>
+                            <path d="M18 12h4"/>
+                            <path d="M4.93 19.07l2.83-2.83"/>
+                            <path d="M16.24 7.76l2.83-2.83"/>
+                            <circle cx="12" cy="12" r="3"/>
+                        </svg>
+                        Settings
+                    </button>
+                    <div class="profile-dropdown-divider"></div>
                     <button class="profile-dropdown-item profile-dropdown-signout" role="menuitem" onclick="signOut()">
                         <svg width="15" height="15" viewBox="0 0 24 24" fill="none"
                             stroke="currentColor" stroke-width="2"
@@ -257,6 +283,85 @@
 
     </main>
 
+</div>
+
+<!-- ── Settings Modal ── -->
+<div class="modal fade" id="ownerSettingsModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
+            <div class="modal-header border-0 px-4 pt-4 pb-3" style="background:linear-gradient(135deg,#f8fafc,#eef2ff);">
+                <div>
+                    <h5 class="modal-title mb-0">Settings</h5>
+                    <div class="small text-muted">Manage your app notification preferences</div>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body px-4 py-4" style="background:linear-gradient(180deg,#ffffff 0%, #f8fafc 100%);">
+                <div class="card border-0 shadow-sm rounded-4 mb-3">
+                    <div class="card-body p-3">
+                        <div class="d-flex align-items-center justify-content-between gap-3">
+                            <div>
+                                <div class="fw-semibold">Browser Notifications</div>
+                                <div class="small text-muted" id="owner-notification-setting-status">Turn on alerts when the app is in the background.</div>
+                            </div>
+                            <div class="form-check form-switch m-0">
+                                <input class="form-check-input" type="checkbox" role="switch" id="owner-notification-toggle" onchange="toggleOwnerNotificationPreference()">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="small text-muted">
+                    When enabled, Order2Me can play a short sound and show a browser notification only while the app is not in the foreground.
+                </div>
+            </div>
+            <div class="modal-footer border-0 px-4 pb-4 pt-0">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ── Owner Profile View Modal ── -->
+<div class="modal fade" id="ownerProfileViewModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
+            <div class="modal-header border-0 px-4 pt-4 pb-3" style="background:linear-gradient(135deg,#fff7ed,#fffaf6);">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="rounded-circle d-flex align-items-center justify-content-center text-white fw-bold"
+                         style="width:46px;height:46px;background:linear-gradient(135deg,#f97316,#f43f5e);">
+                        👤
+                    </div>
+                    <div>
+                        <h5 class="modal-title mb-0">My Profile</h5>
+                        <div class="small text-muted">Account details</div>
+                    </div>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body px-4 py-4" style="background:linear-gradient(180deg,#ffffff 0%, #fffaf6 100%);">
+                <div id="owner-profile-view-status" class="alert small d-none"></div>
+                <div class="card border-0 rounded-4 shadow-sm" style="background:rgba(249,115,22,0.06);">
+                    <div class="card-body p-4">
+                        <div class="mb-3">
+                            <div class="small text-uppercase text-muted fw-semibold mb-1">Name</div>
+                            <div id="owner-profile-view-name" class="fw-bold fs-5 text-dark">—</div>
+                        </div>
+                        <div class="mb-3">
+                            <div class="small text-uppercase text-muted fw-semibold mb-1">Email Address</div>
+                            <div id="owner-profile-view-email" class="fw-semibold text-dark">—</div>
+                        </div>
+                        <div>
+                            <div class="small text-uppercase text-muted fw-semibold mb-1">Phone Number</div>
+                            <div id="owner-profile-view-phone" class="fw-semibold text-dark">—</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer border-0 px-4 pb-4 pt-0" style="background:linear-gradient(180deg,#fffaf6 0%, #ffffff 100%);">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
 </div>
 
 <!-- ── REJECT REASON MODAL ── -->

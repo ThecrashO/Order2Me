@@ -12,6 +12,58 @@
 let addFoodModal;
 let editFoodModal;
 let rejectModal;
+const NOTIFICATION_PREF_KEY = 'order2me-notifications-enabled';
+
+function syncOwnerNotificationSettingUI() {
+    const checkbox = document.getElementById('owner-notification-toggle');
+    const statusEl = document.getElementById('owner-notification-setting-status');
+    if (!checkbox || !statusEl) return;
+
+    const supported = 'Notification' in window && location.protocol !== 'file:';
+    checkbox.disabled = !supported;
+    checkbox.checked = supported && isNotificationPreferenceEnabled();
+    statusEl.textContent = supported
+        ? (checkbox.checked ? 'Notifications are enabled.' : 'Notifications are currently disabled.')
+        : 'Notifications are not available on this origin yet.';
+}
+
+async function toggleOwnerNotificationPreference() {
+    const checkbox = document.getElementById('owner-notification-toggle');
+    const statusEl = document.getElementById('owner-notification-setting-status');
+    if (!checkbox || !statusEl) return;
+
+    if (!('Notification' in window) || location.protocol === 'file:') {
+        checkbox.checked = false;
+        statusEl.textContent = 'Notifications are not available on this origin yet.';
+        localStorage.setItem(NOTIFICATION_PREF_KEY, 'false');
+        showToast('Notifications are not supported on this page origin yet.', 'warning');
+        return;
+    }
+
+    const enable = checkbox.checked;
+    if (enable) {
+        const permission = await Notification.requestPermission();
+        if (permission === 'granted') {
+            localStorage.setItem(NOTIFICATION_PREF_KEY, 'true');
+            syncOwnerNotificationSettingUI();
+            showToast('Notifications enabled.', 'success');
+        } else {
+            checkbox.checked = false;
+            localStorage.setItem(NOTIFICATION_PREF_KEY, 'false');
+            statusEl.textContent = 'Notification permission was denied.';
+            showToast('Browser notification permission was denied.', 'warning');
+        }
+        return;
+    }
+
+    localStorage.setItem(NOTIFICATION_PREF_KEY, 'false');
+    syncOwnerNotificationSettingUI();
+    showToast('Notifications disabled.', 'info');
+}
+
+function isNotificationPreferenceEnabled() {
+    return localStorage.getItem(NOTIFICATION_PREF_KEY) === 'true';
+}
 
 function playNotificationSound(type = 'info') {
     try {
@@ -36,7 +88,9 @@ function playNotificationSound(type = 'info') {
 }
 
 function maybeBrowserNotification(title, message) {
-    if (!('Notification' in window)) return;
+    if (!('Notification' in window) || location.protocol === 'file:') return;
+    if (!isNotificationPreferenceEnabled()) return;
+
     const shouldUseBrowserNotify = document.visibilityState === 'hidden' || !document.hasFocus();
     if (!shouldUseBrowserNotify) return;
 
@@ -45,15 +99,6 @@ function maybeBrowserNotification(title, message) {
             body: message,
             icon: 'images/logo.png'
         });
-    } else if (Notification.permission === 'default') {
-        Notification.requestPermission().then(permission => {
-            if (permission === 'granted') {
-                new Notification(title, {
-                    body: message,
-                    icon: 'images/logo.png'
-                });
-            }
-        }).catch(() => {});
     }
 }
 
@@ -61,8 +106,10 @@ function showToast(message, type = 'info') {
     const container = document.getElementById('app-toast-container');
     if (!container) return;
 
-    playNotificationSound(type);
-    maybeBrowserNotification('Order2Me', message);
+    if (isNotificationPreferenceEnabled()) {
+        playNotificationSound(type);
+        maybeBrowserNotification('Order2Me', message);
+    }
 
     const typeMap = {
         success: 'text-bg-success',
@@ -116,6 +163,8 @@ async function initializeApp() {
     // Populate owner name in sidebar profile dropdown
     const nameEl = document.getElementById('owner-profile-name');
     if (nameEl && ownerProfile.name) nameEl.textContent = ownerProfile.name;
+
+    syncOwnerNotificationSettingUI();
 
     // Init modals
     addFoodModal = new bootstrap.Modal(document.getElementById('addFoodModal'));
@@ -182,6 +231,58 @@ async function loadOrders() {
     allOrders = data || [];
     updatePendingBadge();
     renderOrders();
+}
+
+async function loadOwnerProfileView() {
+    const statusEl = document.getElementById('owner-profile-view-status');
+    const nameEl = document.getElementById('owner-profile-view-name');
+    const emailEl = document.getElementById('owner-profile-view-email');
+    const phoneEl = document.getElementById('owner-profile-view-phone');
+
+    try {
+        const { data, error } = await supabaseClient
+            .from('users')
+            .select('id, name, email, phone_number, role')
+            .eq('id', ownerProfile.id)
+            .single();
+
+        if (error) throw error;
+
+        const profile = data || ownerProfile;
+        if (nameEl) nameEl.textContent = profile.name || '—';
+        if (emailEl) emailEl.textContent = profile.email || '—';
+        if (phoneEl) phoneEl.textContent = profile.phone_number || '—';
+
+        if (statusEl) {
+            statusEl.className = 'alert small d-none';
+            statusEl.textContent = '';
+        }
+    } catch (error) {
+        console.error('Error loading owner profile view:', error);
+        if (statusEl) {
+            statusEl.className = 'alert alert-danger small';
+            statusEl.textContent = error?.message || 'Unable to load profile information.';
+        }
+    }
+}
+
+function openOwnerProfileInfo() {
+    closeOwnerProfileDropdown();
+    const modalEl = document.getElementById('ownerProfileViewModal');
+    if (!modalEl) return;
+
+    loadOwnerProfileView();
+    const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+    modal.show();
+}
+
+function openOwnerSettings() {
+    closeOwnerProfileDropdown();
+    syncOwnerNotificationSettingUI();
+    const modalEl = document.getElementById('ownerSettingsModal');
+    if (!modalEl) return;
+    const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+    modal.show();
 }
 
 function refreshOrders() {

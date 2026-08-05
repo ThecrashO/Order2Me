@@ -12,6 +12,58 @@
 
 // ── Owner payment number — fetched from DB at runtime ────────
 let ownerPhoneNumber = null; // loaded in initStudentPage()
+const NOTIFICATION_PREF_KEY = 'order2me-notifications-enabled';
+
+function isNotificationPreferenceEnabled() {
+    return localStorage.getItem(NOTIFICATION_PREF_KEY) === 'true';
+}
+
+function syncNotificationSettingUI() {
+    const checkbox = document.getElementById('notification-toggle');
+    const statusEl = document.getElementById('notification-setting-status');
+    if (!checkbox || !statusEl) return;
+
+    const supported = 'Notification' in window && location.protocol !== 'file:';
+    checkbox.disabled = !supported;
+    checkbox.checked = supported && isNotificationPreferenceEnabled();
+    statusEl.textContent = supported
+        ? (checkbox.checked ? 'Notifications are enabled.' : 'Notifications are currently disabled.')
+        : 'Notifications are not available on this origin yet.';
+}
+
+async function toggleNotificationPreference() {
+    const checkbox = document.getElementById('notification-toggle');
+    const statusEl = document.getElementById('notification-setting-status');
+    if (!checkbox || !statusEl) return;
+
+    if (!('Notification' in window) || location.protocol === 'file:') {
+        checkbox.checked = false;
+        statusEl.textContent = 'Notifications are not available on this origin yet.';
+        localStorage.setItem(NOTIFICATION_PREF_KEY, 'false');
+        showToast('Notifications are not supported on this page origin yet.', 'warning');
+        return;
+    }
+
+    const enable = checkbox.checked;
+    if (enable) {
+        const permission = await Notification.requestPermission();
+        if (permission === 'granted') {
+            localStorage.setItem(NOTIFICATION_PREF_KEY, 'true');
+            syncNotificationSettingUI();
+            showToast('Notifications enabled.', 'success');
+        } else {
+            checkbox.checked = false;
+            localStorage.setItem(NOTIFICATION_PREF_KEY, 'false');
+            statusEl.textContent = 'Notification permission was denied.';
+            showToast('Browser notification permission was denied.', 'warning');
+        }
+        return;
+    }
+
+    localStorage.setItem(NOTIFICATION_PREF_KEY, 'false');
+    syncNotificationSettingUI();
+    showToast('Notifications disabled.', 'info');
+}
 
 function playNotificationSound(type = 'info') {
     try {
@@ -36,7 +88,9 @@ function playNotificationSound(type = 'info') {
 }
 
 function maybeBrowserNotification(title, message) {
-    if (!('Notification' in window)) return;
+    if (!('Notification' in window) || location.protocol === 'file:') return;
+    if (!isNotificationPreferenceEnabled()) return;
+
     const shouldUseBrowserNotify = document.visibilityState === 'hidden' || !document.hasFocus();
     if (!shouldUseBrowserNotify) return;
 
@@ -45,15 +99,6 @@ function maybeBrowserNotification(title, message) {
             body: message,
             icon: 'images/logo.png'
         });
-    } else if (Notification.permission === 'default') {
-        Notification.requestPermission().then(permission => {
-            if (permission === 'granted') {
-                new Notification(title, {
-                    body: message,
-                    icon: 'images/logo.png'
-                });
-            }
-        }).catch(() => {});
     }
 }
 
@@ -61,8 +106,10 @@ function showToast(message, type = 'info') {
     const container = document.getElementById('app-toast-container');
     if (!container) return;
 
-    playNotificationSound(type);
-    maybeBrowserNotification('Order2Me', message);
+    if (isNotificationPreferenceEnabled()) {
+        playNotificationSound(type);
+        maybeBrowserNotification('Order2Me', message);
+    }
 
     const typeMap = {
         success: 'text-bg-success',
