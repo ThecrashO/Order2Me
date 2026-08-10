@@ -136,13 +136,31 @@ function showToast(message, type = 'info') {
     toast.addEventListener('hidden.bs.toast', () => toast.remove());
 }
 
-let allOrders      = [];   // cache for client-side filtering
-let activeFilter   = 'all';
+let allOrders      = [];   // cache for client-side filtering (ALL orders)
+let activeFilter   = 'today'; // default: show today's active orders
 let activeSearch   = '';   // search query for orders
 let ownerProfile   = null; // current logged-in owner
 let menuItemsData  = new Map(); // id -> full item object (used for edit/image lookups)
 let allMenuItemsArr = [];  // flat array cache for menu search
 let allStudentsArr  = [];  // flat array cache for student search
+
+// ── Date helpers ──────────────────────────────────────────────
+function getTodayBounds() {
+    const now   = new Date();
+    const start = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0);
+    const end   = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999);
+    return { start, end };
+}
+
+function isTodayOrder(order) {
+    const { start, end } = getTodayBounds();
+    const t = new Date(order.created_at);
+    return t >= start && t <= end;
+}
+
+function goToHistory() {
+    window.location.href = 'history.html';
+}
 
 // ── 1. INIT ──────────────────────────────────────────────────
 
@@ -304,9 +322,16 @@ function updatePendingBadge() {
 
 function renderOrders() {
     const container = document.getElementById('orders-list');
-    let filtered  = activeFilter === 'all'
-        ? allOrders
-        : allOrders.filter(o => o.status === activeFilter);
+
+    // 'today' filter: only orders placed today
+    let base = (activeFilter === 'today')
+        ? allOrders.filter(o => isTodayOrder(o))
+        : allOrders;
+
+    // Status sub-filter (all/pending/preparing/ready/delivered/cancelled)
+    let filtered = (activeFilter === 'all' || activeFilter === 'today')
+        ? base
+        : base.filter(o => o.status === activeFilter);
 
     // Apply text search
     const q = activeSearch.trim().toLowerCase();
@@ -318,9 +343,16 @@ function renderOrders() {
     }
 
     if (filtered.length === 0) {
+        const isToday = activeFilter === 'today';
         container.innerHTML = q
             ? `<p class="text-muted">No orders match "${escapeHtml(activeSearch)}".</p>`
-            : '<p class="text-muted">No orders found.</p>';
+            : isToday
+                ? `<div class="text-center py-5 text-muted">
+                       <div style="font-size:2.5rem">🍽️</div>
+                       <p class="mt-2 mb-0 fw-semibold">No orders yet today.</p>
+                       <p class="small">New orders will appear here in real time.</p>
+                   </div>`
+                : '<p class="text-muted">No orders found.</p>';
         return;
     }
 
@@ -345,7 +377,8 @@ function buildOrderCard(order) {
         pending:   { color: 'warning',   label: 'Pending'   },
         preparing: { color: 'info',      label: 'Preparing' },
         ready:     { color: 'success',   label: 'Ready'     },
-        delivered: { color: 'secondary', label: 'Delivered' }
+        delivered: { color: 'secondary', label: 'Delivered' },
+        cancelled: { color: 'danger',    label: 'Cancelled' }
     };
     const cfg = statusConfig[order.status] || { color: 'secondary', label: order.status };
 
@@ -382,6 +415,8 @@ function buildOrderCard(order) {
                     onclick="updateStatus(${order.id}, 'delivered')">
                 Mark Delivered
             </button>`;
+    } else if (order.status === 'cancelled') {
+        actionHtml = `<span class="badge bg-danger">Cancelled / Rejected</span>`;
     }
 
     // Delivery note (now always required — display prominently)
@@ -492,15 +527,10 @@ async function confirmReject() {
     btn.disabled = true;
     spinner.classList.remove('d-none');
 
-    // NOTE: orders table has no reject_reason column yet.
-    // We store the rejection by removing from pending state.
-    // To add reject_reason: ALTER TABLE orders ADD COLUMN reject_reason text;
     const { error } = await supabaseClient
         .from('orders')
-        .update({ status: 'delivered' })   // repurposed as "closed/rejected"
+        .update({ status: 'cancelled' })
         .eq('id', orderId);
-
-    // Ideally: .update({ status: 'rejected', reject_reason: finalReason })
 
     btn.disabled = false;
     spinner.classList.add('d-none');
@@ -511,12 +541,12 @@ async function confirmReject() {
         return;
     }
 
-    console.log(`Order ${orderId} rejected. Reason: ${finalReason}`);
-    showToast(`Order #${orderId} rejected successfully.`, 'success');
+    console.log(`Order ${orderId} cancelled. Reason: ${finalReason}`);
+    showToast(`Order #${orderId} cancelled successfully.`, 'success');
     rejectModal.hide();
 
     const order = allOrders.find(o => o.id === Number(orderId));
-    if (order) order.status = 'delivered';
+    if (order) order.status = 'cancelled';
     updatePendingBadge();
     renderOrders();
 }

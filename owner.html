@@ -157,7 +157,7 @@
                     <rect x="9" y="3" width="6" height="4" rx="1"/>
                     <path d="M9 12h6M9 16h4"/>
                 </svg>
-                <span>Orders</span>
+                <span>Today's Orders</span>
                 <span class="badge bg-danger ms-auto d-none" id="pending-badge">0</span>
             </button>
             <button class="sidebar-nav-item" id="owner-nav-menu"
@@ -180,24 +180,43 @@
                 <span>Students</span>
                 <span class="badge bg-secondary ms-auto d-none" id="students-count-badge">0</span>
             </button>
+            <!-- Order History link -->
+            <a href="history.html" class="sidebar-history-link" id="owner-nav-history">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                     stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path d="M3 3v5h5"/>
+                    <path d="M3.05 13A9 9 0 1 0 6 5.3L3 8"/>
+                    <path d="M12 7v5l4 2"/>
+                </svg>
+                <span>Order History</span>
+            </a>
         </nav>
     </aside>
 
     <!-- ── Main content ── -->
     <main class="student-main">
 
-        <!-- Panel: Orders -->
+        <!-- Panel: Orders (Today Only) -->
         <section id="owner-panel-orders" class="student-panel active-panel">
 
-            <div class="panel-header">
-                <h2 class="panel-title">📋 Orders</h2>
-                <!-- Filter buttons -->
-                <div class="d-flex flex-wrap gap-2 align-items-center">
-                    <button class="btn btn-sm btn-primary order-filter active" data-status="all">All</button>
+            <div class="panel-header" style="flex-wrap:wrap;gap:10px;">
+                <div>
+                    <h2 class="panel-title mb-1">🍳 Today's Orders</h2>
+                    <div class="today-date-pill" id="owner-today-date-pill">
+                        📅 <span id="owner-today-label">—</span>
+                    </div>
+                </div>
+                <!-- Filter buttons + History button -->
+                <div class="d-flex flex-wrap gap-2 align-items-center ms-auto">
+                    <button class="btn btn-sm btn-history" onclick="goToHistory()">
+                        📜 Order History
+                    </button>
+                    <button class="btn btn-sm btn-primary order-filter active" data-status="today">🔴 Live Feed</button>
                     <button class="btn btn-sm btn-outline-warning order-filter" data-status="pending">Pending</button>
                     <button class="btn btn-sm btn-outline-info order-filter" data-status="preparing">Preparing</button>
                     <button class="btn btn-sm btn-outline-success order-filter" data-status="ready">Ready</button>
                     <button class="btn btn-sm btn-outline-secondary order-filter" data-status="delivered">Delivered</button>
+                    <button class="btn btn-sm btn-outline-danger order-filter" data-status="cancelled">Cancelled</button>
                 </div>
             </div>
 
@@ -217,7 +236,7 @@
             </div>
 
             <div id="orders-list">
-                <p class="text-muted">Loading orders...</p>
+                <p class="text-muted">Loading today's orders...</p>
             </div>
         </section>
 
@@ -560,6 +579,15 @@
         if (name === 'menu') loadMenuItems();
         if (name === 'students') loadStudents();
     }
+
+    // Set today's date label
+    (function setTodayLabel() {
+        const el = document.getElementById('owner-today-label');
+        if (!el) return;
+        el.textContent = new Date().toLocaleDateString('en-GB', {
+            weekday: 'short', day: '2-digit', month: 'short', year: 'numeric'
+        });
+    })();
 
     const savedOwnerPanel = window.location.hash.replace('#', '').trim();
     if (savedOwnerPanel === 'orders' || savedOwnerPanel === 'menu' || savedOwnerPanel === 'students') {

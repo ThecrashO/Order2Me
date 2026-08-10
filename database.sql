@@ -311,3 +311,104 @@ FOR SELECT
 USING (bucket_id = 'menu-images');
 
 -- ============================================================
+
+
+-- ============================================================
+-- MIGRATION: Add 'cancelled' status + updated_at to orders
+-- Run this in Supabase SQL Editor ONCE.
+-- ============================================================
+
+-- 1. Add updated_at column with auto-update trigger
+ALTER TABLE public.orders
+  ADD COLUMN IF NOT EXISTS updated_at timestamp WITHOUT TIME ZONE DEFAULT now();
+
+-- Auto-update updated_at on every row change
+CREATE OR REPLACE FUNCTION public.set_updated_at()
+RETURNS TRIGGER LANGUAGE plpgsql AS $$
+BEGIN
+  NEW.updated_at = now();
+  RETURN NEW;
+END;
+$$;
+
+DROP TRIGGER IF EXISTS trg_orders_updated_at ON public.orders;
+CREATE TRIGGER trg_orders_updated_at
+  BEFORE UPDATE ON public.orders
+  FOR EACH ROW EXECUTE FUNCTION public.set_updated_at();
+
+-- 2. Replace CHECK constraint to include 'cancelled'
+ALTER TABLE public.orders
+  DROP CONSTRAINT IF EXISTS orders_status_check;
+
+ALTER TABLE public.orders
+  ADD CONSTRAINT orders_status_check
+  CHECK (status = ANY (ARRAY[
+    'pending'::text,
+    'preparing'::text,
+    'ready'::text,
+    'delivered'::text,
+    'cancelled'::text
+  ]));
+
+-- 3. RLS: students can INSERT their own orders
+ALTER TABLE public.orders ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Students can insert own orders" ON public.orders;
+CREATE POLICY "Students can insert own orders"
+ON public.orders FOR INSERT
+WITH CHECK (
+  auth.role() = 'authenticated'
+  AND student_id = (
+    SELECT id FROM public.users WHERE auth_user_id = auth.uid()
+  )
+);
+
+-- 4. RLS: students can SELECT their own orders
+DROP POLICY IF EXISTS "Students can view own orders" ON public.orders;
+CREATE POLICY "Students can view own orders"
+ON public.orders FOR SELECT
+USING (
+  auth.role() = 'authenticated'
+  AND student_id = (
+    SELECT id FROM public.users WHERE auth_user_id = auth.uid()
+  )
+);
+
+-- 5. RLS: owners can SELECT all orders
+DROP POLICY IF EXISTS "Owners can view all orders" ON public.orders;
+CREATE POLICY "Owners can view all orders"
+ON public.orders FOR SELECT
+USING (
+  auth.role() = 'authenticated'
+  AND EXISTS (
+    SELECT 1 FROM public.users AS me
+    WHERE me.auth_user_id = auth.uid() AND me.role = 'owner'
+  )
+);
+
+-- 6. RLS: owners can UPDATE order status
+DROP POLICY IF EXISTS "Owners can update order status" ON public.orders;
+CREATE POLICY "Owners can update order status"
+ON public.orders FOR UPDATE
+USING (
+  auth.role() = 'authenticated'
+  AND EXISTS (
+    SELECT 1 FROM public.users AS me
+    WHERE me.auth_user_id = auth.uid() AND me.role = 'owner'
+  )
+);
+
+-- 7. RLS: allow order_items INSERT for authenticated
+ALTER TABLE public.order_items ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Students can insert order items" ON public.order_items;
+CREATE POLICY "Students can insert order items"
+ON public.order_items FOR INSERT
+WITH CHECK (auth.role() = 'authenticated');
+
+DROP POLICY IF EXISTS "Authenticated can view order items" ON public.order_items;
+CREATE POLICY "Authenticated can view order items"
+ON public.order_items FOR SELECT
+USING (auth.role() = 'authenticated');
+
+-- ============================================================

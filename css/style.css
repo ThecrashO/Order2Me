@@ -1571,3 +1571,201 @@ body::before {
 
 /* Badge tweaks */
 .badge.bg-primary { background-color: var(--brand) !important; }
+
+/* ── Cancelled / Rejected badge ────────────────────────────── */
+.badge.bg-cancelled, .badge-cancelled {
+    background-color: #dc2626 !important;
+    color: #fff !important;
+}
+
+/* ── History nav button (sidebar) ────────────────────────────── */
+.sidebar-history-link {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 14px;
+    border-radius: 12px;
+    border: none;
+    background: transparent;
+    color: var(--text-muted);
+    font-weight: 600;
+    font-size: 0.92rem;
+    cursor: pointer;
+    text-decoration: none;
+    transition: background 0.18s, color 0.18s;
+    width: 100%;
+    text-align: left;
+}
+.sidebar-history-link:hover {
+    background: rgba(249,115,22,.10);
+    color: var(--brand);
+    text-decoration: none;
+}
+.sidebar-history-link svg { flex-shrink: 0; }
+
+/* ── Today's date pill (orders panel header) ────────────────── */
+.today-date-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 12px;
+    border-radius: 999px;
+    background: linear-gradient(135deg, rgba(249,115,22,.12), rgba(251,146,60,.10));
+    border: 1px solid rgba(249,115,22,.25);
+    color: var(--brand-dark);
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0.01em;
+}
+
+/* ── View History accent button ─────────────────────────────── */
+.btn-history {
+    background: linear-gradient(135deg, #7c3aed, #6d28d9);
+    border: none;
+    color: #fff;
+    font-weight: 700;
+    box-shadow: 0 6px 18px rgba(124,58,237,.22);
+    transition: transform 0.18s, box-shadow 0.18s;
+}
+.btn-history:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 24px rgba(124,58,237,.30);
+    color: #fff;
+}
+
+/* ── Order Progress Tracker (student today view) ─────────────── */
+.order-tracker-card {
+    border: 1px solid rgba(249,115,22,.20);
+    border-radius: 18px;
+    background: linear-gradient(180deg, #fffefb 0%, #fff7ed 100%);
+    box-shadow: 0 10px 30px rgba(249,115,22,.10);
+    margin-bottom: 1.1rem;
+    overflow: hidden;
+    transition: box-shadow 0.2s, transform 0.2s;
+}
+.order-tracker-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 16px 36px rgba(249,115,22,.16);
+}
+.order-tracker-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 18px 10px;
+    border-bottom: 1px solid rgba(249,115,22,.12);
+}
+.order-tracker-id {
+    font-weight: 800;
+    font-size: 0.98rem;
+    color: var(--text-main);
+}
+.order-tracker-time {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    margin-top: 1px;
+}
+.order-tracker-body {
+    padding: 14px 18px;
+}
+
+/* Progress steps */
+.order-steps {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin: 10px 0 14px;
+    position: relative;
+}
+.order-step {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 5px;
+    flex: 1;
+    position: relative;
+    z-index: 1;
+}
+.order-step-dot {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: #e2e8f0;
+    border: 2px solid #e2e8f0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    transition: background 0.35s, border-color 0.35s, box-shadow 0.35s;
+}
+.order-step-dot.done {
+    background: linear-gradient(135deg, #10b981, #059669);
+    border-color: #10b981;
+    box-shadow: 0 0 0 4px rgba(16,185,129,.18);
+}
+.order-step-dot.active {
+    background: linear-gradient(135deg, var(--brand), var(--brand-dark));
+    border-color: var(--brand);
+    box-shadow: 0 0 0 5px rgba(249,115,22,.22);
+    animation: pulse-step 1.4s ease-in-out infinite;
+}
+.order-step-dot.cancelled {
+    background: linear-gradient(135deg, #ef4444, #dc2626);
+    border-color: #ef4444;
+}
+@keyframes pulse-step {
+    0%, 100% { box-shadow: 0 0 0 5px rgba(249,115,22,.22); }
+    50%       { box-shadow: 0 0 0 9px rgba(249,115,22,.08); }
+}
+.order-step-label {
+    font-size: 0.67rem;
+    font-weight: 700;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    text-align: center;
+}
+.order-step-label.active-label { color: var(--brand); }
+.order-step-label.done-label   { color: #10b981; }
+.order-step-label.cancelled-label { color: #ef4444; }
+
+/* Connecting line between steps */
+.order-step-line {
+    height: 3px;
+    flex: 1;
+    background: #e2e8f0;
+    margin-bottom: 20px;
+    transition: background 0.35s;
+    z-index: 0;
+}
+.order-step-line.line-done { background: linear-gradient(90deg, #10b981, #059669); }
+
+.order-tracker-items {
+    font-size: 0.83rem;
+    color: var(--text-muted);
+    line-height: 1.5;
+}
+.order-tracker-total {
+    font-weight: 800;
+    color: var(--brand-dark);
+    font-size: 0.95rem;
+    margin-top: 6px;
+}
+.order-tracker-note {
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    background: rgba(249,115,22,.07);
+    border-left: 3px solid var(--brand);
+    padding: 6px 10px;
+    border-radius: 0 8px 8px 0;
+    margin-top: 6px;
+}
+
+/* Empty today's orders state */
+.today-empty-state {
+    text-align: center;
+    padding: 48px 24px;
+    color: var(--text-muted);
+}
+.today-empty-state .empty-emoji { font-size: 3rem; margin-bottom: 12px; }
+.today-empty-state h5 { font-weight: 700; color: var(--text-main); }
+.today-empty-state p  { font-size: 0.9rem; }

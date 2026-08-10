@@ -143,6 +143,18 @@ let selectedPaymentMethod = null; // 'KBZPay' | 'WavePay' | 'Cash'
 let allMenuItems          = [];   // full list for client-side category filter
 let activeCategory        = 'all';
 
+// ── Date helpers ─────────────────────────────────────────────
+function getTodayBounds() {
+    const now   = new Date();
+    const start = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0);
+    const end   = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999);
+    return { start, end };
+}
+
+function goToHistory() {
+    window.location.href = 'history.html';
+}
+
 // -- 1. MENU --------------------------------------------------
 
 async function loadMenu() {
@@ -299,9 +311,14 @@ async function loadStudentOrders() {
     const container = document.getElementById('orders-container');
     if (!container) return;
 
-    container.innerHTML = '<p class="text-muted">Loading your orders...</p>';
+    container.innerHTML = '<p class="text-muted">Loading today\'s orders...</p>';
 
     if (!currentStudentProfile) return;
+
+    // Only fetch orders placed TODAY (local time)
+    const { start, end } = getTodayBounds();
+    const startISO = start.toISOString();
+    const endISO   = end.toISOString();
 
     const { data, error } = await supabaseClient
         .from('orders')
@@ -322,6 +339,8 @@ async function loadStudentOrders() {
             )
         `)
         .eq('student_id', currentStudentProfile.id)
+        .gte('created_at', startISO)
+        .lte('created_at', endISO)
         .order('created_at', { ascending: false });
 
     if (error) {
@@ -330,88 +349,123 @@ async function loadStudentOrders() {
         return;
     }
 
-    displayStudentOrders(data || []);
+    displayTodayOrders(data || []);
 }
 
-function displayStudentOrders(orders) {
+// Render today's orders as animated progress trackers
+function displayTodayOrders(orders) {
     const container = document.getElementById('orders-container');
     if (!container) return;
 
     if (!orders || orders.length === 0) {
-        container.innerHTML = '<p class="text-muted">You have no orders yet.</p>';
+        container.innerHTML = `
+            <div class="today-empty-state">
+                <div class="empty-emoji">🍽️</div>
+                <h5>No active orders today</h5>
+                <p>Place an order from the menu and it will appear here with a live progress tracker.</p>
+                <button class="btn btn-history btn-sm mt-2" onclick="goToHistory()">
+                    📜 View Past Orders
+                </button>
+            </div>`;
         return;
     }
 
+    // Status order for progress steps
+    const STEPS = [
+        { key: 'pending',   icon: '⏳', label: 'Pending'  },
+        { key: 'preparing', icon: '🍳', label: 'Preparing'},
+        { key: 'ready',     icon: '✅', label: 'Ready'   },
+        { key: 'delivered', icon: '📦', label: 'Delivered'}
+    ];
+    const STATUS_ORDER = { pending: 0, preparing: 1, ready: 2, delivered: 3, cancelled: -1 };
+
     container.innerHTML = orders.map(order => {
-        const statusColors = {
-            pending:   'warning',
-            preparing: 'info',
-            ready:     'success',
-            delivered: 'secondary'
-        };
-        const badgeColor = statusColors[order.status] || 'secondary';
+        const isCancelled = order.status === 'cancelled';
+        const currentStep = STATUS_ORDER[order.status] ?? 0;
 
-        const itemsHtml = (order.order_items || []).map(item => {
-            const name = item.menu_items ? item.menu_items.name : 'Item';
-            return `
-                <div class="d-flex justify-content-between small mb-1">
-                    <span>${escapeHtml(name)} x ${item.quantity}</span>
-                    <span>${item.price * item.quantity} MMK</span>
-                </div>
-            `;
-        }).join('');
+        // Build step dots + connecting lines
+        let stepsHtml = '';
+        STEPS.forEach((step, idx) => {
+            const stepIdx = idx;
+            let dotClass = '';
+            let labelClass = '';
 
-        // Supabase returns payments as object (1-to-1) or array — handle both
+            if (isCancelled) {
+                dotClass   = stepIdx === 0 ? 'cancelled' : '';
+                labelClass = stepIdx === 0 ? 'cancelled-label' : '';
+            } else if (stepIdx < currentStep) {
+                dotClass   = 'done';
+                labelClass = 'done-label';
+            } else if (stepIdx === currentStep) {
+                dotClass   = 'active';
+                labelClass = 'active-label';
+            }
+
+            const lineClass = (!isCancelled && stepIdx < currentStep) ? 'line-done' : '';
+
+            stepsHtml += `<div class="order-step">
+                <div class="order-step-dot ${dotClass}">${dotClass === 'done' ? '✓' : step.icon}</div>
+                <div class="order-step-label ${labelClass}">${isCancelled && stepIdx === 0 ? 'Cancelled' : step.label}</div>
+            </div>`;
+
+            if (idx < STEPS.length - 1) {
+                stepsHtml += `<div class="order-step-line ${lineClass}"></div>`;
+            }
+        });
+
+        // Items summary
+        const itemsText = (order.order_items || []).map(oi => {
+            const name = oi.menu_items ? oi.menu_items.name : 'Item';
+            return `${escapeHtml(name)} ×${oi.quantity}`;
+        }).join(', ');
+
+        // Payment method
         const payment = order.payments
             ? (Array.isArray(order.payments) ? order.payments[0] : order.payments)
             : null;
-        const paymentHtml = payment ? `
-            <div class="mt-2 pt-2 border-top small">
-                <span class="badge bg-secondary">${escapeHtml(payment.payment_method)}</span>
-                ${payment.screenshot_url
-                    ? `<button type="button" class="btn btn-sm btn-link ms-2 p-0 small btn-view-receipt"
-                               data-screenshot-url="${payment.screenshot_url}">
-                               🖼 View Receipt</button>`
-                    : ''}
-            </div>
-        ` : '';
+        const payBadge = payment
+            ? `<span class="badge bg-secondary ms-1">${escapeHtml(payment.payment_method)}</span>`
+            : '';
 
         const noteHtml = order.delivery_note
-            ? `<p class="mb-1 small text-muted"><strong>📍 Note:</strong> ${escapeHtml(order.delivery_note)}</p>`
+            ? `<div class="order-tracker-note">📍 ${escapeHtml(order.delivery_note)}</div>`
             : '';
 
         const time = new Date(order.created_at).toLocaleString('en-GB', {
-            day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit'
+            hour: '2-digit', minute: '2-digit'
         });
+
+        const statusLabel = isCancelled
+            ? '<span class="badge bg-danger">Cancelled</span>'
+            : `<span class="badge" style="background:var(--brand);">${order.status.charAt(0).toUpperCase() + order.status.slice(1)}</span>`;
 
         return `
-            <div class="card mb-3">
-                <div class="card-header d-flex justify-content-between align-items-center">
-                    <div>
-                        <strong>Order #${order.id}</strong>
-                        <div class="small text-muted">Placed ${time}</div>
-                    </div>
-                    <span class="badge bg-${badgeColor} text-dark text-capitalize">${order.status}</span>
+        <div class="order-tracker-card">
+            <div class="order-tracker-header">
+                <div>
+                    <div class="order-tracker-id">📋 Order #${order.id}</div>
+                    <div class="order-tracker-time">⏰ Placed at ${time}</div>
                 </div>
-                <div class="card-body py-2">
-                    ${itemsHtml}
-                    ${noteHtml}
-                    ${paymentHtml}
-                    <div class="text-end mt-2">
-                        <strong>Total: ${order.total_amount} MMK</strong>
-                    </div>
+                <div class="d-flex align-items-center gap-2">
+                    ${statusLabel}
+                    ${payBadge}
                 </div>
             </div>
-        `;
+            <div class="order-tracker-body">
+                <!-- Progress tracker -->
+                <div class="order-steps">${stepsHtml}</div>
+                <!-- Items -->
+                <div class="order-tracker-items">${itemsText || '—'}</div>
+                <div class="order-tracker-total">💰 ${Number(order.total_amount).toLocaleString()} MMK</div>
+                ${noteHtml}
+            </div>
+        </div>`;
     }).join('');
+}
 
-    // Wire up receipt buttons after innerHTML is set
-    document.querySelectorAll('.btn-view-receipt').forEach(btn => {
-        btn.addEventListener('click', () => {
-            const url = btn.dataset.screenshotUrl;
-            if (url) showImageLightbox(url);
-        });
-    });
+// Legacy alias kept for compatibility (called on order success refresh)
+function displayStudentOrders(orders) {
+    displayTodayOrders(orders);
 }
 
 function escapeHtml(text) {
