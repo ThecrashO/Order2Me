@@ -159,7 +159,7 @@ function isTodayOrder(order) {
 }
 
 function goToHistory() {
-    window.location.href = 'history.html';
+    if (typeof showOwnerPanel === 'function') showOwnerPanel('history');
 }
 
 // ── 1. INIT ──────────────────────────────────────────────────
