@@ -1,11 +1,75 @@
+// ============================================================
+// sw.js  --  Order2Me Service Worker
+// ============================================================
+// Provides:
+//   1. PWA shell caching (app shell strategy)
+//   2. Offline fallback for cached assets
+// ============================================================
+
+const CACHE_NAME = 'order2me-v1';
+
+// Assets to cache on install (app shell)
+const APP_SHELL = [
+    './',
+    './index.html',
+    './login.html',
+    './student.html',
+    './owner.html',
+    './manifest.json',
+    './css/style.css',
+    './images/logo.png',
+    './js/supabase.js',
+    './js/auth.js',
+    './js/student.js',
+    './js/owner.js',
+];
+
+// ── Install: cache app shell ──────────────────────────────────
 self.addEventListener('install', (event) => {
     self.skipWaiting();
+    event.waitUntil(
+        caches.open(CACHE_NAME).then((cache) => cache.addAll(APP_SHELL))
+    );
 });
 
+// ── Activate: remove old caches ──────────────────────────────
 self.addEventListener('activate', (event) => {
-    event.waitUntil(self.clients.claim());
+    event.waitUntil(
+        Promise.all([
+            self.clients.claim(),
+            caches.keys().then((keys) =>
+                Promise.all(
+                    keys
+                        .filter((key) => key !== CACHE_NAME)
+                        .map((key) => caches.delete(key))
+                )
+            ),
+        ])
+    );
 });
 
+// ── Fetch: network-first, cache fallback ─────────────────────
 self.addEventListener('fetch', (event) => {
-    event.respondWith(fetch(event.request));
+    // Skip non-GET and cross-origin requests (e.g. Supabase API)
+    if (event.request.method !== 'GET') return;
+    const url = new URL(event.request.url);
+    if (url.origin !== self.location.origin) return;
+
+    event.respondWith(
+        fetch(event.request)
+            .then((response) => {
+                // Update cache with fresh response
+                if (response && response.status === 200) {
+                    const clone = response.clone();
+                    caches.open(CACHE_NAME).then((cache) =>
+                        cache.put(event.request, clone)
+                    );
+                }
+                return response;
+            })
+            .catch(() =>
+                // Network failed → serve from cache
+                caches.match(event.request)
+            )
+    );
 });

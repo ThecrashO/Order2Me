@@ -143,6 +143,7 @@ let ownerProfile   = null; // current logged-in owner
 let menuItemsData  = new Map(); // id -> full item object (used for edit/image lookups)
 let allMenuItemsArr = [];  // flat array cache for menu search
 let allStudentsArr  = [];  // flat array cache for student search
+let ownerRealtimeChannel = null; // Supabase Realtime channel
 
 // ── Date helpers ──────────────────────────────────────────────
 function getTodayBounds() {
@@ -213,7 +214,61 @@ async function initializeApp() {
     // Load both sections
     loadOrders();
     loadMenuItems();
+
+    // Subscribe to Realtime order events
+    subscribeOwnerRealtime();
 }
+
+// ── Realtime: listen for new orders & status changes ─────────
+function subscribeOwnerRealtime() {
+    if (ownerRealtimeChannel) {
+        supabaseClient.removeChannel(ownerRealtimeChannel);
+    }
+
+    ownerRealtimeChannel = supabaseClient
+        .channel('owner-orders-realtime')
+        .on(
+            'postgres_changes',
+            { event: 'INSERT', schema: 'public', table: 'orders' },
+            (payload) => {
+                const newOrder = payload.new;
+                if (!newOrder) return;
+
+                // Only notify for today's orders
+                if (!isTodayOrder(newOrder)) return;
+
+                // Reload full orders (with joins) to get complete data
+                loadOrders();
+
+                const name = newOrder.student_name || 'Someone';
+                const total = Number(newOrder.total_amount || 0).toLocaleString();
+                showToast(`🔔 New order from ${name} — ${total} MMK`, 'success');
+                maybeBrowserNotification(
+                    '🔔 New Order!',
+                    `${name} placed an order for ${total} MMK`
+                );
+            }
+        )
+        .on(
+            'postgres_changes',
+            { event: 'UPDATE', schema: 'public', table: 'orders' },
+            (payload) => {
+                const updated = payload.new;
+                if (!updated) return;
+
+                // Refresh orders list to reflect status change
+                loadOrders();
+            }
+        )
+        .subscribe();
+}
+
+// Cleanup Realtime on page unload
+window.addEventListener('beforeunload', () => {
+    if (ownerRealtimeChannel) {
+        supabaseClient.removeChannel(ownerRealtimeChannel);
+    }
+});
 
 // ── 2. ORDERS ─────────────────────────────────────────────────
 

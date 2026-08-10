@@ -1234,6 +1234,63 @@ async function initStudentPage() {
 
     loadMenu();
     loadStudentOrders();
+
+    // Subscribe to Realtime order status changes
+    subscribeStudentRealtime();
 }
+
+// ── Realtime: listen for status changes on own orders ───────
+const STATUS_MESSAGES = {
+    preparing: { msg: '🍳 Your order is being prepared!', type: 'info'    },
+    ready:     { msg: '✅ Your order is ready for pickup!', type: 'success' },
+    delivered: { msg: '📦 Order delivered. Enjoy your meal!', type: 'success' },
+    cancelled: { msg: '❌ Your order has been cancelled.',   type: 'danger'  },
+};
+
+function subscribeStudentRealtime() {
+    if (!currentStudentProfile) return;
+
+    if (studentRealtimeChannel) {
+        supabaseClient.removeChannel(studentRealtimeChannel);
+    }
+
+    studentRealtimeChannel = supabaseClient
+        .channel('student-orders-realtime')
+        .on(
+            'postgres_changes',
+            {
+                event: 'UPDATE',
+                schema: 'public',
+                table: 'orders',
+                filter: `student_id=eq.${currentStudentProfile.id}`
+            },
+            (payload) => {
+                const updated = payload.new;
+                const old     = payload.old;
+                if (!updated) return;
+
+                // Only react to status changes
+                if (old && old.status === updated.status) return;
+
+                // Refresh today's orders UI
+                loadStudentOrders();
+
+                // Show notification for the new status
+                const info = STATUS_MESSAGES[updated.status];
+                if (info) {
+                    showToast(info.msg, info.type);
+                    maybeBrowserNotification('Order2Me', info.msg);
+                }
+            }
+        )
+        .subscribe();
+}
+
+// Cleanup Realtime on page unload
+window.addEventListener('beforeunload', () => {
+    if (studentRealtimeChannel) {
+        supabaseClient.removeChannel(studentRealtimeChannel);
+    }
+});
 
 document.addEventListener('DOMContentLoaded', initStudentPage);
