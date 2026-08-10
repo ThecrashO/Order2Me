@@ -136,14 +136,14 @@ function showToast(message, type = 'info') {
     toast.addEventListener('hidden.bs.toast', () => toast.remove());
 }
 
-let allOrders      = [];   // cache for client-side filtering (ALL orders)
-let activeFilter   = 'today'; // default: show today's active orders
-let activeSearch   = '';   // search query for orders
-let ownerProfile   = null; // current logged-in owner
-let menuItemsData  = new Map(); // id -> full item object (used for edit/image lookups)
-let allMenuItemsArr = [];  // flat array cache for menu search
-let allStudentsArr  = [];  // flat array cache for student search
-let ownerRealtimeChannel = null; // Supabase Realtime channel
+let allOrders         = [];   // cache for client-side filtering (ALL orders)
+let activeFilter      = 'today'; // default: show today's active orders
+let activeSearch      = '';   // search query for orders
+let ownerProfile      = null; // current logged-in owner
+let menuItemsData     = new Map(); // id -> full item object (used for edit/image lookups)
+let allMenuItemsArr   = [];  // flat array cache for menu search
+let allStudentsArr    = [];  // flat array cache for student search
+let ownerRealtimeChannel = null; // Supabase Realtime channel reference
 
 // ── Date helpers ──────────────────────────────────────────────
 function getTodayBounds() {
@@ -160,7 +160,7 @@ function isTodayOrder(order) {
 }
 
 function goToHistory() {
-    if (typeof showOwnerPanel === 'function') showOwnerPanel('history');
+    window.location.href = 'history.html';
 }
 
 // ── 1. INIT ──────────────────────────────────────────────────

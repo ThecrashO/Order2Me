@@ -152,7 +152,7 @@ function getTodayBounds() {
 }
 
 function goToHistory() {
-    if (typeof showPanel === 'function') showPanel('history');
+    window.location.href = 'history.html';
 }
 
 // -- 1. MENU --------------------------------------------------
