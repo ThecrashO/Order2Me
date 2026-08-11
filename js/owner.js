@@ -87,29 +87,39 @@ function playNotificationSound(type = 'info') {
     }
 }
 
-function maybeBrowserNotification(title, message) {
+async function maybeBrowserNotification(title, message, options = {}) {
     if (!('Notification' in window) || location.protocol === 'file:') return;
     if (!isNotificationPreferenceEnabled()) return;
 
     const shouldUseBrowserNotify = document.visibilityState === 'hidden' || !document.hasFocus();
     if (!shouldUseBrowserNotify) return;
 
-    if (Notification.permission === 'granted') {
-        new Notification(title, {
-            body: message,
-            icon: 'images/logo.png'
-        });
+    if (Notification.permission !== 'granted') return;
+
+    const notificationOptions = {
+        body: message,
+        icon: 'images/logo.png',
+        badge: 'images/logo.png',
+        tag: options.tag || 'order2me-owner-update',
+        renotify: true,
+        data: { url: options.url || 'owner.html' }
+    };
+
+    try {
+        if ('serviceWorker' in navigator) {
+            const registration = await navigator.serviceWorker.ready;
+            await registration.showNotification(title, notificationOptions);
+            return;
+        }
+        new Notification(title, notificationOptions);
+    } catch (error) {
+        console.debug('Browser notification unavailable:', error);
     }
 }
 
 function showToast(message, type = 'info') {
     const container = document.getElementById('app-toast-container');
     if (!container) return;
-
-    if (isNotificationPreferenceEnabled()) {
-        playNotificationSound(type);
-        maybeBrowserNotification('Order2Me', message);
-    }
 
     const typeMap = {
         success: 'text-bg-success',
@@ -243,9 +253,11 @@ function subscribeOwnerRealtime() {
                 const name = newOrder.customer_name || 'Someone';
                 const total = Number(newOrder.total_amount || 0).toLocaleString();
                 showToast(`🔔 New order from ${name} — ${total} MMK`, 'success');
+                if (isNotificationPreferenceEnabled()) playNotificationSound('success');
                 maybeBrowserNotification(
                     '🔔 New Order!',
-                    `${name} placed an order for ${total} MMK`
+                    `${name} placed an order for ${total} MMK`,
+                    { tag: `order2me-new-order-${newOrder.id}`, url: 'owner.html#orders' }
                 );
             }
         )

@@ -13,6 +13,7 @@
 // ── Owner payment number — fetched from DB at runtime ────────
 let ownerPhoneNumber = null; // loaded in initCustomerPage()
 const NOTIFICATION_PREF_KEY = 'order2me-notifications-enabled';
+let customerRealtimeChannel = null;
 
 function isNotificationPreferenceEnabled() {
     return localStorage.getItem(NOTIFICATION_PREF_KEY) === 'true';
@@ -87,29 +88,42 @@ function playNotificationSound(type = 'info') {
     }
 }
 
-function maybeBrowserNotification(title, message) {
+async function maybeBrowserNotification(title, message, options = {}) {
     if (!('Notification' in window) || location.protocol === 'file:') return;
     if (!isNotificationPreferenceEnabled()) return;
 
     const shouldUseBrowserNotify = document.visibilityState === 'hidden' || !document.hasFocus();
     if (!shouldUseBrowserNotify) return;
 
-    if (Notification.permission === 'granted') {
-        new Notification(title, {
-            body: message,
-            icon: 'images/logo.png'
-        });
+    if (Notification.permission !== 'granted') return;
+
+    const notificationOptions = {
+        body: message,
+        icon: 'images/logo.png',
+        badge: 'images/logo.png',
+        tag: options.tag || 'order2me-order-update',
+        renotify: true,
+        data: {
+            url: options.url || 'customer.html',
+            orderId: options.orderId || null
+        }
+    };
+
+    try {
+        if ('serviceWorker' in navigator) {
+            const registration = await navigator.serviceWorker.ready;
+            await registration.showNotification(title, notificationOptions);
+            return;
+        }
+        new Notification(title, notificationOptions);
+    } catch (error) {
+        console.debug('Browser notification unavailable:', error);
     }
 }
 
 function showToast(message, type = 'info') {
     const container = document.getElementById('app-toast-container');
     if (!container) return;
-
-    if (isNotificationPreferenceEnabled()) {
-        playNotificationSound(type);
-        maybeBrowserNotification('Order2Me', message);
-    }
 
     const typeMap = {
         success: 'text-bg-success',
@@ -1223,6 +1237,8 @@ async function initCustomerPage() {
     currentCustomerProfile = await requireCustomer();
     if (!currentCustomerProfile) return; // requireCustomer redirects to login
 
+    syncNotificationSettingUI();
+
     // Populate profile dropdown name
     const profileNameEl = document.getElementById('profile-name');
     if (profileNameEl && currentCustomerProfile.name) {
@@ -1241,10 +1257,26 @@ async function initCustomerPage() {
 
 // ── Realtime: listen for status changes on own orders ───────
 const STATUS_MESSAGES = {
-    preparing: { msg: '🍳 Your order is being prepared!', type: 'info'    },
-    ready:     { msg: '✅ Your order is ready for pickup!', type: 'success' },
-    delivered: { msg: '📦 Order delivered. Enjoy your meal!', type: 'success' },
-    cancelled: { msg: '❌ Your order has been cancelled.',   type: 'danger'  },
+    preparing: {
+        title: 'Order accepted',
+        msg: '🍳 Your order has been accepted and is being prepared.',
+        type: 'info'
+    },
+    ready: {
+        title: 'Ready for pickup',
+        msg: '✅ Your order is ready. Please come and pick it up!',
+        type: 'success'
+    },
+    delivered: {
+        title: 'Order completed',
+        msg: '📦 Your order has been completed. Enjoy your meal!',
+        type: 'success'
+    },
+    cancelled: {
+        title: 'Order cancelled',
+        msg: '❌ Your order has been cancelled.',
+        type: 'danger'
+    },
 };
 
 function subscribeCustomerRealtime() {
@@ -1279,7 +1311,14 @@ function subscribeCustomerRealtime() {
                 const info = STATUS_MESSAGES[updated.status];
                 if (info) {
                     showToast(info.msg, info.type);
-                    maybeBrowserNotification('Order2Me', info.msg);
+                    if (isNotificationPreferenceEnabled()) {
+                        playNotificationSound(info.type);
+                        maybeBrowserNotification(info.title, info.msg, {
+                            tag: `order2me-order-${updated.id}`,
+                            orderId: updated.id,
+                            url: 'customer.html#orders'
+                        });
+                    }
                 }
             }
         )
