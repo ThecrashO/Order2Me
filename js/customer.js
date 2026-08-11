@@ -972,8 +972,13 @@ async function submitCheckout() {
 // -- 4. CREATE ORDER IN SUPABASE ------------------------------
 
 async function uploadPaymentScreenshot(file) {
+    const authUser = await getCurrentUser();
+    if (!authUser) {
+        console.error('Screenshot upload error: no authenticated user session.');
+        return null;
+    }
     const ext      = file.name.split('.').pop();
-    const fileName = `${activeShopId}/${currentCustomerProfile.id}/payment_${Date.now()}.${ext}`;
+    const fileName = `${activeShopId}/${authUser.id}/payment_${Date.now()}.${ext}`;
 
     const { error: uploadError } = await supabaseClient.storage
         .from('payment-screenshots')

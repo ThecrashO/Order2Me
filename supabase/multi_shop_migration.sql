@@ -497,6 +497,105 @@ INSERT INTO storage.buckets (id, name, public)
 VALUES ('payment-screenshots', 'payment-screenshots', false)
 ON CONFLICT (id) DO UPDATE SET public = EXCLUDED.public;
 
+CREATE OR REPLACE FUNCTION public.can_upload_payment_screenshot(object_name text)
+RETURNS boolean
+LANGUAGE plpgsql
+STABLE
+SECURITY DEFINER
+SET search_path = ''
+AS $$
+DECLARE
+  folders text[];
+  profile_id bigint;
+  profile_role text;
+BEGIN
+  folders := storage.foldername(object_name);
+
+  SELECT u.id, u.role
+  INTO profile_id, profile_role
+  FROM public.users u
+  WHERE u.auth_user_id = auth.uid()
+  LIMIT 1;
+
+  IF auth.uid() IS NULL
+     OR profile_id IS NULL
+     OR profile_role <> 'customer'
+     OR COALESCE(array_length(folders, 1), 0) < 2 THEN
+    RETURN false;
+  END IF;
+
+  IF folders[2] <> profile_id::text
+     AND folders[2] <> auth.uid()::text THEN
+    RETURN false;
+  END IF;
+
+  RETURN EXISTS (
+    SELECT 1
+    FROM public.shops s
+    WHERE s.id::text = folders[1]
+      AND s.status = 'approved'
+  );
+END;
+$$;
+
+CREATE OR REPLACE FUNCTION public.can_read_payment_screenshot(object_name text)
+RETURNS boolean
+LANGUAGE plpgsql
+STABLE
+SECURITY DEFINER
+SET search_path = ''
+AS $$
+DECLARE
+  folders text[];
+  profile_id bigint;
+  profile_role text;
+BEGIN
+  folders := storage.foldername(object_name);
+
+  SELECT u.id, u.role
+  INTO profile_id, profile_role
+  FROM public.users u
+  WHERE u.auth_user_id = auth.uid()
+  LIMIT 1;
+
+  IF auth.uid() IS NULL OR profile_id IS NULL THEN
+    RETURN false;
+  END IF;
+
+  IF COALESCE(array_length(folders, 1), 0) = 0 THEN
+    RETURN profile_role IN ('owner', 'admin');
+  END IF;
+
+  IF profile_role = 'admin' THEN
+    RETURN true;
+  END IF;
+
+  IF profile_role = 'owner' THEN
+    RETURN EXISTS (
+      SELECT 1
+      FROM public.shops s
+      WHERE s.id::text = folders[1]
+        AND s.owner_id = profile_id
+        AND s.status = 'approved'
+    );
+  END IF;
+
+  RETURN COALESCE(array_length(folders, 1), 0) >= 2
+    AND (folders[2] = profile_id::text OR folders[2] = auth.uid()::text)
+    AND EXISTS (
+      SELECT 1
+      FROM public.shops s
+      WHERE s.id::text = folders[1]
+        AND s.status = 'approved'
+    );
+END;
+$$;
+
+REVOKE ALL ON FUNCTION public.can_upload_payment_screenshot(text) FROM PUBLIC;
+REVOKE ALL ON FUNCTION public.can_read_payment_screenshot(text) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION public.can_upload_payment_screenshot(text) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.can_read_payment_screenshot(text) TO authenticated;
+
 DROP POLICY IF EXISTS "Owner can upload menu images" ON storage.objects;
 DROP POLICY IF EXISTS "Owner can update menu images" ON storage.objects;
 DROP POLICY IF EXISTS "Authenticated users can upload screenshots" ON storage.objects;
@@ -532,38 +631,14 @@ CREATE POLICY "Customers upload approved shop payment screenshots"
 ON storage.objects FOR INSERT TO authenticated
 WITH CHECK (
   bucket_id = 'payment-screenshots'
-  AND public.current_profile_role() = 'customer'
-  AND (storage.foldername(name))[1] ~ '^[0-9]+$'
-  AND (storage.foldername(name))[2] ~ '^[0-9]+$'
-  AND ((storage.foldername(name))[2])::bigint = public.current_profile_id()
-  AND EXISTS (
-    SELECT 1 FROM public.shops s
-    WHERE s.id = ((storage.foldername(name))[1])::bigint
-      AND s.status = 'approved'
-  )
+  AND public.can_upload_payment_screenshot(name)
 );
 
 CREATE POLICY "Users read permitted payment screenshots"
 ON storage.objects FOR SELECT TO authenticated
 USING (
   bucket_id = 'payment-screenshots'
-  AND (
-    (
-      (storage.foldername(name))[1] ~ '^[0-9]+$'
-      AND (
-        public.owns_approved_shop(((storage.foldername(name))[1])::bigint)
-        OR public.is_admin()
-        OR (
-          (storage.foldername(name))[2] ~ '^[0-9]+$'
-          AND ((storage.foldername(name))[2])::bigint = public.current_profile_id()
-        )
-      )
-    )
-    OR (
-      COALESCE(array_length(storage.foldername(name), 1), 0) = 0
-      AND public.current_profile_role() IN ('owner', 'admin')
-    )
-  )
+  AND public.can_read_payment_screenshot(name)
 );
 
 -- 14. Realtime events for shop approval and order updates.
