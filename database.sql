@@ -98,6 +98,7 @@ CREATE TABLE public.payments (
                       'Cash'::text
                   ])),
   screenshot_url  text,
+  screenshot_path text,
   created_at      timestamp WITHOUT TIME ZONE DEFAULT now(),
   CONSTRAINT payments_pkey       PRIMARY KEY (id),
   CONSTRAINT fk_payment_order    FOREIGN KEY (order_id) REFERENCES public.orders(id)

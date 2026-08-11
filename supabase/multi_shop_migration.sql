@@ -61,6 +61,7 @@ WHERE s.slug = 'main-canteen'
 -- 4. Every menu item and order belongs to exactly one shop.
 ALTER TABLE public.menu_items ADD COLUMN IF NOT EXISTS shop_id bigint;
 ALTER TABLE public.orders ADD COLUMN IF NOT EXISTS shop_id bigint;
+ALTER TABLE public.payments ADD COLUMN IF NOT EXISTS screenshot_path text;
 
 UPDATE public.menu_items
 SET shop_id = (SELECT id FROM public.shops ORDER BY id LIMIT 1)
@@ -485,9 +486,15 @@ USING (public.is_admin())
 WITH CHECK (public.is_admin());
 
 -- 13. Storage writes use a shop-id first folder (for example 12/menu_1.png).
+INSERT INTO storage.buckets (id, name, public)
+VALUES ('payment-screenshots', 'payment-screenshots', false)
+ON CONFLICT (id) DO UPDATE SET public = EXCLUDED.public;
+
 DROP POLICY IF EXISTS "Owner can upload menu images" ON storage.objects;
 DROP POLICY IF EXISTS "Owner can update menu images" ON storage.objects;
 DROP POLICY IF EXISTS "Authenticated users can upload screenshots" ON storage.objects;
+DROP POLICY IF EXISTS "Public can view screenshots" ON storage.objects;
+DROP POLICY IF EXISTS "Users read permitted payment screenshots" ON storage.objects;
 DROP POLICY IF EXISTS "Approved owners upload own shop menu images" ON storage.objects;
 DROP POLICY IF EXISTS "Approved owners update own shop menu images" ON storage.objects;
 DROP POLICY IF EXISTS "Customers can upload screenshots" ON storage.objects;
@@ -520,6 +527,8 @@ WITH CHECK (
   bucket_id = 'payment-screenshots'
   AND public.current_profile_role() = 'customer'
   AND (storage.foldername(name))[1] ~ '^[0-9]+$'
+  AND (storage.foldername(name))[2] ~ '^[0-9]+$'
+  AND ((storage.foldername(name))[2])::bigint = public.current_profile_id()
   AND EXISTS (
     SELECT 1 FROM public.shops s
     WHERE s.id = ((storage.foldername(name))[1])::bigint
@@ -527,9 +536,33 @@ WITH CHECK (
   )
 );
 
+CREATE POLICY "Users read permitted payment screenshots"
+ON storage.objects FOR SELECT TO authenticated
+USING (
+  bucket_id = 'payment-screenshots'
+  AND (
+    (
+      (storage.foldername(name))[1] ~ '^[0-9]+$'
+      AND (
+        public.owns_approved_shop(((storage.foldername(name))[1])::bigint)
+        OR public.is_admin()
+        OR (
+          (storage.foldername(name))[2] ~ '^[0-9]+$'
+          AND ((storage.foldername(name))[2])::bigint = public.current_profile_id()
+        )
+      )
+    )
+    OR (
+      COALESCE(array_length(storage.foldername(name), 1), 0) = 0
+      AND public.current_profile_role() IN ('owner', 'admin')
+    )
+  )
+);
+
 -- 14. Realtime events for shop approval and order updates.
 ALTER TABLE public.orders REPLICA IDENTITY FULL;
 ALTER TABLE public.shops REPLICA IDENTITY FULL;
+ALTER TABLE public.users REPLICA IDENTITY FULL;
 
 DO $$
 BEGIN
@@ -545,6 +578,13 @@ BEGIN
     WHERE pubname = 'supabase_realtime' AND schemaname = 'public' AND tablename = 'shops'
   ) THEN
     ALTER PUBLICATION supabase_realtime ADD TABLE public.shops;
+  END IF;
+
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_publication_tables
+    WHERE pubname = 'supabase_realtime' AND schemaname = 'public' AND tablename = 'users'
+  ) THEN
+    ALTER PUBLICATION supabase_realtime ADD TABLE public.users;
   END IF;
 END;
 $$;

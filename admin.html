@@ -13,7 +13,11 @@
 <body class="admin-page">
 <nav class="navbar navbar-dark admin-navbar">
     <div class="container-fluid px-3 px-md-4">
-        <a class="navbar-brand d-flex align-items-center gap-2" href="admin.html">
+        <button id="admin-sidebar-toggle" class="sidebar-hamburger" onclick="openAdminSidebar()"
+            aria-label="Open admin navigation" aria-expanded="false" aria-controls="admin-sidebar">
+            <span></span><span></span><span></span>
+        </button>
+        <a class="navbar-brand d-flex align-items-center gap-2 ms-2" href="admin.html">
             <span class="o2m-logo-nav"><img src="images/logo.png" alt="" class="o2m-logo-image"></span>
             <span>Order2Me Admin</span>
         </a>
@@ -21,7 +25,27 @@
     </div>
 </nav>
 
+<div id="admin-sidebar-backdrop" class="sidebar-backdrop" onclick="closeAdminSidebar()" aria-hidden="true"></div>
+<div class="customer-layout admin-layout">
+<aside class="customer-sidebar" id="admin-sidebar" aria-label="Admin navigation" role="dialog" aria-modal="true">
+    <div class="sidebar-header">
+        <span class="sidebar-logo"><span class="o2m-logo-sidebar"><img src="images/logo.png" alt="" class="o2m-logo-image"></span> Admin</span>
+        <button class="sidebar-close-btn" onclick="closeAdminSidebar()" aria-label="Close sidebar">&times;</button>
+    </div>
+    <nav class="sidebar-nav">
+        <button class="sidebar-nav-item active" id="admin-nav-shops" onclick="showAdminPanel('shops')" aria-current="page">
+            <span aria-hidden="true">🏪</span><span>Shops</span>
+            <span class="badge bg-warning text-dark ms-auto d-none" id="admin-pending-badge">0</span>
+        </button>
+        <button class="sidebar-nav-item" id="admin-nav-users" onclick="showAdminPanel('users')">
+            <span aria-hidden="true">👥</span><span>App Users</span>
+            <span class="badge bg-secondary ms-auto" id="admin-users-badge">0</span>
+        </button>
+    </nav>
+</aside>
+
 <main class="admin-main container-fluid">
+    <section id="admin-panel-shops" class="admin-view active-admin-view">
     <div class="admin-welcome">
         <div>
             <span class="admin-eyebrow">Platform control</span>
@@ -53,7 +77,40 @@
             <div class="hist-loading"><div class="hist-spinner"></div><span>Loading shops…</span></div>
         </div>
     </section>
+    </section>
+
+    <section id="admin-panel-users" class="admin-view">
+        <div class="admin-welcome admin-users-welcome">
+            <div>
+                <span class="admin-eyebrow">Platform community</span>
+                <h1>App users</h1>
+                <p>See customers, shop owners, and administrators using Order2Me.</p>
+            </div>
+            <button class="btn btn-light" onclick="loadAdminUsers()">↻ Refresh</button>
+        </div>
+        <section class="admin-stats admin-user-stats" aria-label="User statistics">
+            <article><span>All users</span><strong id="admin-users-all">0</strong></article>
+            <article class="approved"><span>Customers</span><strong id="admin-users-customers">0</strong></article>
+            <article class="pending"><span>Owners</span><strong id="admin-users-owners">0</strong></article>
+            <article><span>Admins</span><strong id="admin-users-admins">0</strong></article>
+        </section>
+        <section class="admin-panel">
+            <div class="admin-toolbar">
+                <div class="admin-filter-row" id="admin-user-filter-row">
+                    <button class="admin-filter active" data-role="all">All</button>
+                    <button class="admin-filter" data-role="customer">Customers</button>
+                    <button class="admin-filter" data-role="owner">Owners</button>
+                    <button class="admin-filter" data-role="admin">Admins</button>
+                </div>
+                <input class="form-control" id="admin-user-search" type="search" placeholder="Search name, email or phone…">
+            </div>
+            <div id="admin-user-list" class="admin-user-list">
+                <div class="hist-loading"><div class="hist-spinner"></div><span>Loading users…</span></div>
+            </div>
+        </section>
+    </section>
 </main>
+</div>
 
 <div class="toast-container position-fixed bottom-0 end-0 p-3" id="app-toast-container"></div>
 

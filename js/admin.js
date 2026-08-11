@@ -3,6 +3,39 @@ let adminShops = [];
 let adminActiveFilter = 'all';
 let adminReasonModal = null;
 let adminShopChannel = null;
+let adminUserChannel = null;
+let adminUsers = [];
+let adminActiveUserRole = 'all';
+
+function openAdminSidebar() {
+    document.getElementById('admin-sidebar').classList.add('sidebar-open');
+    document.getElementById('admin-sidebar-backdrop').classList.add('sidebar-backdrop-show');
+    document.getElementById('admin-sidebar-toggle').setAttribute('aria-expanded', 'true');
+    document.body.style.overflow = 'hidden';
+}
+
+function closeAdminSidebar() {
+    document.getElementById('admin-sidebar').classList.remove('sidebar-open');
+    document.getElementById('admin-sidebar-backdrop').classList.remove('sidebar-backdrop-show');
+    document.getElementById('admin-sidebar-toggle').setAttribute('aria-expanded', 'false');
+    document.body.style.overflow = '';
+}
+
+function showAdminPanel(name) {
+    if (!['shops', 'users'].includes(name)) return;
+    document.querySelectorAll('.admin-view').forEach(panel => panel.classList.remove('active-admin-view'));
+    document.getElementById(`admin-panel-${name}`).classList.add('active-admin-view');
+    document.querySelectorAll('#admin-sidebar .sidebar-nav-item').forEach(item => {
+        item.classList.remove('active');
+        item.removeAttribute('aria-current');
+    });
+    const nav = document.getElementById(`admin-nav-${name}`);
+    nav.classList.add('active');
+    nav.setAttribute('aria-current', 'page');
+    history.replaceState(null, '', `${location.pathname}#${name}`);
+    closeAdminSidebar();
+    if (name === 'users') loadAdminUsers();
+}
 
 function adminEscape(value) {
     const div = document.createElement('div');
@@ -26,6 +59,64 @@ function updateAdminStats() {
     document.getElementById('admin-stat-pending').textContent = adminShops.filter(s => s.status === 'pending').length;
     document.getElementById('admin-stat-approved').textContent = adminShops.filter(s => s.status === 'approved').length;
     document.getElementById('admin-stat-restricted').textContent = adminShops.filter(s => ['rejected', 'suspended'].includes(s.status)).length;
+    const pendingCount = adminShops.filter(s => s.status === 'pending').length;
+    const badge = document.getElementById('admin-pending-badge');
+    badge.textContent = pendingCount;
+    badge.classList.toggle('d-none', pendingCount === 0);
+}
+
+function updateAdminUserStats() {
+    document.getElementById('admin-users-all').textContent = adminUsers.length;
+    document.getElementById('admin-users-customers').textContent = adminUsers.filter(user => user.role === 'customer').length;
+    document.getElementById('admin-users-owners').textContent = adminUsers.filter(user => user.role === 'owner').length;
+    document.getElementById('admin-users-admins').textContent = adminUsers.filter(user => user.role === 'admin').length;
+    document.getElementById('admin-users-badge').textContent = adminUsers.length;
+}
+
+function renderAdminUsers() {
+    const search = document.getElementById('admin-user-search').value.trim().toLowerCase();
+    const filtered = adminUsers.filter(user => {
+        const matchesRole = adminActiveUserRole === 'all' || user.role === adminActiveUserRole;
+        const haystack = `${user.name || ''} ${user.email || ''} ${user.phone_number || ''}`.toLowerCase();
+        return matchesRole && (!search || haystack.includes(search));
+    });
+    const container = document.getElementById('admin-user-list');
+    if (!filtered.length) {
+        container.innerHTML = '<div class="admin-empty">👥<strong>No users found</strong><span>Try another role or search.</span></div>';
+        return;
+    }
+
+    container.innerHTML = filtered.map(user => {
+        const shop = Array.isArray(user.shops) ? user.shops[0] : user.shops;
+        const joined = new Date(user.created_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+        return `<article class="admin-user-card role-${user.role}">
+            <div class="admin-user-avatar">${adminEscape((user.name || user.email || '?').charAt(0).toUpperCase())}</div>
+            <div class="admin-user-copy">
+                <div class="admin-user-title"><strong>${adminEscape(user.name || 'Unnamed user')}</strong><span>${adminEscape(user.role)}</span></div>
+                <div>${adminEscape(user.email || '—')}</div>
+                <small>${adminEscape(user.phone_number || 'No phone')} · Joined ${joined}</small>
+                ${shop ? `<small class="admin-user-shop">🏪 ${adminEscape(shop.name)} · ${adminEscape(shop.status)}</small>` : ''}
+            </div>
+        </article>`;
+    }).join('');
+}
+
+async function loadAdminUsers() {
+    const container = document.getElementById('admin-user-list');
+    container.innerHTML = '<div class="hist-loading"><div class="hist-spinner"></div><span>Loading users…</span></div>';
+    const { data, error } = await supabaseClient
+        .from('users')
+        .select(`id, name, email, phone_number, role, created_at,
+            shops!shops_owner_id_fkey (name, status)`)
+        .order('created_at', { ascending: false });
+    if (error) {
+        console.error('Admin user load failed:', error);
+        container.innerHTML = `<div class="hist-error">${adminEscape(error.message)}</div>`;
+        return;
+    }
+    adminUsers = data || [];
+    updateAdminUserStats();
+    renderAdminUsers();
 }
 
 function renderAdminShops() {
@@ -151,16 +242,33 @@ async function initAdminPage() {
         });
     });
     document.getElementById('admin-shop-search').addEventListener('input', renderAdminShops);
+    document.querySelectorAll('#admin-user-filter-row .admin-filter').forEach(button => {
+        button.addEventListener('click', () => {
+            document.querySelectorAll('#admin-user-filter-row .admin-filter').forEach(item => item.classList.remove('active'));
+            button.classList.add('active');
+            adminActiveUserRole = button.dataset.role;
+            renderAdminUsers();
+        });
+    });
+    document.getElementById('admin-user-search').addEventListener('input', renderAdminUsers);
 
     await loadAdminShops();
+    await loadAdminUsers();
+    const requestedPanel = location.hash.replace('#', '');
+    if (['shops', 'users'].includes(requestedPanel)) showAdminPanel(requestedPanel);
     adminShopChannel = supabaseClient
         .channel('admin-shops-realtime')
         .on('postgres_changes', { event: '*', schema: 'public', table: 'shops' }, loadAdminShops)
+        .subscribe();
+    adminUserChannel = supabaseClient
+        .channel('admin-users-realtime')
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'users' }, loadAdminUsers)
         .subscribe();
 }
 
 window.addEventListener('beforeunload', () => {
     if (adminShopChannel) supabaseClient.removeChannel(adminShopChannel);
+    if (adminUserChannel) supabaseClient.removeChannel(adminUserChannel);
 });
 
 document.addEventListener('DOMContentLoaded', initAdminPage);

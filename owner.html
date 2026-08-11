@@ -370,6 +370,16 @@
                                 <input class="form-check-input" type="checkbox" role="switch" id="owner-notification-toggle" onchange="toggleOwnerNotificationPreference()">
                             </div>
                         </div>
+                        <button type="button" class="btn btn-outline-primary btn-sm w-100 mt-3"
+                            id="owner-enable-notifications-btn" onclick="enableOwnerNotifications()">
+                            Enable notifications
+                        </button>
+                        <div class="small text-muted mt-2">
+                            If permission was blocked before, open the browser's Site Settings and change Notifications to Allow.
+                        </div>
+                        <div class="small text-muted mt-2" id="owner-realtime-status" role="status">
+                            Live order connection: checking…
+                        </div>
                     </div>
                 </div>
                 <div class="card border-0 shadow-sm rounded-4">

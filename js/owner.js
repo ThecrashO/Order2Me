@@ -17,6 +17,7 @@ const NOTIFICATION_PREF_KEY = 'order2me-notifications-enabled';
 function syncOwnerNotificationSettingUI() {
     const checkbox = document.getElementById('owner-notification-toggle');
     const statusEl = document.getElementById('owner-notification-setting-status');
+    const enableButton = document.getElementById('owner-enable-notifications-btn');
     if (!checkbox || !statusEl) return;
 
     const supported = 'Notification' in window && window.isSecureContext;
@@ -29,9 +30,42 @@ function syncOwnerNotificationSettingUI() {
             : checkbox.checked
                 ? 'Notifications are enabled.'
                 : 'Turn this on to receive new-order alerts.';
+    if (enableButton) {
+        enableButton.disabled = !supported;
+        enableButton.textContent = Notification.permission === 'denied'
+            ? 'Notifications blocked — view instructions'
+            : checkbox.checked
+                ? 'Send test notification'
+                : 'Enable notifications';
+    }
 }
 
 async function toggleOwnerNotificationPreference() {
+    const checkbox = document.getElementById('owner-notification-toggle');
+    await setOwnerNotificationPreference(Boolean(checkbox?.checked));
+}
+
+async function enableOwnerNotifications() {
+    const alreadyEnabled = 'Notification' in window
+        && isNotificationPreferenceEnabled()
+        && Notification.permission === 'granted';
+    if (alreadyEnabled) {
+        playNotificationSound('success');
+        const shown = await maybeBrowserNotification(
+            'Order2Me owner test',
+            'Owner notifications are working correctly.',
+            { tag: `order2me-owner-test-${Date.now()}`, url: 'owner.html#orders' }
+        );
+        const statusEl = document.getElementById('owner-notification-setting-status');
+        statusEl.textContent = shown
+            ? 'Test notification sent successfully.'
+            : 'The test could not be displayed. Check browser notification settings.';
+        return;
+    }
+    await setOwnerNotificationPreference(true);
+}
+
+async function setOwnerNotificationPreference(enable) {
     const checkbox = document.getElementById('owner-notification-toggle');
     const statusEl = document.getElementById('owner-notification-setting-status');
     if (!checkbox || !statusEl) return;
@@ -44,19 +78,43 @@ async function toggleOwnerNotificationPreference() {
         return;
     }
 
-    const enable = checkbox.checked;
+    if (enable && Notification.permission === 'denied') {
+        checkbox.checked = false;
+        localStorage.setItem(NOTIFICATION_PREF_KEY, 'false');
+        syncOwnerNotificationSettingUI();
+        statusEl.textContent = 'Notifications are blocked. Open this site in browser settings, choose Permissions, then set Notifications to Allow.';
+        showToast('Allow notifications from the browser Site Settings, then try again.', 'warning');
+        return;
+    }
+
     if (enable) {
-        const permission = await Notification.requestPermission();
+        statusEl.textContent = 'Requesting browser permission…';
+        let permission;
+        try {
+            permission = await Notification.requestPermission();
+        } catch (error) {
+            console.error('Notification permission request failed:', error);
+            checkbox.checked = false;
+            localStorage.setItem(NOTIFICATION_PREF_KEY, 'false');
+            showToast('Unable to enable browser notifications.', 'warning');
+            syncOwnerNotificationSettingUI();
+            statusEl.textContent = 'Unable to request permission. Open this app over HTTPS and check Site Settings.';
+            return;
+        }
         if (permission === 'granted') {
+            checkbox.checked = true;
             localStorage.setItem(NOTIFICATION_PREF_KEY, 'true');
             syncOwnerNotificationSettingUI();
             showToast('Notifications enabled.', 'success');
             playNotificationSound('success');
-            await maybeBrowserNotification(
+            const shown = await maybeBrowserNotification(
                 'Order2Me notifications enabled',
                 'You will now receive alerts for new orders.',
                 { tag: 'order2me-owner-notification-test', url: 'owner.html#orders' }
             );
+            statusEl.textContent = shown
+                ? 'Notifications are enabled. A test was sent.'
+                : 'Permission is enabled, but the test could not be displayed.';
         } else {
             checkbox.checked = false;
             localStorage.setItem(NOTIFICATION_PREF_KEY, 'false');
@@ -67,6 +125,7 @@ async function toggleOwnerNotificationPreference() {
     }
 
     localStorage.setItem(NOTIFICATION_PREF_KEY, 'false');
+    checkbox.checked = false;
     syncOwnerNotificationSettingUI();
     showToast('Notifications disabled.', 'info');
 }
@@ -285,10 +344,32 @@ function subscribeOwnerRealtime() {
             }
         )
         .subscribe((status) => {
+            setOwnerRealtimeStatus(status);
             if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
                 console.error('Owner realtime notification channel:', status);
             }
         });
+}
+
+function setOwnerRealtimeStatus(status) {
+    const statusEl = document.getElementById('owner-realtime-status');
+    if (!statusEl) return;
+
+    statusEl.classList.remove('text-muted', 'text-success', 'text-danger');
+    if (status === 'SUBSCRIBED') {
+        statusEl.classList.add('text-success');
+        statusEl.textContent = 'Live order connection: connected';
+        return;
+    }
+
+    if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'CLOSED') {
+        statusEl.classList.add('text-danger');
+        statusEl.textContent = 'Live order connection: disconnected. Refresh this page.';
+        return;
+    }
+
+    statusEl.classList.add('text-muted');
+    statusEl.textContent = 'Live order connection: connecting…';
 }
 
 // Cleanup Realtime on page unload
@@ -317,7 +398,8 @@ async function loadOrders() {
             ),
             payments (
                 payment_method,
-                screenshot_url
+                screenshot_url,
+                screenshot_path
             )
         `)
         .eq('shop_id', ownerShop.id)
@@ -331,6 +413,7 @@ async function loadOrders() {
     }
 
     allOrders = data || [];
+    await hydratePaymentScreenshotUrls(allOrders);
     updatePendingBadge();
     renderOrders();
 }
@@ -498,6 +581,36 @@ function filterOrdersBySearch(query) {
     renderOrders();
 }
 
+function getStoredScreenshotPath(payment) {
+    if (payment?.screenshot_path) return payment.screenshot_path;
+    const marker = '/payment-screenshots/';
+    const url = payment?.screenshot_url || '';
+    const index = url.indexOf(marker);
+    if (index < 0) return null;
+    return decodeURIComponent(url.slice(index + marker.length).split('?')[0]);
+}
+
+async function hydratePaymentScreenshotUrls(orders) {
+    const payments = (orders || []).flatMap(order => {
+        if (!order.payments) return [];
+        return Array.isArray(order.payments) ? order.payments : [order.payments];
+    });
+
+    await Promise.all(payments.map(async payment => {
+        payment.screenshot_display_url = payment.screenshot_url || null;
+        const path = getStoredScreenshotPath(payment);
+        if (!path) return;
+        const { data, error } = await supabaseClient.storage
+            .from('payment-screenshots')
+            .createSignedUrl(path, 60 * 60);
+        if (error) {
+            console.warn('Could not create screenshot preview URL:', error.message);
+            return;
+        }
+        payment.screenshot_display_url = data?.signedUrl || payment.screenshot_url || null;
+    }));
+}
+
 function buildOrderCard(order) {
     const statusConfig = {
         pending:   { color: 'warning',   label: 'Pending'   },
@@ -563,14 +676,17 @@ function buildOrderCard(order) {
     if (payment) {
         const methodIcons = { KBZPay: '📱', WavePay: '🌊', Cash: '✅' };
         const icon = methodIcons[payment.payment_method] || '💳';
-        const screenshotLink = payment.screenshot_url
-            ? `<button type="button" class="btn btn-sm btn-outline-secondary ms-2 btn-view-screenshot"
-                   data-screenshot-url="${payment.screenshot_url}">
-                   🖼 View Screenshot
+        const screenshotUrl = payment.screenshot_display_url || payment.screenshot_url;
+        const screenshotLink = screenshotUrl
+            ? `<button type="button" class="payment-screenshot-preview btn-view-screenshot"
+                   data-screenshot-url="${escapeHtml(screenshotUrl)}" aria-label="View payment screenshot">
+                   <img src="${escapeHtml(screenshotUrl)}" alt="Payment screenshot"
+                       onerror="this.parentElement.classList.add('preview-error')">
+                   <span>View screenshot</span>
                </button>`
-            : '<span class="text-muted small ms-2">(no screenshot)</span>';
+            : '<span class="payment-screenshot-missing">Screenshot was not uploaded</span>';
         paymentHtml = `
-            <div class="d-flex align-items-center mb-2">
+            <div class="payment-proof-row mb-2">
                 <span class="badge bg-dark me-1">${icon} ${escapeHtml(payment.payment_method)}</span>
                 ${screenshotLink}
             </div>`;

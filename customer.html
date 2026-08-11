@@ -171,6 +171,15 @@
                     <span>Order History</span>
                 </button>
             </nav>
+
+            <!-- Approved shops live in the sidebar so menu switching is always nearby. -->
+            <section class="sidebar-shop-picker" aria-labelledby="shop-picker-title">
+                <div class="sidebar-shop-heading">
+                    <span id="shop-picker-title">Choose shop</span>
+                    <strong id="active-shop-label">Loading…</strong>
+                </div>
+                <div id="shop-picker-list" class="sidebar-shop-list" role="listbox" aria-label="Approved shops"></div>
+            </section>
         </aside>
 
         <!-- ── Main content ── -->
@@ -193,18 +202,6 @@
                             placeholder="Search menu..." oninput="filterMenu(this.value)" autocomplete="off">
                     </div>
                 </div>
-
-                <!-- Approved shop selector -->
-                <section class="shop-picker mb-3" aria-labelledby="shop-picker-title">
-                    <div class="shop-picker-heading">
-                        <div>
-                            <span class="shop-picker-kicker">Choose a canteen</span>
-                            <h3 id="shop-picker-title">Where would you like to order?</h3>
-                        </div>
-                        <span id="active-shop-label" class="active-shop-label">Loading shops…</span>
-                    </div>
-                    <div id="shop-picker-list" class="shop-picker-list" role="listbox" aria-label="Approved shops"></div>
-                </section>
 
                 <!-- Category Filter Bar -->
                 <div class="cat-filter-strip mb-3" id="category-filter-bar">

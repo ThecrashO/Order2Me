@@ -236,7 +236,11 @@ function renderShopPicker() {
 
 function selectShop(shopId, initial = false) {
     const nextShop = approvedShops.find(shop => shop.id === Number(shopId));
-    if (!nextShop || nextShop.id === activeShopId) return;
+    if (!nextShop) return;
+    if (nextShop.id === activeShopId) {
+        if (!initial && typeof closeSidebar === 'function') closeSidebar();
+        return;
+    }
 
     if (!initial && cart.length > 0) {
         const confirmed = window.confirm('Changing shops will clear your current cart. Continue?');
@@ -254,6 +258,7 @@ function selectShop(shopId, initial = false) {
     renderShopPicker();
     fetchOwnerPhone();
     loadMenu();
+    if (!initial && typeof closeSidebar === 'function') closeSidebar();
 }
 
 async function loadMenu() {
@@ -966,9 +971,9 @@ async function submitCheckout() {
 
 // -- 4. CREATE ORDER IN SUPABASE ------------------------------
 
-async function uploadPaymentScreenshot(file, orderId) {
+async function uploadPaymentScreenshot(file) {
     const ext      = file.name.split('.').pop();
-    const fileName = `${activeShopId}/order_${orderId}_${Date.now()}.${ext}`;
+    const fileName = `${activeShopId}/${currentCustomerProfile.id}/payment_${Date.now()}.${ext}`;
 
     const { error: uploadError } = await supabaseClient.storage
         .from('payment-screenshots')
@@ -983,7 +988,10 @@ async function uploadPaymentScreenshot(file, orderId) {
         .from('payment-screenshots')
         .getPublicUrl(fileName);
 
-    return data.publicUrl || null;
+    return {
+        path: fileName,
+        publicUrl: data.publicUrl || null
+    };
 }
 
 async function createOrder(deliveryNote, paymentMethod, screenshotFile) {
@@ -997,6 +1005,18 @@ async function createOrder(deliveryNote, paymentMethod, screenshotFile) {
 
     // Calculate total
     const totalAmount = cart.reduce((s, i) => s + i.price * i.quantity, 0);
+
+    // Upload first and retain the storage path. Owners use a signed URL from
+    // this path, so screenshots also work when the bucket is private.
+    let screenshot = null;
+    if (screenshotFile) {
+        screenshot = await uploadPaymentScreenshot(screenshotFile);
+        if (!screenshot) {
+            errorBanner.textContent = 'Payment screenshot upload failed. Please retry before placing the order.';
+            errorBanner.classList.remove('d-none');
+            return;
+        }
+    }
 
     // Step 1: Insert order
     const { data: orderData, error: orderError } = await supabaseClient
@@ -1040,22 +1060,14 @@ async function createOrder(deliveryNote, paymentMethod, screenshotFile) {
         return;
     }
 
-    // Step 3: Upload screenshot
-    let screenshotUrl = null;
-    if (screenshotFile) {
-        screenshotUrl = await uploadPaymentScreenshot(screenshotFile, orderId);
-        if (!screenshotUrl) {
-            console.warn('Screenshot upload failed. Saving payment without URL.');
-        }
-    }
-
-    // Step 4: Save payment record
+    // Step 3: Save payment record
     const { error: paymentError } = await supabaseClient
         .from('payments')
         .insert({
             order_id:       orderId,
             payment_method: paymentMethod,
-            screenshot_url: screenshotUrl
+            screenshot_url: screenshot?.publicUrl || null,
+            screenshot_path: screenshot?.path || null
         });
 
     if (paymentError) {
