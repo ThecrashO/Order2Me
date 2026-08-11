@@ -2707,7 +2707,10 @@ textarea {
 }
 .payment-screenshot-preview.preview-error img { display: none; }
 .payment-screenshot-preview.preview-error::before { content: '🖼️'; font-size: 1.2rem; }
+.payment-screenshot-preview.preview-error span { font-size: 0; }
+.payment-screenshot-preview.preview-error span::after { content: 'Screenshot unavailable'; color: #dc2626; font-size: .75rem; }
 .payment-screenshot-missing { color: #dc2626; font-size: .74rem; font-weight: 700; }
+.payment-proof-error { border-color: #fecaca; background: #fff7f7; }
 
 @media (max-width: 767.98px) {
     .shop-picker-list { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; }

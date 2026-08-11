@@ -977,10 +977,15 @@ async function uploadPaymentScreenshot(file) {
 
     const { error: uploadError } = await supabaseClient.storage
         .from('payment-screenshots')
-        .upload(fileName, file, { upsert: true });
+        .upload(fileName, file, { cacheControl: '3600', upsert: false });
 
     if (uploadError) {
-        console.error('Screenshot upload error:', uploadError);
+        console.error('Screenshot upload error:', {
+            message: uploadError.message,
+            statusCode: uploadError.statusCode,
+            error: uploadError.error,
+            path: fileName
+        });
         return null;
     }
 
@@ -1060,20 +1065,41 @@ async function createOrder(deliveryNote, paymentMethod, screenshotFile) {
         return;
     }
 
-    // Step 3: Save payment record
-    const { error: paymentError } = await supabaseClient
+    // Step 3: Save payment record. Retry against the legacy schema so an
+    // older Supabase project can still retain the screenshot URL.
+    const paymentPayload = {
+        order_id: orderId,
+        payment_method: paymentMethod,
+        screenshot_url: screenshot?.publicUrl || null,
+        screenshot_path: screenshot?.path || null
+    };
+    let { error: paymentError } = await supabaseClient
         .from('payments')
-        .insert({
-            order_id:       orderId,
-            payment_method: paymentMethod,
-            screenshot_url: screenshot?.publicUrl || null,
-            screenshot_path: screenshot?.path || null
-        });
+        .insert(paymentPayload);
+
+    const paymentErrorText = [paymentError?.message, paymentError?.details, paymentError?.hint]
+        .filter(Boolean)
+        .join(' ');
+    if (paymentError && (paymentError.code === '42703' || /screenshot_path/i.test(paymentErrorText))) {
+        console.warn('payments.screenshot_path is unavailable; retrying payment record with screenshot_url.');
+        const legacyPayload = { ...paymentPayload };
+        delete legacyPayload.screenshot_path;
+        ({ error: paymentError } = await supabaseClient
+            .from('payments')
+            .insert(legacyPayload));
+    }
 
     if (paymentError) {
-        console.error('Error saving payment:', paymentError);
-        // Non-fatal: order is already placed, just warn
-        errorBanner.textContent = 'Order placed but payment record failed. Please contact the canteen. Order ID: ' + orderId;
+        console.error('Error saving payment proof:', {
+            code: paymentError.code,
+            message: paymentError.message,
+            details: paymentError.details,
+            hint: paymentError.hint,
+            orderId
+        });
+        // The order already exists. Do not retry the entire checkout because
+        // that would create a duplicate order.
+        errorBanner.textContent = 'Order placed, but the payment screenshot could not be attached. Please contact the shop. Order ID: ' + orderId;
         errorBanner.classList.remove('d-none');
     }
 
@@ -1089,6 +1115,13 @@ async function createOrder(deliveryNote, paymentMethod, screenshotFile) {
     // Show success modal
     document.getElementById('success-order-id').textContent = orderId;
     document.getElementById('success-total').textContent = totalAmount;
+    const paymentStatusEl = document.getElementById('success-payment-status');
+    paymentStatusEl.className = paymentError
+        ? 'alert alert-warning small mt-3 mb-3'
+        : 'alert alert-success small mt-3 mb-3';
+    paymentStatusEl.textContent = paymentError
+        ? 'Your order was placed, but the screenshot was not attached. Please show it to the shop and mention this order ID.'
+        : 'Payment screenshot attached successfully.';
 
     setTimeout(() => {
         new bootstrap.Modal(document.getElementById('successModal')).show();

@@ -617,7 +617,11 @@ async function hydratePaymentScreenshotUrls(orders) {
             .from('payment-screenshots')
             .createSignedUrl(path, 60 * 60);
         if (error) {
-            console.warn('Could not create screenshot preview URL:', error.message);
+            payment.screenshot_sign_error = error.message;
+            console.warn('Could not create screenshot preview URL:', {
+                path,
+                message: error.message
+            });
             return;
         }
         payment.screenshot_display_url = data?.signedUrl || payment.screenshot_url || null;
@@ -694,7 +698,7 @@ function buildOrderCard(order) {
             ? `<button type="button" class="payment-screenshot-preview btn-view-screenshot"
                    data-screenshot-url="${escapeHtml(screenshotUrl)}" aria-label="View payment screenshot">
                    <img src="${escapeHtml(screenshotUrl)}" alt="Payment screenshot"
-                       onerror="this.parentElement.classList.add('preview-error')">
+                       onerror="this.parentElement.classList.add('preview-error'); this.parentElement.disabled=true">
                    <span>View screenshot</span>
                </button>`
             : '<span class="payment-screenshot-missing">Screenshot was not uploaded</span>';
@@ -704,7 +708,10 @@ function buildOrderCard(order) {
                 ${screenshotLink}
             </div>`;
     } else {
-        paymentHtml = '<p class="text-muted small mb-2">⚠ No payment record</p>';
+        paymentHtml = `
+            <div class="payment-proof-row payment-proof-error mb-2">
+                <span class="payment-screenshot-missing">Payment proof record is missing</span>
+            </div>`;
     }
 
     const time = new Date(order.created_at).toLocaleString('en-GB', {

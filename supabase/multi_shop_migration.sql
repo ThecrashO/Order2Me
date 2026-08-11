@@ -62,6 +62,12 @@ WHERE s.slug = 'main-canteen'
 ALTER TABLE public.menu_items ADD COLUMN IF NOT EXISTS shop_id bigint;
 ALTER TABLE public.orders ADD COLUMN IF NOT EXISTS shop_id bigint;
 ALTER TABLE public.payments ADD COLUMN IF NOT EXISTS screenshot_path text;
+
+UPDATE public.payments
+SET screenshot_path = split_part(split_part(screenshot_url, '/payment-screenshots/', 2), '?', 1)
+WHERE screenshot_path IS NULL
+  AND screenshot_url LIKE '%/payment-screenshots/%';
+
 NOTIFY pgrst, 'reload schema';
 
 UPDATE public.menu_items
