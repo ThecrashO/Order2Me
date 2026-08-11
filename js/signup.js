@@ -1,10 +1,10 @@
-async function initSignupPage() {
+﻿async function initSignupPage() {
     const form = document.getElementById('signup-form');
     const status = document.getElementById('signup-status');
 
     const profile = await getCurrentProfile();
     if (profile) {
-        window.location.href = profile.role === 'owner' ? 'owner.html' : 'student.html';
+        window.location.href = profile.role === 'owner' ? 'owner.html' : 'customer.html';
         return;
     }
 
@@ -39,7 +39,7 @@ async function initSignupPage() {
             return;
         }
 
-        const result = await signUpStudent(name, email, phone, password);
+        const result = await signUpCustomer(name, email, phone, password);
 
         if (result.error) {
             status.textContent = result.error.message;

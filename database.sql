@@ -1,4 +1,4 @@
--- ============================================================
+﻿-- ============================================================
 -- Order2Me - Supabase Database Schema
 -- University Canteen Digital Ordering System
 -- ============================================================
@@ -10,7 +10,7 @@
 
 -- ============================================================
 -- 1. USERS TABLE
--- Stores student and owner profile data.
+-- Stores customer and owner profile data.
 -- Authentication (login/signup) is handled by Supabase Auth.
 -- ============================================================
 CREATE TABLE public.users (
@@ -19,7 +19,7 @@ CREATE TABLE public.users (
   name           text        NOT NULL,
   email          text        NOT NULL UNIQUE,
   phone_number   text        UNIQUE,
-  role           text        NOT NULL CHECK (role = ANY (ARRAY['student'::text, 'owner'::text])),
+  role           text        NOT NULL CHECK (role = ANY (ARRAY['customer'::text, 'owner'::text])),
   created_at     timestamp   WITHOUT TIME ZONE DEFAULT now(),
   CONSTRAINT users_pkey PRIMARY KEY (id)
 );
@@ -43,15 +43,15 @@ CREATE TABLE public.menu_items (
 
 -- ============================================================
 -- 3. ORDERS TABLE
--- Stores each order placed by a student.
+-- Stores each order placed by a customer.
 --
 -- Status flow:
 --   pending -> preparing -> ready -> delivered
 -- ============================================================
 CREATE TABLE public.orders (
   id            bigint GENERATED ALWAYS AS IDENTITY NOT NULL,
-  student_id    bigint  NOT NULL,
-  student_name  text,                               -- denormalised for quick display
+  customer_id    bigint  NOT NULL,
+  customer_name  text,                               -- denormalised for quick display
   delivery_note text,
   total_amount  numeric NOT NULL,
   status        text    DEFAULT 'pending'::text
@@ -63,7 +63,7 @@ CREATE TABLE public.orders (
                         ])),
   created_at    timestamp WITHOUT TIME ZONE DEFAULT now(),
   CONSTRAINT orders_pkey    PRIMARY KEY (id),
-  CONSTRAINT fk_student     FOREIGN KEY (student_id) REFERENCES public.users(id)
+  CONSTRAINT fk_customer     FOREIGN KEY (customer_id) REFERENCES public.users(id)
 );
 
 
@@ -107,7 +107,7 @@ CREATE TABLE public.payments (
 -- DATABASE RELATIONSHIPS SUMMARY
 -- ============================================================
 --
---  users           1 ──< orders          (student_id -> users.id)
+--  users           1 ──< orders          (customer_id -> users.id)
 --  orders          1 ──< order_items     (order_id   -> orders.id)
 --  menu_items      1 ──< order_items     (menu_item_id -> menu_items.id)
 --  orders          1 ──1 payments        (order_id   -> orders.id, UNIQUE)
@@ -183,18 +183,18 @@ USING (
   AND auth.uid() = auth_user_id
 );
 
-CREATE POLICY IF NOT EXISTS "Allow anon insert student profile"
+CREATE POLICY IF NOT EXISTS "Allow anon insert customer profile"
 ON public.users
 FOR INSERT
 WITH CHECK (
   auth.role() = 'anon'
-  AND role = 'student'
+  AND role = 'customer'
   AND auth_user_id IS NOT NULL
 );
 
 -- ============================================================
 -- Allow any authenticated user to read the owner's phone number
--- (needed by the student page to display KBZPay / WavePay numbers)
+-- (needed by the customer page to display KBZPay / WavePay numbers)
 -- Run this in your Supabase SQL editor if not already applied.
 -- ============================================================
 
@@ -211,14 +211,14 @@ USING (
 -- ============================================================
 
 -- ============================================================
--- Allow owner to read ALL student profiles
--- Required for the Owner Dashboard > Students panel.
+-- Allow owner to read ALL customer profiles
+-- Required for the Owner Dashboard > Customers panel.
 -- Run this in your Supabase SQL editor.
 -- ============================================================
 
-DROP POLICY IF EXISTS "Allow owner to read all students" ON public.users;
+DROP POLICY IF EXISTS "Allow owner to read all customers" ON public.users;
 
-CREATE POLICY "Allow owner to read all students"
+CREATE POLICY "Allow owner to read all customers"
 ON public.users
 FOR SELECT
 USING (
@@ -235,20 +235,20 @@ USING (
 
 -- ============================================================
 -- Payments Table RLS Policies
--- Students must be able to INSERT payment records after ordering.
+-- Customers must be able to INSERT payment records after ordering.
 -- Run these in Supabase SQL Editor.
 -- ============================================================
 
 ALTER TABLE public.payments ENABLE ROW LEVEL SECURITY;
 
-DROP POLICY IF EXISTS "Students can insert payments" ON public.payments;
-CREATE POLICY "Students can insert payments"
+DROP POLICY IF EXISTS "Customers can insert payments" ON public.payments;
+CREATE POLICY "Customers can insert payments"
 ON public.payments
 FOR INSERT
 WITH CHECK (auth.role() = 'authenticated');
 
-DROP POLICY IF EXISTS "Students can view own payments" ON public.payments;
-CREATE POLICY "Students can view own payments"
+DROP POLICY IF EXISTS "Customers can view own payments" ON public.payments;
+CREATE POLICY "Customers can view own payments"
 ON public.payments
 FOR SELECT
 USING (auth.role() = 'authenticated');
@@ -350,26 +350,26 @@ ALTER TABLE public.orders
     'cancelled'::text
   ]));
 
--- 3. RLS: students can INSERT their own orders
+-- 3. RLS: customers can INSERT their own orders
 ALTER TABLE public.orders ENABLE ROW LEVEL SECURITY;
 
-DROP POLICY IF EXISTS "Students can insert own orders" ON public.orders;
-CREATE POLICY "Students can insert own orders"
+DROP POLICY IF EXISTS "Customers can insert own orders" ON public.orders;
+CREATE POLICY "Customers can insert own orders"
 ON public.orders FOR INSERT
 WITH CHECK (
   auth.role() = 'authenticated'
-  AND student_id = (
+  AND customer_id = (
     SELECT id FROM public.users WHERE auth_user_id = auth.uid()
   )
 );
 
--- 4. RLS: students can SELECT their own orders
-DROP POLICY IF EXISTS "Students can view own orders" ON public.orders;
-CREATE POLICY "Students can view own orders"
+-- 4. RLS: customers can SELECT their own orders
+DROP POLICY IF EXISTS "Customers can view own orders" ON public.orders;
+CREATE POLICY "Customers can view own orders"
 ON public.orders FOR SELECT
 USING (
   auth.role() = 'authenticated'
-  AND student_id = (
+  AND customer_id = (
     SELECT id FROM public.users WHERE auth_user_id = auth.uid()
   )
 );
@@ -401,8 +401,8 @@ USING (
 -- 7. RLS: allow order_items INSERT for authenticated
 ALTER TABLE public.order_items ENABLE ROW LEVEL SECURITY;
 
-DROP POLICY IF EXISTS "Students can insert order items" ON public.order_items;
-CREATE POLICY "Students can insert order items"
+DROP POLICY IF EXISTS "Customers can insert order items" ON public.order_items;
+CREATE POLICY "Customers can insert order items"
 ON public.order_items FOR INSERT
 WITH CHECK (auth.role() = 'authenticated');
 

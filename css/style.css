@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+﻿@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
 
 /* ── Design Tokens ─────────────────────────────────────────── */
 :root {
@@ -234,20 +234,20 @@ body::before {
 
 .opacity-60 { opacity: 0.6; }
 
-/* ── Student Card Grid ───────────────────────────────────── */
-.student-card {
+/* ── Customer Card Grid ───────────────────────────────────── */
+.customer-card {
     border-radius: 14px;
     border: 1px solid rgba(249,115,22,.18);
     background: linear-gradient(180deg, #fffdfb 0%, #fff7ed 100%);
     transition: transform 0.18s ease, box-shadow 0.18s ease;
 }
 
-.student-card:hover {
+.customer-card:hover {
     transform: translateY(-3px);
     box-shadow: 0 8px 24px rgba(0,0,0,0.11) !important;
 }
 
-.student-avatar {
+.customer-avatar {
     width: 48px;
     height: 48px;
     border-radius: 50%;
@@ -262,7 +262,7 @@ body::before {
     box-shadow: 0 3px 10px rgba(0,0,0,0.18);
 }
 
-.student-card-name {
+.customer-card-name {
     font-size: 0.92rem;
     color: #1e293b;
     line-height: 1.3;
@@ -271,31 +271,31 @@ body::before {
     text-overflow: ellipsis;
 }
 
-.student-card-joined {
+.customer-card-joined {
     font-size: 0.72rem;
     margin-top: 1px;
 }
 
-.student-card-info {
+.customer-card-info {
     display: flex;
     flex-direction: column;
     gap: 0.35rem;
 }
 
-.student-info-row {
+.customer-info-row {
     display: flex;
     align-items: center;
     gap: 0.5rem;
     min-width: 0;
 }
 
-.student-info-icon {
+.customer-info-icon {
     font-size: 0.8rem;
     flex-shrink: 0;
     opacity: 0.7;
 }
 
-.student-info-row span:last-child {
+.customer-info-row span:last-child {
     min-width: 0;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -315,7 +315,7 @@ body::before {
     }
 }
 
-/* ── Student panel-header: stack on mobile ────────────────── */
+/* ── Customer panel-header: stack on mobile ────────────────── */
 @media (max-width: 575.98px) {
     .panel-header {
         flex-direction: column;
@@ -557,12 +557,12 @@ body::before {
 /* ============================================================
 
 /* ============================================================
-   Student Sidebar Layout — overlay / slide-in design
+   Customer Sidebar Layout — overlay / slide-in design
    ============================================================ */
 
 
 /* Layout wrapper: main fills full width; sidebar overlays it */
-.student-layout {
+.customer-layout {
     background:
         radial-gradient(circle at top left, rgba(249,115,22,.10), transparent 20%),
         linear-gradient(180deg, rgba(255,247,237,.9), rgba(248,250,252,.96));
@@ -588,7 +588,7 @@ body::before {
 }
 
 /* ── Sidebar panel (fixed, slides in from left) ───────────── */
-.student-sidebar {
+.customer-sidebar {
     position: fixed;
     top: 0;
     left: 0;
@@ -606,7 +606,7 @@ body::before {
     overflow-x: hidden;
 }
 
-.student-sidebar.sidebar-open {
+.customer-sidebar.sidebar-open {
     transform: translateX(0);
 }
 
@@ -749,30 +749,30 @@ body::before {
 }
 
 /* ── Main content (always full width) ────────────────────────*/
-.student-main {
+.customer-main {
     padding: 1.75rem 2rem;
     min-height: calc(100vh - 56px);
 }
 
-.student-main .student-panel > .card,
-.student-main .student-panel > .panel-header,
-.student-main .student-panel > .cat-filter-strip,
-.student-main .student-panel .card {
+.customer-main .customer-panel > .card,
+.customer-main .customer-panel > .panel-header,
+.customer-main .customer-panel > .cat-filter-strip,
+.customer-main .customer-panel .card {
     position: relative;
     z-index: 1;
 }
 
-.student-main .student-panel {
+.customer-main .customer-panel {
     background: transparent;
 }
 
 /* ── Panels (show/hide) ───────────────────────────────────── */
-.student-panel {
+.customer-panel {
     display: none;
     animation: panelFadeIn 0.25s ease both;
 }
 
-.student-panel.active-panel {
+.customer-panel.active-panel {
     display: block;
 }
 
@@ -868,7 +868,7 @@ body::before {
 
 /* ── Mobile tweaks ────────────────────────────────────────── */
 @media (max-width: 575.98px) {
-    .student-main {
+    .customer-main {
         padding: 1rem 0.9rem;
     }
 
@@ -880,7 +880,7 @@ body::before {
         padding: 1.3rem;
     }
 
-    .student-sidebar {
+    .customer-sidebar {
         width: 80vw;
         max-width: 300px;
     }
@@ -1511,7 +1511,7 @@ body::before {
    Global Brand Overrides — Orange + Navy system
    ============================================================ */
 
-/* Student navbar — orange gradient */
+/* Customer navbar — orange gradient */
 .navbar.bg-primary {
     background: linear-gradient(135deg, var(--brand) 0%, var(--brand-dark) 100%) !important;
     box-shadow: 0 2px 16px rgba(249,115,22,.28);
@@ -1633,7 +1633,7 @@ body::before {
     color: #fff;
 }
 
-/* ── Order Progress Tracker (student today view) ─────────────── */
+/* ── Order Progress Tracker (customer today view) ─────────────── */
 .order-tracker-card {
     border: 1px solid rgba(249,115,22,.20);
     border-radius: 18px;

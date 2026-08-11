@@ -1,8 +1,8 @@
-// ============================================================
+﻿// ============================================================
 // history.js  --  Order2Me History Page
 // ============================================================
 // Handles:
-//   1. Auth check & role detection (student / owner)
+//   1. Auth check & role detection (customer / owner)
 //   2. Loading past orders (before today's date)
 //   3. Date range filtering for owner
 //   4. Rendering rich history cards
@@ -84,20 +84,20 @@ async function initHistoryPage() {
     currentRole    = profile.role;
 
     const roleEl = document.getElementById('hist-role-badge');
-    if (roleEl) roleEl.textContent = currentRole === 'owner' ? '\ud83d\udc51 Owner View' : '\ud83c\udf93 Student View';
+    if (roleEl) roleEl.textContent = currentRole === 'owner' ? '\ud83d\udc51 Owner View' : '\ud83c\udf93 Customer View';
 
     const nameEl = document.getElementById('hist-user-name');
     if (nameEl) nameEl.textContent = profile.name || profile.email;
 
     const backLink = document.getElementById('hist-back-link');
-    if (backLink) backLink.href = currentRole === 'owner' ? 'owner.html' : 'student.html';
+    if (backLink) backLink.href = currentRole === 'owner' ? 'owner.html' : 'customer.html';
 
     if (currentRole === 'owner') {
         setupOwnerUI();
         applyDateRange('yesterday');
     } else {
         document.getElementById('owner-filter-bar')?.classList.add('hist-hidden');
-        loadStudentHistory();
+        loadCustomerHistory();
     }
 }
 
@@ -152,7 +152,7 @@ async function loadOwnerHistory(startISO, endISO) {
 
     let query = supabaseClient
         .from('orders')
-        .select(`id, student_name, status, total_amount, delivery_note, created_at,
+        .select(`id, customer_name, status, total_amount, delivery_note, created_at,
             order_items ( quantity, price, menu_items ( name ) ),
             payments ( payment_method, screenshot_url )`)
         .order('created_at', { ascending: false });
@@ -211,7 +211,7 @@ function renderOwnerHistory(orders) {
             <div class="hist-card-header">
                 <div>
                     <div class="hist-card-id">Order #${order.id}</div>
-                    <div class="hist-card-meta">\ud83d\udc64 ${escapeHtml(order.student_name||'Unknown')}</div>
+                    <div class="hist-card-meta">\ud83d\udc64 ${escapeHtml(order.customer_name||'Unknown')}</div>
                     <div class="hist-card-meta">\ud83d\udd50 ${formatDateLabel(order.created_at)}</div>
                 </div>
                 <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px">
@@ -228,8 +228,8 @@ function renderOwnerHistory(orders) {
     container.innerHTML = statsHtml + `<div class="hist-cards-list">${cardsHtml}</div>`;
 }
 
-// ── 3. STUDENT HISTORY ────────────────────────────────────────
-async function loadStudentHistory() {
+// ── 3. CUSTOMER HISTORY ────────────────────────────────────────
+async function loadCustomerHistory() {
     const container = document.getElementById('hist-content');
     container.innerHTML = '<div class="hist-loading"><div class="hist-spinner"></div><span>Loading your history...</span></div>';
 
@@ -238,17 +238,17 @@ async function loadStudentHistory() {
         .select(`id, status, total_amount, delivery_note, created_at,
             order_items ( quantity, price, menu_items (name) ),
             payments ( payment_method )`)
-        .eq('student_id', currentProfile.id)
+        .eq('customer_id', currentProfile.id)
         .lt('created_at', getTodayStart().toISOString())
         .order('created_at', { ascending: false });
 
     if (error) { container.innerHTML = `<div class="hist-error">&#9888; ${escapeHtml(error.message)}</div>`; return; }
 
     historyOrders = data || [];
-    renderStudentHistory(historyOrders);
+    renderCustomerHistory(historyOrders);
 }
 
-function renderStudentHistory(orders) {
+function renderCustomerHistory(orders) {
     const container = document.getElementById('hist-content');
     if (!orders.length) {
         container.innerHTML = `
@@ -256,7 +256,7 @@ function renderStudentHistory(orders) {
                 <div class="hist-empty-icon">\ud83d\udceb</div>
                 <h3>No past orders found</h3>
                 <p>Orders you've placed on previous days will appear here.</p>
-                <a href="student.html" class="hist-back-btn">Browse Menu</a>
+                <a href="customer.html" class="hist-back-btn">Browse Menu</a>
             </div>`;
         return;
     }
@@ -309,11 +309,11 @@ function renderStudentHistory(orders) {
 // ── 4. CSV EXPORT ─────────────────────────────────────────────
 function exportCSV() {
     if (!historyOrders.length) { showToast('No orders to export.', 'warning'); return; }
-    const rows = [['Order ID','Student','Status','Total (MMK)','Payment','Items','Date']];
+    const rows = [['Order ID','Customer','Status','Total (MMK)','Payment','Items','Date']];
     historyOrders.forEach(o => {
         const payment = o.payments ? (Array.isArray(o.payments)?o.payments[0]:o.payments) : null;
         const items = (o.order_items||[]).map(oi=>`${oi.menu_items?.name||'Item'} x${oi.quantity}`).join('; ');
-        rows.push([o.id, o.student_name||'', o.status, o.total_amount, payment?payment.payment_method:'', items, formatDateLabel(o.created_at)]);
+        rows.push([o.id, o.customer_name||'', o.status, o.total_amount, payment?payment.payment_method:'', items, formatDateLabel(o.created_at)]);
     });
     const csv  = rows.map(r => r.map(escapeCSV).join(',')).join('\n');
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });

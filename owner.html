@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 
 <head>
@@ -135,10 +135,10 @@
 <div id="owner-sidebar-backdrop" class="sidebar-backdrop" onclick="closeOwnerSidebar()" aria-hidden="true"></div>
 
 <!-- Layout wrapper -->
-<div class="student-layout">
+<div class="customer-layout">
 
     <!-- ── Sidebar ── -->
-    <aside class="student-sidebar" id="owner-sidebar" aria-label="Owner navigation" role="dialog" aria-modal="true">
+    <aside class="customer-sidebar" id="owner-sidebar" aria-label="Owner navigation" role="dialog" aria-modal="true">
 
         <div class="sidebar-header">
             <span class="sidebar-logo">
@@ -175,8 +175,8 @@
                 </svg>
                 <span>Menu Management</span>
             </button>
-            <button class="sidebar-nav-item" id="owner-nav-students"
-                    onclick="showOwnerPanel('students')">
+            <button class="sidebar-nav-item" id="owner-nav-customers"
+                    onclick="showOwnerPanel('customers')">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                     <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
@@ -184,8 +184,8 @@
                     <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
                     <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
                 </svg>
-                <span>Students</span>
-                <span class="badge bg-secondary ms-auto d-none" id="students-count-badge">0</span>
+                <span>Customers</span>
+                <span class="badge bg-secondary ms-auto d-none" id="customers-count-badge">0</span>
             </button>
             <!-- Order History panel button -->
             <button class="sidebar-nav-item" id="owner-nav-history"
@@ -202,10 +202,10 @@
     </aside>
 
     <!-- ── Main content ── -->
-    <main class="student-main">
+    <main class="customer-main">
 
         <!-- Panel: Orders (Today Only) -->
-        <section id="owner-panel-orders" class="student-panel active-panel">
+        <section id="owner-panel-orders" class="customer-panel active-panel">
 
             <div class="panel-header" style="flex-wrap:wrap;gap:10px;">
                 <div>
@@ -249,7 +249,7 @@
         </section>
 
         <!-- Panel: Menu Management -->
-        <section id="owner-panel-menu" class="student-panel">
+        <section id="owner-panel-menu" class="customer-panel">
 
             <div class="panel-header">
                 <h2 class="panel-title">🍽️ Menu Management</h2>
@@ -280,11 +280,11 @@
             </div>
         </section>
 
-        <!-- Panel: Students -->
-        <section id="owner-panel-students" class="student-panel">
+        <!-- Panel: Customers -->
+        <section id="owner-panel-customers" class="customer-panel">
 
             <div class="panel-header">
-                <h2 class="panel-title">👤 Students</h2>
+                <h2 class="panel-title">👤 Customers</h2>
                 <div class="input-group" style="max-width:300px;">
                     <span class="input-group-text bg-white border-end-0">
                         <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" fill="currentColor"
@@ -292,16 +292,16 @@
                             <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.099zm-5.242 1.156a5.5 5.5 0 1 1 0-11 5.5 5.5 0 0 1 0 11z"/>
                         </svg>
                     </span>
-                    <input type="search" id="students-search" class="form-control border-start-0 ps-0"
+                    <input type="search" id="customers-search" class="form-control border-start-0 ps-0"
                            placeholder="Search by name, email or phone..."
-                           oninput="filterStudents(this.value)" autocomplete="off">
+                           oninput="filterCustomers(this.value)" autocomplete="off">
                 </div>
             </div>
 
             <div class="card">
                 <div class="card-body p-0">
-                    <div id="students-list">
-                        <p class="text-muted p-3">Loading students...</p>
+                    <div id="customers-list">
+                        <p class="text-muted p-3">Loading customers...</p>
                     </div>
                 </div>
             </div>
@@ -309,7 +309,7 @@
         </section>
 
         <!-- Panel: Order History -->
-        <section id="owner-panel-history" class="student-panel">
+        <section id="owner-panel-history" class="customer-panel">
 
             <div class="panel-header" style="flex-wrap:wrap;gap:10px;">
                 <h2 class="panel-title">📜 Order History</h2>
@@ -577,7 +577,7 @@
     </div>
 </div>
 
-<!-- ── Sidebar / Panel JS (inline, same pattern as student) ── -->
+<!-- ── Sidebar / Panel JS (inline, same pattern as customer) ── -->
 <script>
     /* ── Sidebar open / close ─────────────────────────────── */
     function openOwnerSidebar() {
@@ -602,9 +602,9 @@
 
     /* ── Panel switcher ───────────────────────────────────── */
     function showOwnerPanel(name) {
-        if (!['orders', 'menu', 'students', 'history'].includes(name)) return;
+        if (!['orders', 'menu', 'customers', 'history'].includes(name)) return;
 
-        document.querySelectorAll('.student-panel').forEach(p => p.classList.remove('active-panel'));
+        document.querySelectorAll('.customer-panel').forEach(p => p.classList.remove('active-panel'));
         const target = document.getElementById('owner-panel-' + name);
         if (target) target.classList.add('active-panel');
 
@@ -620,7 +620,7 @@
 
         // Lazy-load on first switch
         if (name === 'menu') loadMenuItems();
-        if (name === 'students') loadStudents();
+        if (name === 'customers') loadCustomers();
         if (name === 'history') initOwnerHistoryPanel();
     }
 
@@ -634,7 +634,7 @@
     })();
 
     const savedOwnerPanel = window.location.hash.replace('#', '').trim();
-    if (['orders', 'menu', 'students', 'history'].includes(savedOwnerPanel)) {
+    if (['orders', 'menu', 'customers', 'history'].includes(savedOwnerPanel)) {
         showOwnerPanel(savedOwnerPanel);
     }
 
@@ -645,9 +645,9 @@
             loadOrders();
         } else if (document.getElementById('owner-panel-menu').classList.contains('active-panel')) {
             loadMenuItems();
-        } else if (document.getElementById('owner-panel-students').classList.contains('active-panel')) {
-            document.getElementById('students-list').innerHTML = '<p class="text-muted p-3">Refreshing...</p>';
-            loadStudents();
+        } else if (document.getElementById('owner-panel-customers').classList.contains('active-panel')) {
+            document.getElementById('customers-list').innerHTML = '<p class="text-muted p-3">Refreshing...</p>';
+            loadCustomers();
         }
     }
 
@@ -780,7 +780,7 @@
 
         let query = supabaseClient
             .from('orders')
-            .select(`id, student_name, status, total_amount, delivery_note, created_at,
+            .select(`id, customer_name, status, total_amount, delivery_note, created_at,
                 order_items ( quantity, price, menu_items ( name ) ),
                 payments ( payment_method, screenshot_url )`)
             .order('created_at', { ascending: false });
@@ -838,7 +838,7 @@
                 <div class="hist-card-header">
                     <div>
                         <div class="hist-card-id">Order #${order.id}</div>
-                        <div class="hist-card-meta">👤 ${_oHEsc(order.student_name || 'Unknown')}</div>
+                        <div class="hist-card-meta">👤 ${_oHEsc(order.customer_name || 'Unknown')}</div>
                         <div class="hist-card-meta">🕐 ${_oFmtDate(order.created_at)}</div>
                     </div>
                     <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px">
@@ -857,11 +857,11 @@
 
     function _ownerExportCSV() {
         if (!_ownerHistOrders.length) return;
-        const rows = [['Order ID','Student','Status','Total (MMK)','Payment','Items','Date']];
+        const rows = [['Order ID','Customer','Status','Total (MMK)','Payment','Items','Date']];
         _ownerHistOrders.forEach(o => {
             const payment = o.payments ? (Array.isArray(o.payments) ? o.payments[0] : o.payments) : null;
             const items = (o.order_items || []).map(oi => `${oi.menu_items?.name || 'Item'} x${oi.quantity}`).join('; ');
-            rows.push([o.id, o.student_name || '', o.status, o.total_amount, payment ? payment.payment_method : '', items, _oFmtDate(o.created_at)]);
+            rows.push([o.id, o.customer_name || '', o.status, o.total_amount, payment ? payment.payment_method : '', items, _oFmtDate(o.created_at)]);
         });
         const csv  = rows.map(r => r.map(_oEscCSV).join(',')).join('\n');
         const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });

@@ -1,11 +1,11 @@
-// ============================================================
+﻿// ============================================================
 // owner.js  --  Order2Me Owner Dashboard
 // ============================================================
 // Sections:
 //   1. Init
 //   2. Orders -- load, render, filter, status update, reject
 //   3. Menu   -- load, display, add, edit, delete, toggle
-//   4. Students -- load, render, filter
+//   4. Customers -- load, render, filter
 // ============================================================
 
 // ── Globals ──────────────────────────────────────────────────
@@ -142,7 +142,7 @@ let activeSearch      = '';   // search query for orders
 let ownerProfile      = null; // current logged-in owner
 let menuItemsData     = new Map(); // id -> full item object (used for edit/image lookups)
 let allMenuItemsArr   = [];  // flat array cache for menu search
-let allStudentsArr    = [];  // flat array cache for student search
+let allCustomersArr    = [];  // flat array cache for customer search
 let ownerRealtimeChannel = null; // Supabase Realtime channel reference
 
 // ── Date helpers ──────────────────────────────────────────────
@@ -240,7 +240,7 @@ function subscribeOwnerRealtime() {
                 // Reload full orders (with joins) to get complete data
                 loadOrders();
 
-                const name = newOrder.student_name || 'Someone';
+                const name = newOrder.customer_name || 'Someone';
                 const total = Number(newOrder.total_amount || 0).toLocaleString();
                 showToast(`🔔 New order from ${name} — ${total} MMK`, 'success');
                 maybeBrowserNotification(
@@ -277,7 +277,7 @@ async function loadOrders() {
         .from('orders')
         .select(`
             id,
-            student_name,
+            customer_name,
             status,
             total_amount,
             delivery_note,
@@ -393,7 +393,7 @@ function renderOrders() {
     if (q) {
         filtered = filtered.filter(o =>
             String(o.id).includes(q) ||
-            (o.student_name || '').toLowerCase().includes(q)
+            (o.customer_name || '').toLowerCase().includes(q)
         );
     }
 
@@ -516,7 +516,7 @@ function buildOrderCard(order) {
             <div class="card-header d-flex justify-content-between align-items-center bg-${cfg.color} bg-opacity-10">
                 <div>
                     <span class="fw-semibold">Order #${order.id}</span>
-                    <span class="text-muted small ms-2">— ${escapeHtml(order.student_name || 'Unknown')}</span>
+                    <span class="text-muted small ms-2">— ${escapeHtml(order.customer_name || 'Unknown')}</span>
                 </div>
                 <span class="badge bg-${cfg.color} text-dark">${cfg.label}</span>
             </div>
@@ -725,19 +725,19 @@ function escapeHtml(text) {
     return String(text).replace(/[&<>"']/g, m => map[m]);
 }
 
-// ── 4. STUDENTS ───────────────────────────────────────────────
+// ── 4. CUSTOMERS ───────────────────────────────────────────────
 
-async function loadStudents() {
-    const container = document.getElementById('students-list');
+async function loadCustomers() {
+    const container = document.getElementById('customers-list');
     if (!container) return;
 
     container.innerHTML = `
         <div class="text-center py-4 text-muted">
             <div class="spinner-border spinner-border-sm me-2" role="status"></div>
-            Loading students...
+            Loading customers...
         </div>`;
 
-    // Fetch students + their order count in one query via Supabase embedded select
+    // Fetch customers + their order count in one query via Supabase embedded select
     const { data, error } = await supabaseClient
         .from('users')
         .select(`
@@ -748,7 +748,7 @@ async function loadStudents() {
             created_at,
             orders ( id )
         `)
-        .eq('role', 'student')
+        .eq('role', 'customer')
         .order('created_at', { ascending: false });
 
     if (error) {
@@ -756,46 +756,46 @@ async function loadStudents() {
         return;
     }
 
-    allStudentsArr = (data || []).map(s => ({
+    allCustomersArr = (data || []).map(s => ({
         ...s,
         order_count: Array.isArray(s.orders) ? s.orders.length : 0
     }));
 
     // Update sidebar count badge
-    const badge = document.getElementById('students-count-badge');
+    const badge = document.getElementById('customers-count-badge');
     if (badge) {
-        badge.textContent = allStudentsArr.length;
-        if (allStudentsArr.length > 0) badge.classList.remove('d-none');
+        badge.textContent = allCustomersArr.length;
+        if (allCustomersArr.length > 0) badge.classList.remove('d-none');
         else badge.classList.add('d-none');
     }
 
-    renderStudents(allStudentsArr);
+    renderCustomers(allCustomersArr);
 }
 
-function filterStudents(query) {
+function filterCustomers(query) {
     const q = query.trim().toLowerCase();
-    if (!q) { renderStudents(allStudentsArr); return; }
-    const filtered = allStudentsArr.filter(s =>
+    if (!q) { renderCustomers(allCustomersArr); return; }
+    const filtered = allCustomersArr.filter(s =>
         (s.name  || '').toLowerCase().includes(q) ||
         (s.email || '').toLowerCase().includes(q) ||
         (s.phone_number || '').toLowerCase().includes(q)
     );
-    renderStudents(filtered, q);
+    renderCustomers(filtered, q);
 }
 
-function renderStudents(students, query = '') {
-    const container = document.getElementById('students-list');
+function renderCustomers(customers, query = '') {
+    const container = document.getElementById('customers-list');
     if (!container) return;
 
-    if (!students || students.length === 0) {
+    if (!customers || customers.length === 0) {
         container.innerHTML = query
             ? `<div class="p-5 text-center text-muted">
                    <div style="font-size:2.5rem;">🔍</div>
-                   <p class="mb-0 mt-2">No students match "<strong>${escapeHtml(query)}</strong>".</p>
+                   <p class="mb-0 mt-2">No customers match "<strong>${escapeHtml(query)}</strong>".</p>
                </div>`
             : `<div class="p-5 text-center text-muted">
                    <div style="font-size:2.5rem;">👤</div>
-                   <p class="mb-0 mt-2">No registered students yet.</p>
+                   <p class="mb-0 mt-2">No registered customers yet.</p>
                </div>`;
         return;
     }
@@ -810,7 +810,7 @@ function renderStudents(students, query = '') {
         { bg: '#f97316', light: '#fff7ed' },
     ];
 
-    const cards = students.map((s, idx) => {
+    const cards = customers.map((s, idx) => {
         const initials = (s.name || '?').split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
         const joinDate = new Date(s.created_at).toLocaleDateString('en-GB', {
             day: '2-digit', month: 'short', year: 'numeric'
@@ -820,34 +820,34 @@ function renderStudents(students, query = '') {
 
         return `
         <div class="col-12 col-sm-6 col-lg-4">
-            <div class="card student-card h-100 shadow-sm">
+            <div class="card customer-card h-100 shadow-sm">
                 <div class="card-body p-3">
 
                     <!-- Avatar + Name row -->
                     <div class="d-flex align-items-center gap-3 mb-3">
-                        <div class="student-avatar" style="background:${bg};">
+                        <div class="customer-avatar" style="background:${bg};">
                             ${initials}
                         </div>
                         <div class="min-w-0">
-                            <div class="fw-bold student-card-name">${escapeHtml(s.name || '—')}</div>
-                            <div class="student-card-joined text-muted">Joined ${joinDate}</div>
+                            <div class="fw-bold customer-card-name">${escapeHtml(s.name || '—')}</div>
+                            <div class="customer-card-joined text-muted">Joined ${joinDate}</div>
                         </div>
                     </div>
 
                     <!-- Info rows -->
-                    <div class="student-card-info">
-                        <div class="student-info-row">
-                            <span class="student-info-icon">✉️</span>
+                    <div class="customer-card-info">
+                        <div class="customer-info-row">
+                            <span class="customer-info-icon">✉️</span>
                             <span class="text-muted small text-truncate">${escapeHtml(s.email || '—')}</span>
                         </div>
-                        <div class="student-info-row">
-                            <span class="student-info-icon">📞</span>
+                        <div class="customer-info-row">
+                            <span class="customer-info-icon">📞</span>
                             <span class="text-muted small">${s.phone_number ? escapeHtml(s.phone_number) : '<em class="text-muted">No phone</em>'}</span>
                         </div>
                     </div>
 
                     <!-- Orders badge -->
-                    <div class="student-orders-row mt-3 pt-2 border-top d-flex align-items-center justify-content-between">
+                    <div class="customer-orders-row mt-3 pt-2 border-top d-flex align-items-center justify-content-between">
                         <span class="text-muted small">Total Orders</span>
                         <span class="badge ${hasOrders ? 'bg-primary' : 'bg-secondary bg-opacity-50 text-secondary'} rounded-pill px-3">
                             ${s.order_count || 0} order${s.order_count !== 1 ? 's' : ''}
@@ -863,7 +863,7 @@ function renderStudents(students, query = '') {
         <div class="p-3">
             <div class="row g-3">${cards}</div>
             <p class="text-muted small mt-3 mb-0 text-end">
-                ${students.length} student${students.length !== 1 ? 's' : ''} registered
+                ${customers.length} customer${customers.length !== 1 ? 's' : ''} registered
             </p>
         </div>
     `;

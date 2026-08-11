@@ -1,5 +1,5 @@
-// ============================================================
-// student.js  --  Order2Me Student Page
+﻿// ============================================================
+// customer.js  --  Order2Me Customer Page
 // ============================================================
 // Handles:
 //   1. Loading menu from Supabase
@@ -11,7 +11,7 @@
 // ============================================================
 
 // ── Owner payment number — fetched from DB at runtime ────────
-let ownerPhoneNumber = null; // loaded in initStudentPage()
+let ownerPhoneNumber = null; // loaded in initCustomerPage()
 const NOTIFICATION_PREF_KEY = 'order2me-notifications-enabled';
 
 function isNotificationPreferenceEnabled() {
@@ -137,7 +137,7 @@ function showToast(message, type = 'info') {
 }
 
 // ── State ────────────────────────────────────────────────────
-let currentStudentProfile = null;
+let currentCustomerProfile = null;
 let cart                  = [];
 let selectedPaymentMethod = null; // 'KBZPay' | 'WavePay' | 'Cash'
 let allMenuItems          = [];   // full list for client-side category filter
@@ -305,15 +305,15 @@ function setupCategoryFilters() {
     });
 }
 
-// -- Student Orders -------------------------------------------
+// -- Customer Orders -------------------------------------------
 
-async function loadStudentOrders() {
+async function loadCustomerOrders() {
     const container = document.getElementById('orders-container');
     if (!container) return;
 
     container.innerHTML = '<p class="text-muted">Loading today\'s orders...</p>';
 
-    if (!currentStudentProfile) return;
+    if (!currentCustomerProfile) return;
 
     // Only fetch orders placed TODAY (local time)
     const { start, end } = getTodayBounds();
@@ -338,13 +338,13 @@ async function loadStudentOrders() {
                 screenshot_url
             )
         `)
-        .eq('student_id', currentStudentProfile.id)
+        .eq('customer_id', currentCustomerProfile.id)
         .gte('created_at', startISO)
         .lte('created_at', endISO)
         .order('created_at', { ascending: false });
 
     if (error) {
-        console.error('Error loading student orders:', error);
+        console.error('Error loading customer orders:', error);
         container.innerHTML = `<p class="text-danger">Error loading your orders: ${escapeHtml(error.message)}</p>`;
         return;
     }
@@ -464,7 +464,7 @@ function displayTodayOrders(orders) {
 }
 
 // Legacy alias kept for compatibility (called on order success refresh)
-function displayStudentOrders(orders) {
+function displayCustomerOrders(orders) {
     displayTodayOrders(orders);
 }
 
@@ -698,7 +698,7 @@ function openCheckout() {
     document.getElementById('kbz-amount').textContent  = total;
     document.getElementById('wave-amount').textContent = total;
 
-    // Set owner numbers (fetched from DB in initStudentPage)
+    // Set owner numbers (fetched from DB in initCustomerPage)
     const displayNum = ownerPhoneNumber || '—';
     document.getElementById('kbz-display-number').textContent  = displayNum;
     document.getElementById('wave-display-number').textContent = displayNum;
@@ -831,7 +831,7 @@ async function submitCheckout() {
     const screenshotFile = screenshotInput.files[0];
     if (!screenshotFile) {
         if (selectedPaymentMethod === 'KBZPay' || selectedPaymentMethod === 'WavePay') {
-            // Open the payment app first so the student can complete payment and return with a screenshot.
+            // Open the payment app first so the customer can complete payment and return with a screenshot.
             openPaymentApp(selectedPaymentMethod);
             return;
         }
@@ -888,8 +888,8 @@ async function createOrder(deliveryNote, paymentMethod, screenshotFile) {
     const { data: orderData, error: orderError } = await supabaseClient
         .from('orders')
         .insert({
-            student_id:    currentStudentProfile.id,
-            student_name:  currentStudentProfile.name,
+            customer_id:    currentCustomerProfile.id,
+            customer_name:  currentCustomerProfile.name,
             total_amount:  totalAmount,
             delivery_note: deliveryNote,
             status:        'pending'
@@ -965,7 +965,7 @@ async function createOrder(deliveryNote, paymentMethod, screenshotFile) {
 
     setTimeout(() => {
         new bootstrap.Modal(document.getElementById('successModal')).show();
-        loadStudentOrders(); // refresh orders list
+        loadCustomerOrders(); // refresh orders list
     }, 300);
 
     console.log('Order placed successfully. Order ID:', orderId, 'Payment:', paymentMethod);
@@ -1071,12 +1071,12 @@ function setProfileLoadingState(show) {
     if (contentEl) contentEl.classList.toggle('d-none', show);
 }
 
-async function loadStudentProfileView() {
+async function loadCustomerProfileView() {
     const loadingEl = document.getElementById('profile-view-loading');
     const contentEl = document.getElementById('profile-view-content');
     const statusEl = document.getElementById('profile-view-status');
 
-    if (!currentStudentProfile) return;
+    if (!currentCustomerProfile) return;
 
     setProfileLoadingState(true);
     clearProfileAlert(statusEl);
@@ -1086,12 +1086,12 @@ async function loadStudentProfileView() {
         const { data, error } = await supabaseClient
             .from('users')
             .select('id, name, email, phone_number, role')
-            .eq('id', currentStudentProfile.id)
+            .eq('id', currentCustomerProfile.id)
             .single();
 
         if (error) throw error;
 
-        currentStudentProfile = data;
+        currentCustomerProfile = data;
         const nameEl = document.getElementById('profile-view-name');
         const phoneEl = document.getElementById('profile-view-phone');
         const emailEl = document.getElementById('profile-view-email');
@@ -1105,7 +1105,7 @@ async function loadStudentProfileView() {
         setProfileLoadingState(false);
         if (contentEl) contentEl.classList.remove('d-none');
     } catch (error) {
-        console.error('Error loading student profile view:', error);
+        console.error('Error loading customer profile view:', error);
         setProfileLoadingState(false);
         if (contentEl) contentEl.classList.add('d-none');
         setProfileAlert(statusEl, 'danger', error?.message || 'Unable to load your profile right now.');
@@ -1121,9 +1121,9 @@ function openEditProfileDialog() {
     const emailInput = document.getElementById('profile-email-readonly');
     const statusEl = document.getElementById('profile-edit-status');
 
-    if (nameInput) nameInput.value = currentStudentProfile?.name || '';
-    if (phoneInput) phoneInput.value = currentStudentProfile?.phone_number || '';
-    if (emailInput) emailInput.value = currentStudentProfile?.email || '';
+    if (nameInput) nameInput.value = currentCustomerProfile?.name || '';
+    if (phoneInput) phoneInput.value = currentCustomerProfile?.phone_number || '';
+    if (emailInput) emailInput.value = currentCustomerProfile?.email || '';
     clearProfileAlert(statusEl);
 
     const viewModalInstance = bootstrap.Modal.getInstance(document.getElementById('profileViewModal'));
@@ -1133,7 +1133,7 @@ function openEditProfileDialog() {
     editModalInstance.show();
 }
 
-function validateStudentProfileInputs(name, phone) {
+function validateCustomerProfileInputs(name, phone) {
     if (!name || !name.trim()) {
         return 'Name cannot be empty.';
     }
@@ -1150,8 +1150,8 @@ function validateStudentProfileInputs(name, phone) {
     return null;
 }
 
-async function saveStudentProfile() {
-    if (!currentStudentProfile) return;
+async function saveCustomerProfile() {
+    if (!currentCustomerProfile) return;
 
     const nameInput = document.getElementById('profile-name-input');
     const phoneInput = document.getElementById('profile-phone-input');
@@ -1161,7 +1161,7 @@ async function saveStudentProfile() {
     const name = nameInput?.value.trim() || '';
     const phone = phoneInput?.value.trim() || '';
 
-    const validationError = validateStudentProfileInputs(name, phone);
+    const validationError = validateCustomerProfileInputs(name, phone);
     if (validationError) {
         setProfileAlert(statusEl, 'danger', validationError);
         return;
@@ -1181,20 +1181,20 @@ async function saveStudentProfile() {
                 name,
                 phone_number: phone
             })
-            .eq('id', currentStudentProfile.id)
+            .eq('id', currentCustomerProfile.id)
             .select('id, name, email, phone_number, role')
             .single();
 
         if (error) throw error;
 
-        currentStudentProfile = data;
+        currentCustomerProfile = data;
         const profileNameEl = document.getElementById('profile-name');
         if (profileNameEl) profileNameEl.textContent = data.name || '—';
 
         const editModalInstance = bootstrap.Modal.getInstance(document.getElementById('profileEditModal'));
         if (editModalInstance) editModalInstance.hide();
 
-        await loadStudentProfileView();
+        await loadCustomerProfileView();
 
         const viewModalEl = document.getElementById('profileViewModal');
         const viewModalStatusEl = document.getElementById('profile-view-status');
@@ -1208,7 +1208,7 @@ async function saveStudentProfile() {
             saveBtn.textContent = 'Save Changes';
         }
     } catch (error) {
-        console.error('Error updating student profile:', error);
+        console.error('Error updating customer profile:', error);
         setProfileAlert(statusEl, 'danger', error?.message || 'Unable to update your profile. Please try again.');
         showToast(error?.message || 'Unable to update your profile. Please try again.', 'danger');
         if (saveBtn) {
@@ -1219,24 +1219,24 @@ async function saveStudentProfile() {
 }
 
 // -- Init -----------------------------------------------------
-async function initStudentPage() {
-    currentStudentProfile = await requireStudent();
-    if (!currentStudentProfile) return; // requireStudent redirects to login
+async function initCustomerPage() {
+    currentCustomerProfile = await requireCustomer();
+    if (!currentCustomerProfile) return; // requireCustomer redirects to login
 
     // Populate profile dropdown name
     const profileNameEl = document.getElementById('profile-name');
-    if (profileNameEl && currentStudentProfile.name) {
-        profileNameEl.textContent = currentStudentProfile.name;
+    if (profileNameEl && currentCustomerProfile.name) {
+        profileNameEl.textContent = currentCustomerProfile.name;
     }
 
     // Load owner phone number from DB (used for KBZPay / WavePay deep links)
     await fetchOwnerPhone();
 
     loadMenu();
-    loadStudentOrders();
+    loadCustomerOrders();
 
     // Subscribe to Realtime order status changes
-    subscribeStudentRealtime();
+    subscribeCustomerRealtime();
 }
 
 // ── Realtime: listen for status changes on own orders ───────
@@ -1247,22 +1247,22 @@ const STATUS_MESSAGES = {
     cancelled: { msg: '❌ Your order has been cancelled.',   type: 'danger'  },
 };
 
-function subscribeStudentRealtime() {
-    if (!currentStudentProfile) return;
+function subscribeCustomerRealtime() {
+    if (!currentCustomerProfile) return;
 
-    if (studentRealtimeChannel) {
-        supabaseClient.removeChannel(studentRealtimeChannel);
+    if (customerRealtimeChannel) {
+        supabaseClient.removeChannel(customerRealtimeChannel);
     }
 
-    studentRealtimeChannel = supabaseClient
-        .channel('student-orders-realtime')
+    customerRealtimeChannel = supabaseClient
+        .channel('customer-orders-realtime')
         .on(
             'postgres_changes',
             {
                 event: 'UPDATE',
                 schema: 'public',
                 table: 'orders',
-                filter: `student_id=eq.${currentStudentProfile.id}`
+                filter: `customer_id=eq.${currentCustomerProfile.id}`
             },
             (payload) => {
                 const updated = payload.new;
@@ -1273,7 +1273,7 @@ function subscribeStudentRealtime() {
                 if (old && old.status === updated.status) return;
 
                 // Refresh today's orders UI
-                loadStudentOrders();
+                loadCustomerOrders();
 
                 // Show notification for the new status
                 const info = STATUS_MESSAGES[updated.status];
@@ -1288,9 +1288,9 @@ function subscribeStudentRealtime() {
 
 // Cleanup Realtime on page unload
 window.addEventListener('beforeunload', () => {
-    if (studentRealtimeChannel) {
-        supabaseClient.removeChannel(studentRealtimeChannel);
+    if (customerRealtimeChannel) {
+        supabaseClient.removeChannel(customerRealtimeChannel);
     }
 });
 
-document.addEventListener('DOMContentLoaded', initStudentPage);
+document.addEventListener('DOMContentLoaded', initCustomerPage);

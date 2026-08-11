@@ -1,4 +1,4 @@
-async function getCurrentUser() {
+﻿async function getCurrentUser() {
     const { data } = await supabaseClient.auth.getSession();
     return data?.session?.user ?? null;
 }
@@ -28,7 +28,7 @@ async function getCurrentProfile() {
                 name: pending.name,
                 email: user.email,
                 phone_number: pending.phone || null,
-                role: pending.role || 'student'
+                role: pending.role || 'customer'
             };
 
             const { data: inserted, error: insertError } = await supabaseClient
@@ -67,8 +67,8 @@ async function requireRole(requiredRole) {
     return profile;
 }
 
-async function requireStudent() {
-    return await requireRole('student');
+async function requireCustomer() {
+    return await requireRole('customer');
 }
 
 async function requireOwner() {
@@ -84,7 +84,7 @@ async function signOut() {
     window.location.href = 'login.html';
 }
 
-async function signUpStudent(name, email, phone, password) {
+async function signUpCustomer(name, email, phone, password) {
     const { data, error } = await supabaseClient.auth.signUp({ email, password });
     if (error) return { error };
 
@@ -95,7 +95,7 @@ async function signUpStudent(name, email, phone, password) {
             name,
             email,
             phone_number: phone || null,
-            role: 'student'
+            role: 'customer'
         };
 
         const { error: profileError } = await supabaseClient
@@ -112,7 +112,7 @@ async function signUpStudent(name, email, phone, password) {
 
     // Case 2: Email confirmation is required — save pending profile info locally
     // so we can create the DB row after the user confirms and logs in.
-    const pendingProfile = { name, email, phone: phone || null, role: 'student' };
+    const pendingProfile = { name, email, phone: phone || null, role: 'customer' };
     localStorage.setItem('pendingProfile_' + email, JSON.stringify(pendingProfile));
 
     return { emailConfirmationRequired: true };

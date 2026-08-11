@@ -1,4 +1,4 @@
-// ============================================================
+﻿// ============================================================
 // sw.js  --  Order2Me Service Worker
 // ============================================================
 // Provides:
@@ -14,7 +14,7 @@ const APP_SHELL = [
     './index.html',
     './login.html',
     './signup.html',
-    './student.html',
+    './customer.html',
     './owner.html',
     './history.html',
     './manifest.json',
@@ -22,7 +22,7 @@ const APP_SHELL = [
     './images/logo.png',
     './js/supabase.js',
     './js/auth.js',
-    './js/student.js',
+    './js/customer.js',
     './js/owner.js',
     './js/history.js',
 ];

@@ -1,10 +1,10 @@
-async function initLoginPage() {
+﻿async function initLoginPage() {
     const form = document.getElementById('login-form');
     const status = document.getElementById('login-status');
 
     const profile = await getCurrentProfile();
     if (profile) {
-        window.location.href = profile.role === 'owner' ? 'owner.html' : 'student.html';
+        window.location.href = profile.role === 'owner' ? 'owner.html' : 'customer.html';
         return;
     }
 
@@ -41,7 +41,7 @@ async function initLoginPage() {
         if (userProfile.role === 'owner') {
             window.location.href = 'owner.html';
         } else {
-            window.location.href = 'student.html';
+            window.location.href = 'customer.html';
         }
     });
 }

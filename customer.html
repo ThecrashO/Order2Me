@@ -1,11 +1,11 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <title>Order2Me — Student</title>
+    <title>Order2Me — Customer</title>
 
     <!-- PWA -->
     <link rel="manifest" href="manifest.json">
@@ -17,7 +17,8 @@
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap"
+        rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="css/style.css">
 </head>
@@ -28,7 +29,8 @@
     <nav class="navbar navbar-dark bg-primary">
         <div class="container-fluid px-3">
             <!-- Hamburger toggle -->
-            <button id="sidebar-toggle" class="sidebar-hamburger" onclick="openSidebar()" aria-label="Open navigation" aria-expanded="false" aria-controls="student-sidebar">
+            <button id="sidebar-toggle" class="sidebar-hamburger" onclick="openSidebar()" aria-label="Open navigation"
+                aria-expanded="false" aria-controls="customer-sidebar">
                 <span></span>
                 <span></span>
                 <span></span>
@@ -37,28 +39,24 @@
                 <span class="o2m-logo-nav" aria-hidden="true">
                     <img src="images/logo.png" alt="Order2Me logo" class="o2m-logo-image">
                 </span>
-                <span class="navbar-role-text">Student</span>
+                <span class="navbar-role-text">Customer</span>
             </div>
 
             <!-- Profile dropdown -->
             <div class="profile-dropdown ms-auto" id="profile-dropdown-wrap">
-                <button class="profile-avatar-btn" id="profile-avatar-btn"
-                    onclick="toggleProfileDropdown()"
-                    aria-haspopup="true" aria-expanded="false"
-                    aria-controls="profile-dropdown-menu"
+                <button class="profile-avatar-btn" id="profile-avatar-btn" onclick="toggleProfileDropdown()"
+                    aria-haspopup="true" aria-expanded="false" aria-controls="profile-dropdown-menu"
                     aria-label="Open profile menu">
                     <!-- User silhouette icon -->
-                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none"
-                        stroke="currentColor" stroke-width="2"
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
                         stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
-                        <circle cx="12" cy="7" r="4"/>
+                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                        <circle cx="12" cy="7" r="4" />
                     </svg>
                     <span class="profile-avatar-caret" aria-hidden="true">
-                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none"
-                            stroke="currentColor" stroke-width="2.5"
-                            stroke-linecap="round" stroke-linejoin="round">
-                            <polyline points="6 9 12 15 18 9"/>
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="6 9 12 15 18 9" />
                         </svg>
                     </span>
                 </button>
@@ -69,16 +67,15 @@
                     <!-- User info header -->
                     <div class="profile-dropdown-header">
                         <div class="profile-dropdown-avatar">
-                            <svg width="26" height="26" viewBox="0 0 24 24" fill="none"
-                                stroke="currentColor" stroke-width="1.8"
-                                stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
-                                <circle cx="12" cy="7" r="4"/>
+                            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                                <circle cx="12" cy="7" r="4" />
                             </svg>
                         </div>
                         <div class="profile-dropdown-userinfo">
                             <div class="profile-dropdown-name" id="profile-name">—</div>
-                            <div class="profile-dropdown-role">Student</div>
+                            <div class="profile-dropdown-role">Customer</div>
                         </div>
                     </div>
 
@@ -86,20 +83,19 @@
 
                     <!-- Menu items -->
                     <button class="profile-dropdown-item" role="menuitem" onclick="openProfileInfo()">
-                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none"
-                            stroke="currentColor" stroke-width="2"
-                            stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
-                            <circle cx="12" cy="7" r="4"/>
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                            <circle cx="12" cy="7" r="4" />
                         </svg>
                         My Profile
                     </button>
                     <button class="profile-dropdown-item" role="menuitem" onclick="openSettings()">
-                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none"
-                            stroke="currentColor" stroke-width="2"
-                            stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                            <circle cx="12" cy="12" r="3"/>
-                            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <circle cx="12" cy="12" r="3" />
+                            <path
+                                d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
                         </svg>
                         Settings
                     </button>
@@ -108,12 +104,11 @@
 
                     <!-- Sign out -->
                     <button class="profile-dropdown-item profile-dropdown-signout" role="menuitem" onclick="signOut()">
-                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none"
-                            stroke="currentColor" stroke-width="2"
-                            stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
-                            <polyline points="16 17 21 12 16 7"/>
-                            <line x1="21" y1="12" x2="9" y2="12"/>
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+                            <polyline points="16 17 21 12 16 7" />
+                            <line x1="21" y1="12" x2="9" y2="12" />
                         </svg>
                         Sign Out
                     </button>
@@ -126,18 +121,20 @@
     <div id="sidebar-backdrop" class="sidebar-backdrop" onclick="closeSidebar()" aria-hidden="true"></div>
 
     <!-- Sidebar + Main layout wrapper -->
-    <div class="student-layout">
+    <div class="customer-layout">
 
         <!-- ── Sidebar (fixed overlay) ── -->
-        <aside class="student-sidebar" id="student-sidebar" aria-label="Navigation menu" role="dialog" aria-modal="true">
+        <aside class="customer-sidebar" id="customer-sidebar" aria-label="Navigation menu" role="dialog"
+            aria-modal="true">
 
             <!-- Sidebar header with close button -->
             <div class="sidebar-header">
                 <span class="sidebar-logo">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                        <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/>
-                        <line x1="3" y1="6" x2="21" y2="6"/>
-                        <path d="M16 10a4 4 0 0 1-8 0"/>
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
+                        stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" />
+                        <line x1="3" y1="6" x2="21" y2="6" />
+                        <path d="M16 10a4 4 0 0 1-8 0" />
                     </svg>
                     <span class="o2m-logo-sidebar" aria-hidden="true">
                         <img src="images/logo.png" alt="Order2Me logo" class="o2m-logo-image">
@@ -146,27 +143,30 @@
                 <button class="sidebar-close-btn" onclick="closeSidebar()" aria-label="Close sidebar">&times;</button>
             </div>
 
-            <nav class="sidebar-nav" aria-label="Student navigation">
+            <nav class="sidebar-nav" aria-label="Customer navigation">
                 <button class="sidebar-nav-item active" id="nav-menu" onclick="showPanel('menu')" aria-current="page">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                        <path d="M3 12h18M3 6h18M3 18h18"/>
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <path d="M3 12h18M3 6h18M3 18h18" />
                     </svg>
                     <span>Today's Menu</span>
                 </button>
                 <button class="sidebar-nav-item" id="nav-orders" onclick="showPanel('orders')">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                        <path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/>
-                        <rect x="9" y="3" width="6" height="4" rx="1"/>
-                        <path d="M9 12h6M9 16h4"/>
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2" />
+                        <rect x="9" y="3" width="6" height="4" rx="1" />
+                        <path d="M9 12h6M9 16h4" />
                     </svg>
                     <span>Today's Orders</span>
                 </button>
                 <!-- Order History panel button -->
                 <button class="sidebar-nav-item" id="nav-history" onclick="showPanel('history')">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                        <path d="M3 3v5h5"/>
-                        <path d="M3.05 13A9 9 0 1 0 6 5.3L3 8"/>
-                        <path d="M12 7v5l4 2"/>
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <path d="M3 3v5h5" />
+                        <path d="M3.05 13A9 9 0 1 0 6 5.3L3 8" />
+                        <path d="M12 7v5l4 2" />
                     </svg>
                     <span>Order History</span>
                 </button>
@@ -174,27 +174,23 @@
         </aside>
 
         <!-- ── Main content ── -->
-        <main class="student-main">
+        <main class="customer-main">
 
             <!-- Panel: Menu -->
-            <section id="panel-menu" class="student-panel active-panel">
+            <section id="panel-menu" class="customer-panel active-panel">
 
                 <div class="panel-header">
                     <h2 class="panel-title">Today's Menu</h2>
                     <div class="input-group" style="max-width:300px;">
                         <span class="input-group-text bg-white border-end-0">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" fill="currentColor" class="text-muted" viewBox="0 0 16 16">
-                                <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.099zm-5.242 1.156a5.5 5.5 0 1 1 0-11 5.5 5.5 0 0 1 0 11z"/>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" fill="currentColor"
+                                class="text-muted" viewBox="0 0 16 16">
+                                <path
+                                    d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.099zm-5.242 1.156a5.5 5.5 0 1 1 0-11 5.5 5.5 0 0 1 0 11z" />
                             </svg>
                         </span>
-                        <input
-                            type="search"
-                            id="menu-search"
-                            class="form-control border-start-0 ps-0"
-                            placeholder="Search menu..."
-                            oninput="filterMenu(this.value)"
-                            autocomplete="off"
-                        >
+                        <input type="search" id="menu-search" class="form-control border-start-0 ps-0"
+                            placeholder="Search menu..." oninput="filterMenu(this.value)" autocomplete="off">
                     </div>
                 </div>
 
@@ -205,8 +201,10 @@
                     <button class="btn btn-outline-info category-filter-btn" data-category="drink">🥤 Drink</button>
                     <button class="btn btn-outline-success category-filter-btn" data-category="salad">🥗 Salad</button>
                     <button class="btn btn-outline-warning category-filter-btn" data-category="snack">🍿 Snack</button>
-                    <button class="btn btn-outline-danger category-filter-btn" data-category="dessert">🍰 Dessert</button>
-                    <button class="btn btn-outline-secondary category-filter-btn" data-category="other">📦 Other</button>
+                    <button class="btn btn-outline-danger category-filter-btn" data-category="dessert">🍰
+                        Dessert</button>
+                    <button class="btn btn-outline-secondary category-filter-btn" data-category="other">📦
+                        Other</button>
                 </div>
 
                 <div class="row" id="menu-container"></div>
@@ -214,23 +212,27 @@
             </section>
 
             <!-- Panel: Your Orders (Today Only) -->
-            <section id="panel-orders" class="student-panel">
+            <section id="panel-orders" class="customer-panel">
 
                 <div class="panel-header" style="flex-wrap:wrap;gap:10px;">
                     <div>
                         <h2 class="panel-title mb-1">📋 Today's Orders</h2>
-                        <div class="today-date-pill" id="student-today-date-pill">
-                            📅 <span id="student-today-label">—</span>
+                        <div class="today-date-pill" id="customer-today-date-pill">
+                            📅 <span id="customer-today-label">—</span>
                         </div>
                     </div>
                     <div class="d-flex gap-2 align-items-center ms-auto flex-wrap">
                         <button class="btn btn-history btn-sm" onclick="showPanel('history')">
                             📜 View Past Orders
                         </button>
-                        <button id="refresh-orders-btn" class="btn btn-sm btn-outline-secondary" onclick="loadStudentOrders()">
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-right:4px;" aria-hidden="true">
-                                <path d="M1 4v6h6"/><path d="M23 20v-6h-6"/>
-                                <path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4-4.64 4.36A9 9 0 0 1 3.51 15"/>
+                        <button id="refresh-orders-btn" class="btn btn-sm btn-outline-secondary"
+                            onclick="loadCustomerOrders()">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"
+                                style="margin-right:4px;" aria-hidden="true">
+                                <path d="M1 4v6h6" />
+                                <path d="M23 20v-6h-6" />
+                                <path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4-4.64 4.36A9 9 0 0 1 3.51 15" />
                             </svg>
                             Refresh
                         </button>
@@ -244,14 +246,14 @@
             </section>
 
             <!-- Panel: Order History -->
-            <section id="panel-history" class="student-panel">
+            <section id="panel-history" class="customer-panel">
 
                 <div class="panel-header">
                     <h2 class="panel-title">📜 Order History</h2>
                 </div>
 
                 <!-- History content rendered by JS -->
-                <div id="student-hist-content">
+                <div id="customer-hist-content">
                     <div class="hist-loading">
                         <div class="hist-spinner"></div>
                         <span>Loading history...</span>
@@ -264,14 +266,15 @@
 
     </div>
 
-    <div class="toast-container position-fixed bottom-0 end-0 p-3" id="app-toast-container" aria-live="polite" aria-atomic="true"></div>
+    <div class="toast-container position-fixed bottom-0 end-0 p-3" id="app-toast-container" aria-live="polite"
+        aria-atomic="true"></div>
 
     <script>
         /* ── Sidebar open / close ─────────────────────────────── */
         function openSidebar() {
-            const sidebar   = document.getElementById('student-sidebar');
-            const backdrop  = document.getElementById('sidebar-backdrop');
-            const toggle    = document.getElementById('sidebar-toggle');
+            const sidebar = document.getElementById('customer-sidebar');
+            const backdrop = document.getElementById('sidebar-backdrop');
+            const toggle = document.getElementById('sidebar-toggle');
             sidebar.classList.add('sidebar-open');
             backdrop.classList.add('sidebar-backdrop-show');
             toggle.setAttribute('aria-expanded', 'true');
@@ -279,9 +282,9 @@
         }
 
         function closeSidebar() {
-            const sidebar   = document.getElementById('student-sidebar');
-            const backdrop  = document.getElementById('sidebar-backdrop');
-            const toggle    = document.getElementById('sidebar-toggle');
+            const sidebar = document.getElementById('customer-sidebar');
+            const backdrop = document.getElementById('sidebar-backdrop');
+            const toggle = document.getElementById('sidebar-toggle');
             sidebar.classList.remove('sidebar-open');
             backdrop.classList.remove('sidebar-backdrop-show');
             toggle.setAttribute('aria-expanded', 'false');
@@ -298,7 +301,7 @@
             if (!['menu', 'orders', 'history'].includes(name)) return;
 
             // Switch panels
-            document.querySelectorAll('.student-panel').forEach(p => p.classList.remove('active-panel'));
+            document.querySelectorAll('.customer-panel').forEach(p => p.classList.remove('active-panel'));
             const target = document.getElementById('panel-' + name);
             if (target) target.classList.add('active-panel');
 
@@ -317,28 +320,28 @@
             closeSidebar();
 
             // Load data on demand
-            if (name === 'orders') loadStudentOrders();
-            if (name === 'history') initStudentHistoryPanel();
+            if (name === 'orders') loadCustomerOrders();
+            if (name === 'history') initCustomerHistoryPanel();
         }
 
         // Set today's date label
         (function setTodayLabel() {
-            const el = document.getElementById('student-today-label');
+            const el = document.getElementById('customer-today-label');
             if (!el) return;
             el.textContent = new Date().toLocaleDateString('en-GB', {
                 weekday: 'short', day: '2-digit', month: 'short', year: 'numeric'
             });
         })();
 
-        const savedStudentPanel = window.location.hash.replace('#', '').trim();
-        if (['menu', 'orders', 'history'].includes(savedStudentPanel)) {
-            showPanel(savedStudentPanel);
+        const savedCustomerPanel = window.location.hash.replace('#', '').trim();
+        if (['menu', 'orders', 'history'].includes(savedCustomerPanel)) {
+            showPanel(savedCustomerPanel);
         }
 
         /* ── Profile Dropdown ─────────────────────────────────── */
         function toggleProfileDropdown() {
             const menu = document.getElementById('profile-dropdown-menu');
-            const btn  = document.getElementById('profile-avatar-btn');
+            const btn = document.getElementById('profile-avatar-btn');
             const isOpen = menu.classList.contains('dropdown-open');
             if (isOpen) {
                 closeProfileDropdown();
@@ -351,7 +354,7 @@
 
         function closeProfileDropdown() {
             const menu = document.getElementById('profile-dropdown-menu');
-            const btn  = document.getElementById('profile-avatar-btn');
+            const btn = document.getElementById('profile-avatar-btn');
             if (!menu) return;
             menu.classList.remove('dropdown-open');
             menu.setAttribute('aria-hidden', 'true');
@@ -369,7 +372,7 @@
             if (e.key === 'Escape') { closeSidebar(); closeProfileDropdown(); }
         });
 
-        // Open the real student profile details modal
+        // Open the real customer profile details modal
         async function openProfileInfo() {
             closeProfileDropdown();
             const modalEl = document.getElementById('profileViewModal');
@@ -377,7 +380,7 @@
 
             const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
             try {
-                await loadStudentProfileView();
+                await loadCustomerProfileView();
                 modal.show();
             } catch (error) {
                 console.error('Failed to open profile view:', error);
@@ -397,7 +400,8 @@
     <div class="modal fade" id="settingsModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
-                <div class="modal-header border-0 px-4 pt-4 pb-3" style="background:linear-gradient(135deg,#f8fafc,#eef2ff);">
+                <div class="modal-header border-0 px-4 pt-4 pb-3"
+                    style="background:linear-gradient(135deg,#f8fafc,#eef2ff);">
                     <div>
                         <h5 class="modal-title mb-0">Settings</h5>
                         <div class="small text-muted">Manage your app preferences</div>
@@ -410,16 +414,19 @@
                             <div class="d-flex align-items-center justify-content-between gap-3">
                                 <div>
                                     <div class="fw-semibold">Browser Notifications</div>
-                                    <div class="small text-muted" id="notification-setting-status">Turn on alerts when the app is in the background.</div>
+                                    <div class="small text-muted" id="notification-setting-status">Turn on alerts when
+                                        the app is in the background.</div>
                                 </div>
                                 <div class="form-check form-switch m-0">
-                                    <input class="form-check-input" type="checkbox" role="switch" id="notification-toggle" onchange="toggleNotificationPreference()">
+                                    <input class="form-check-input" type="checkbox" role="switch"
+                                        id="notification-toggle" onchange="toggleNotificationPreference()">
                                 </div>
                             </div>
                         </div>
                     </div>
                     <div class="small text-muted">
-                        When this is enabled, Order2Me can play a short sound and show a browser notification only when the app is not active in the foreground.
+                        When this is enabled, Order2Me can play a short sound and show a browser notification only when
+                        the app is not active in the foreground.
                     </div>
                 </div>
                 <div class="modal-footer border-0 px-4 pb-4 pt-0">
@@ -433,10 +440,11 @@
     <div class="modal fade" id="profileViewModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
-                <div class="modal-header border-0 px-4 pt-4 pb-3" style="background:linear-gradient(135deg,#fff7ed,#fffaf6);">
+                <div class="modal-header border-0 px-4 pt-4 pb-3"
+                    style="background:linear-gradient(135deg,#fff7ed,#fffaf6);">
                     <div class="d-flex align-items-center gap-3">
                         <div class="rounded-circle d-flex align-items-center justify-content-center text-white fw-bold"
-                             style="width:46px;height:46px;background:linear-gradient(135deg,#f97316,#f43f5e);">
+                            style="width:46px;height:46px;background:linear-gradient(135deg,#f97316,#f43f5e);">
                             👤
                         </div>
                         <div>
@@ -472,9 +480,11 @@
                         </div>
                     </div>
                 </div>
-                <div class="modal-footer border-0 px-4 pb-4 pt-0" style="background:linear-gradient(180deg,#fffaf6 0%, #ffffff 100%);">
+                <div class="modal-footer border-0 px-4 pb-4 pt-0"
+                    style="background:linear-gradient(180deg,#fffaf6 0%, #ffffff 100%);">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                    <button type="button" class="btn btn-primary" id="profile-open-edit-btn" onclick="openEditProfileDialog()">Edit Profile</button>
+                    <button type="button" class="btn btn-primary" id="profile-open-edit-btn"
+                        onclick="openEditProfileDialog()">Edit Profile</button>
                 </div>
             </div>
         </div>
@@ -484,7 +494,8 @@
     <div class="modal fade" id="profileEditModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
-                <div class="modal-header border-0 px-4 pt-4 pb-3" style="background:linear-gradient(135deg,#eef6ff,#f8fbff);">
+                <div class="modal-header border-0 px-4 pt-4 pb-3"
+                    style="background:linear-gradient(135deg,#eef6ff,#f8fbff);">
                     <div>
                         <h5 class="modal-title mb-0">Edit Profile</h5>
                         <div class="small text-muted">Update your public contact info</div>
@@ -507,9 +518,11 @@
                         <div class="form-text text-muted mt-1">Email is read-only and cannot be changed here.</div>
                     </div>
                 </div>
-                <div class="modal-footer border-0 px-4 pb-4 pt-0" style="background:linear-gradient(180deg,#f8fbff 0%, #ffffff 100%);">
+                <div class="modal-footer border-0 px-4 pb-4 pt-0"
+                    style="background:linear-gradient(180deg,#f8fbff 0%, #ffffff 100%);">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="button" class="btn btn-primary" id="profile-save-btn" onclick="saveStudentProfile()">Save Changes</button>
+                    <button type="button" class="btn btn-primary" id="profile-save-btn"
+                        onclick="saveCustomerProfile()">Save Changes</button>
                 </div>
             </div>
         </div>
@@ -564,8 +577,7 @@
                             📍 Delivery Location &amp; Note <span class="text-danger">*</span>
                         </label>
                         <textarea id="checkout-note" class="form-control" rows="3"
-                            placeholder="Where to deliver? e.g. Room 201, Building A&#10;Any food preferences? e.g. No spicy, extra rice"
-                            maxlength="300"></textarea>
+                            placeholder="Where to deliver and notes?" maxlength="300"></textarea>
                         <div class="form-text text-muted">Tell the owner where you are and any special requests.</div>
                         <div id="checkout-note-error" class="text-danger small mt-1 d-none">
                             ⚠ Please enter your delivery location.
@@ -601,7 +613,8 @@
 
                         <!-- KBZPay -->
                         <div id="kbzpay-panel" class="d-none">
-                            <div class="border border-primary rounded-3 p-3" style="background:linear-gradient(135deg,#e8f0fe,#f0f4ff)">
+                            <div class="border border-primary rounded-3 p-3"
+                                style="background:linear-gradient(135deg,#e8f0fe,#f0f4ff)">
                                 <div class="d-flex align-items-center mb-2">
                                     <span style="font-size:24px;">📱</span>
                                     <span class="fw-bold ms-2 text-primary">KBZPay</span>
@@ -620,7 +633,8 @@
                                 <ol class="small mb-0 ps-3 text-dark">
                                     <li>Open <strong>KBZPay</strong> app on your phone</li>
                                     <li>Go to <strong>Send Money / Transfer</strong></li>
-                                    <li>Enter the number above &amp; send <strong><span class="text-primary">the exact amount</span></strong></li>
+                                    <li>Enter the number above &amp; send <strong><span class="text-primary">the exact
+                                                amount</span></strong></li>
                                     <li>Screenshot the success screen</li>
                                     <li>Upload the screenshot below ↓</li>
                                 </ol>
@@ -629,7 +643,8 @@
 
                         <!-- WavePay -->
                         <div id="wavepay-panel" class="d-none">
-                            <div class="border border-success rounded-3 p-3" style="background:linear-gradient(135deg,#e8f5e9,#f0fdf4)">
+                            <div class="border border-success rounded-3 p-3"
+                                style="background:linear-gradient(135deg,#e8f5e9,#f0fdf4)">
                                 <div class="d-flex align-items-center mb-2">
                                     <span style="font-size:24px;">🌊</span>
                                     <span class="fw-bold ms-2 text-success">WavePay</span>
@@ -648,7 +663,8 @@
                                 <ol class="small mb-0 ps-3 text-dark">
                                     <li>Open <strong>WavePay</strong> app on your phone</li>
                                     <li>Go to <strong>Send Money / Transfer</strong></li>
-                                    <li>Enter the number above &amp; send <strong><span class="text-success">the exact amount</span></strong></li>
+                                    <li>Enter the number above &amp; send <strong><span class="text-success">the exact
+                                                amount</span></strong></li>
                                     <li>Screenshot the success screen</li>
                                     <li>Upload the screenshot below ↓</li>
                                 </ol>
@@ -714,9 +730,9 @@
     <button id="cart-fab" aria-label="Open cart" onclick="toggleCartDrawer()" title="View Cart">
         <!-- Lucide-style ShoppingBag SVG -->
         <svg id="cart-fab-icon" viewBox="0 0 24 24" aria-hidden="true">
-            <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/>
-            <line x1="3" y1="6" x2="21" y2="6"/>
-            <path d="M16 10a4 4 0 0 1-8 0"/>
+            <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" />
+            <line x1="3" y1="6" x2="21" y2="6" />
+            <path d="M16 10a4 4 0 0 1-8 0" />
         </svg>
         <span id="cart-fab-badge" class="d-none">0</span>
     </button>
@@ -729,11 +745,11 @@
 
         <div id="cart-drawer-header">
             <h5>
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                     stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                    <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/>
-                    <line x1="3" y1="6" x2="21" y2="6"/>
-                    <path d="M16 10a4 4 0 0 1-8 0"/>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
+                    stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" />
+                    <line x1="3" y1="6" x2="21" y2="6" />
+                    <path d="M16 10a4 4 0 0 1-8 0" />
                 </svg>
                 Your Cart
                 <span id="drawer-count-badge" class="ms-1" style="
@@ -766,17 +782,17 @@
 
     <script src="js/supabase.js"></script>
     <script src="js/auth.js"></script>
-    <script src="js/student.js"></script>
+    <script src="js/customer.js"></script>
     <script>
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('sw.js').catch(() => {});
+                navigator.serviceWorker.register('sw.js').catch(() => { });
             });
         }
 
-        /* ── Student History Panel ─────────────────────────────── */
-        async function initStudentHistoryPanel() {
-            const container = document.getElementById('student-hist-content');
+        /* ── Customer History Panel ─────────────────────────────── */
+        async function initCustomerHistoryPanel() {
+            const container = document.getElementById('customer-hist-content');
             if (!container) return;
 
             container.innerHTML = '<div class="hist-loading"><div class="hist-spinner"></div><span>Loading history...</span></div>';
@@ -795,7 +811,7 @@
                 .select(`id, status, total_amount, delivery_note, created_at,
                     order_items ( quantity, price, menu_items (name) ),
                     payments ( payment_method )`)
-                .eq('student_id', profile.id)
+                .eq('customer_id', profile.id)
                 .lt('created_at', todayStart.toISOString())
                 .order('created_at', { ascending: false });
 
@@ -816,9 +832,9 @@
             }
 
             const STATUS_BADGE = {
-                pending:   { bg: '#f59e0b', label: 'Pending'   },
+                pending: { bg: '#f59e0b', label: 'Pending' },
                 preparing: { bg: '#06b6d4', label: 'Preparing' },
-                ready:     { bg: '#10b981', label: 'Ready'     },
+                ready: { bg: '#10b981', label: 'Ready' },
                 delivered: { bg: '#64748b', label: 'Delivered' },
                 cancelled: { bg: '#ef4444', label: 'Cancelled' },
             };
@@ -826,7 +842,7 @@
             // Group by date
             const grouped = {};
             orders.forEach(o => {
-                const k = new Date(o.created_at).toLocaleDateString('en-GB', { day:'2-digit', month:'short', year:'numeric' });
+                const k = new Date(o.created_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
                 (grouped[k] = grouped[k] || []).push(o);
             });
 
@@ -837,7 +853,7 @@
                     const s = STATUS_BADGE[order.status] || { bg: '#94a3b8', label: order.status };
                     const payment = order.payments ? (Array.isArray(order.payments) ? order.payments[0] : order.payments) : null;
                     const items = (order.order_items || []).map(oi => `${oi.menu_items?.name || 'Item'} ×${oi.quantity}`).join(' • ');
-                    const time  = new Date(order.created_at).toLocaleTimeString('en-GB', { hour:'2-digit', minute:'2-digit' });
+                    const time = new Date(order.created_at).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
                     const payBadge = payment ? `<span class="hist-badge" style="background:#1e293b;font-size:.7rem">${_hEsc(payment.payment_method)}</span>` : '';
                     html += `
                     <div class="hist-card">
@@ -862,7 +878,7 @@
         }
 
         function _hEsc(text) {
-            const map = { '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#039;' };
+            const map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' };
             return String(text).replace(/[&<>"']/g, m => map[m]);
         }
     </script>
