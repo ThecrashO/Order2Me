@@ -1898,3 +1898,392 @@ body::before {
     .hist-stats-grid { grid-template-columns: repeat(2, 1fr); }
     .hist-card { padding: 12px 12px; }
 }
+
+/* ============================================================
+   Mobile UX polish
+   ============================================================ */
+
+html {
+    -webkit-text-size-adjust: 100%;
+    scroll-behavior: smooth;
+}
+
+body {
+    overflow-x: hidden;
+}
+
+button,
+.btn,
+input,
+select,
+textarea {
+    touch-action: manipulation;
+}
+
+@media (max-width: 575.98px) {
+    body {
+        padding-bottom: env(safe-area-inset-bottom, 0px);
+        background:
+            radial-gradient(circle at top left, rgba(249,115,22,.12), transparent 32%),
+            linear-gradient(180deg, #fffaf5 0%, #f8fafc 100%);
+    }
+
+    /* Compact, safe-area-aware app header */
+    .navbar {
+        position: sticky;
+        top: 0;
+        z-index: 1030;
+        min-height: 60px;
+        padding-top: max(.45rem, env(safe-area-inset-top, 0px));
+        padding-bottom: .45rem;
+    }
+
+    .navbar .container-fluid {
+        padding-left: .75rem !important;
+        padding-right: .75rem !important;
+        flex-wrap: nowrap;
+    }
+
+    .o2m-logo-nav {
+        width: 38px;
+        height: 38px;
+        flex: 0 0 38px;
+    }
+
+    .navbar-brand {
+        min-width: 0;
+        margin-left: .45rem !important;
+        gap: .45rem !important;
+        font-size: .92rem;
+    }
+
+    .navbar-role-text {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .sidebar-hamburger,
+    .profile-avatar-btn,
+    .navbar .btn-outline-light {
+        min-width: 44px;
+        min-height: 44px;
+    }
+
+    .profile-avatar-btn {
+        justify-content: center;
+        padding: .45rem .6rem;
+    }
+
+    .profile-dropdown-menu {
+        position: fixed;
+        top: calc(64px + env(safe-area-inset-top, 0px));
+        left: .75rem;
+        right: .75rem;
+        width: auto;
+        max-width: none;
+        border-radius: 18px;
+    }
+
+    .profile-dropdown-item {
+        min-height: 48px;
+        font-size: .9rem;
+    }
+
+    /* Main content breathes without wasting scarce screen width */
+    .customer-layout,
+    .customer-main {
+        min-height: calc(100dvh - 60px);
+    }
+
+    .customer-main {
+        padding: .85rem .75rem calc(5.25rem + env(safe-area-inset-bottom, 0px));
+    }
+
+    .panel-header {
+        gap: .65rem;
+        margin-bottom: .85rem;
+        padding: .8rem;
+        border-radius: 14px;
+    }
+
+    .panel-header > *,
+    .panel-header > .d-flex,
+    .panel-header > .input-group {
+        width: 100%;
+        max-width: none !important;
+        margin-left: 0 !important;
+    }
+
+    .panel-header .btn-success {
+        min-height: 44px;
+    }
+
+    .panel-title {
+        font-size: 1.08rem;
+        line-height: 1.35;
+    }
+
+    .form-control,
+    .form-select {
+        min-height: 46px;
+        font-size: 16px; /* prevents iOS input zoom */
+    }
+
+    textarea.form-control {
+        min-height: 92px;
+    }
+
+    .btn {
+        min-height: 42px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    /* Filters stay on one thumb-friendly horizontal rail */
+    .cat-filter-strip,
+    .panel-header .d-flex.flex-wrap:has(.order-filter),
+    #owner-hist-filter-bar,
+    .hist-range-strip {
+        flex-wrap: nowrap !important;
+        overflow-x: auto;
+        overscroll-behavior-inline: contain;
+        scroll-snap-type: x proximity;
+        scrollbar-width: none;
+        padding-bottom: .35rem;
+    }
+
+    .cat-filter-strip::-webkit-scrollbar,
+    .panel-header .d-flex.flex-wrap:has(.order-filter)::-webkit-scrollbar,
+    #owner-hist-filter-bar::-webkit-scrollbar,
+    .hist-range-strip::-webkit-scrollbar {
+        display: none;
+    }
+
+    .order-filter,
+    .hist-range-btn,
+    .hist-export-btn,
+    .btn-history {
+        flex: 0 0 auto;
+        min-height: 40px;
+        scroll-snap-align: start;
+        white-space: nowrap;
+    }
+
+    /* Cards: compact but readable, with no hover jump on touch */
+    .card,
+    .menu-card,
+    .owner-menu-card,
+    .customer-card,
+    .hist-card,
+    .order-tracker-card {
+        border-radius: 14px;
+        box-shadow: 0 6px 18px rgba(15,23,42,.08) !important;
+    }
+
+    .card:hover,
+    .menu-card:hover,
+    .owner-menu-card:hover,
+    .customer-card:hover,
+    .hist-card:hover,
+    .order-tracker-card:hover {
+        transform: none;
+    }
+
+    .menu-add-btn {
+        width: 100%;
+        min-height: 40px;
+        margin-top: .15rem;
+    }
+
+    .owner-menu-img-wrap,
+    .owner-menu-card-img {
+        height: 120px;
+    }
+
+    .order-tracker-header,
+    .hist-card-header {
+        gap: .6rem;
+    }
+
+    .order-tracker-header {
+        padding: 12px;
+    }
+
+    .order-tracker-body {
+        padding: 12px;
+    }
+
+    .order-step-label {
+        font-size: .58rem;
+        letter-spacing: 0;
+    }
+
+    /* Cart controls wrap rather than squeezing item names */
+    #cart-drawer {
+        top: max(0px, env(safe-area-inset-top, 0px));
+        height: calc(100dvh - env(safe-area-inset-top, 0px));
+    }
+
+    #cart-drawer-header {
+        padding: .9rem 1rem;
+    }
+
+    #cart-drawer-body {
+        padding: .75rem 1rem;
+    }
+
+    #cart-drawer-footer {
+        padding: .85rem 1rem calc(.9rem + env(safe-area-inset-bottom, 0px));
+    }
+
+    .drawer-item {
+        flex-wrap: wrap;
+        gap: .55rem;
+    }
+
+    .drawer-item-info {
+        flex: 1 1 calc(100% - 130px);
+    }
+
+    .drawer-item-subtotal {
+        margin-left: auto;
+    }
+
+    .drawer-qty-btn,
+    .drawer-remove-btn {
+        min-width: 36px;
+        min-height: 36px;
+    }
+
+    /* Bootstrap dialogs behave like reachable mobile bottom sheets */
+    .modal-dialog,
+    .modal-dialog-centered {
+        min-height: 0;
+        margin: auto .5rem 0;
+        align-items: flex-end;
+    }
+
+    .modal.fade .modal-dialog {
+        transform: translateY(32px);
+    }
+
+    .modal.show .modal-dialog {
+        transform: none;
+    }
+
+    .modal-content {
+        max-height: calc(100dvh - max(1rem, env(safe-area-inset-top, 0px)));
+        border-radius: 22px 22px 0 0 !important;
+        overflow: hidden;
+    }
+
+    .modal-header,
+    .modal-body,
+    .modal-footer {
+        padding-left: 1rem !important;
+        padding-right: 1rem !important;
+    }
+
+    .modal-body {
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .modal-footer {
+        padding-bottom: calc(1rem + env(safe-area-inset-bottom, 0px)) !important;
+        gap: .5rem;
+    }
+
+    .modal-footer .btn {
+        flex: 1 1 140px;
+    }
+
+    /* History/date controls become full-width and readable */
+    .hist-custom-row,
+    .hist-custom-row > .d-flex {
+        width: 100%;
+    }
+
+    .hist-date-input {
+        flex: 1;
+        min-width: 0;
+        min-height: 44px;
+        font-size: 16px;
+    }
+
+    #app-toast-container {
+        left: .75rem !important;
+        right: .75rem !important;
+        bottom: calc(4.75rem + env(safe-area-inset-bottom, 0px)) !important;
+        padding: 0 !important;
+    }
+
+    #app-toast-container .toast {
+        width: 100%;
+        min-width: 0;
+        max-width: none;
+    }
+
+    .auth-shell {
+        align-items: start;
+        min-height: 100dvh;
+        padding: max(1rem, env(safe-area-inset-top, 0px)) .75rem max(1rem, env(safe-area-inset-bottom, 0px));
+    }
+
+    .auth-shell .container,
+    .auth-shell [class*="col-"] {
+        padding-left: 0;
+        padding-right: 0;
+    }
+
+    .auth-card {
+        border-radius: 20px !important;
+    }
+
+    .auth-card .card-body {
+        padding: 1.25rem 1rem;
+    }
+
+    .auth-card .btn[type="submit"] {
+        min-height: 48px;
+    }
+}
+
+@media (max-width: 379.98px) {
+    /* One column prevents unreadably narrow food cards on small phones. */
+    #menu-container > .col-6 {
+        flex: 0 0 100%;
+        max-width: 100%;
+    }
+
+    .menu-card-img {
+        height: 150px;
+    }
+
+    .navbar-role-text,
+    .profile-avatar-caret {
+        display: none;
+    }
+
+    .hist-stats-grid {
+        grid-template-columns: 1fr 1fr;
+        gap: .55rem;
+    }
+
+    .hist-stat-card {
+        padding: 12px 8px;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        scroll-behavior: auto !important;
+        animation-duration: .01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: .01ms !important;
+    }
+}
