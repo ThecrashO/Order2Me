@@ -5,6 +5,7 @@ BEGIN;
 
 ALTER TABLE public.payments
   ADD COLUMN IF NOT EXISTS screenshot_path text;
+NOTIFY pgrst, 'reload schema';
 
 INSERT INTO storage.buckets (id, name, public)
 VALUES ('payment-screenshots', 'payment-screenshots', false)

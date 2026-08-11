@@ -62,6 +62,7 @@ WHERE s.slug = 'main-canteen'
 ALTER TABLE public.menu_items ADD COLUMN IF NOT EXISTS shop_id bigint;
 ALTER TABLE public.orders ADD COLUMN IF NOT EXISTS shop_id bigint;
 ALTER TABLE public.payments ADD COLUMN IF NOT EXISTS screenshot_path text;
+NOTIFY pgrst, 'reload schema';
 
 UPDATE public.menu_items
 SET shop_id = (SELECT id FROM public.shops ORDER BY id LIMIT 1)

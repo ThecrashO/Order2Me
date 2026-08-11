@@ -382,9 +382,7 @@ window.addEventListener('beforeunload', () => {
 // ── 2. ORDERS ─────────────────────────────────────────────────
 
 async function loadOrders() {
-    const { data, error } = await supabaseClient
-        .from('orders')
-        .select(`
+    const buildOrderSelect = includeScreenshotPath => `
             id,
             customer_name,
             status,
@@ -398,15 +396,30 @@ async function loadOrders() {
             ),
             payments (
                 payment_method,
-                screenshot_url,
-                screenshot_path
+                screenshot_url
+                ${includeScreenshotPath ? ', screenshot_path' : ''}
             )
-        `)
+        `;
+    const fetchOrders = includeScreenshotPath => supabaseClient
+        .from('orders')
+        .select(buildOrderSelect(includeScreenshotPath))
         .eq('shop_id', ownerShop.id)
         .order('created_at', { ascending: false });
 
+    let { data, error } = await fetchOrders(true);
+    const errorText = [error?.message, error?.details, error?.hint].filter(Boolean).join(' ');
+    if (error && (error.code === '42703' || /screenshot_path/i.test(errorText))) {
+        console.warn('payments.screenshot_path is not available yet; loading orders with the legacy schema. Run the Supabase SQL patch.');
+        ({ data, error } = await fetchOrders(false));
+    }
+
     if (error) {
-        console.error('Error loading orders:', error);
+        console.error('Error loading orders:', {
+            code: error.code,
+            message: error.message,
+            details: error.details,
+            hint: error.hint
+        });
         document.getElementById('orders-list').innerHTML =
             `<p class="text-danger">Error loading orders: ${error.message}</p>`;
         return;
