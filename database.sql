@@ -259,6 +259,26 @@ ON public.payments
 FOR SELECT
 USING (auth.role() = 'authenticated');
 
+-- 8. Realtime: publish order inserts and status updates.
+-- Safe to run more than once in the Supabase SQL Editor.
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1
+    FROM pg_publication_tables
+    WHERE pubname = 'supabase_realtime'
+      AND schemaname = 'public'
+      AND tablename = 'orders'
+  ) THEN
+    ALTER PUBLICATION supabase_realtime ADD TABLE public.orders;
+  END IF;
+END;
+$$;
+
+-- Include the previous status in UPDATE events so clients can ignore
+-- duplicate events and alert only when the status actually changes.
+ALTER TABLE public.orders REPLICA IDENTITY FULL;
+
 -- ============================================================
 -- Storage: payment-screenshots bucket policies
 -- Create the bucket first in Supabase Dashboard > Storage,

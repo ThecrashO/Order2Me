@@ -19,12 +19,16 @@ function syncOwnerNotificationSettingUI() {
     const statusEl = document.getElementById('owner-notification-setting-status');
     if (!checkbox || !statusEl) return;
 
-    const supported = 'Notification' in window && location.protocol !== 'file:';
+    const supported = 'Notification' in window && window.isSecureContext;
     checkbox.disabled = !supported;
-    checkbox.checked = supported && isNotificationPreferenceEnabled();
-    statusEl.textContent = supported
-        ? (checkbox.checked ? 'Notifications are enabled.' : 'Notifications are currently disabled.')
-        : 'Notifications are not available on this origin yet.';
+    checkbox.checked = supported && Notification.permission === 'granted' && isNotificationPreferenceEnabled();
+    statusEl.textContent = !supported
+        ? 'Notifications require HTTPS or localhost.'
+        : Notification.permission === 'denied'
+            ? 'Notifications are blocked in your browser settings.'
+            : checkbox.checked
+                ? 'Notifications are enabled.'
+                : 'Turn this on to receive new-order alerts.';
 }
 
 async function toggleOwnerNotificationPreference() {
@@ -32,11 +36,11 @@ async function toggleOwnerNotificationPreference() {
     const statusEl = document.getElementById('owner-notification-setting-status');
     if (!checkbox || !statusEl) return;
 
-    if (!('Notification' in window) || location.protocol === 'file:') {
+    if (!('Notification' in window) || !window.isSecureContext) {
         checkbox.checked = false;
-        statusEl.textContent = 'Notifications are not available on this origin yet.';
+        statusEl.textContent = 'Notifications require HTTPS or localhost.';
         localStorage.setItem(NOTIFICATION_PREF_KEY, 'false');
-        showToast('Notifications are not supported on this page origin yet.', 'warning');
+        showToast('Use HTTPS or localhost to enable notifications.', 'warning');
         return;
     }
 
@@ -47,6 +51,12 @@ async function toggleOwnerNotificationPreference() {
             localStorage.setItem(NOTIFICATION_PREF_KEY, 'true');
             syncOwnerNotificationSettingUI();
             showToast('Notifications enabled.', 'success');
+            playNotificationSound('success');
+            await maybeBrowserNotification(
+                'Order2Me notifications enabled',
+                'You will now receive alerts for new orders.',
+                { tag: 'order2me-owner-notification-test', url: 'owner.html#orders' }
+            );
         } else {
             checkbox.checked = false;
             localStorage.setItem(NOTIFICATION_PREF_KEY, 'false');
@@ -88,13 +98,8 @@ function playNotificationSound(type = 'info') {
 }
 
 async function maybeBrowserNotification(title, message, options = {}) {
-    if (!('Notification' in window) || location.protocol === 'file:') return;
-    if (!isNotificationPreferenceEnabled()) return;
-
-    const shouldUseBrowserNotify = document.visibilityState === 'hidden' || !document.hasFocus();
-    if (!shouldUseBrowserNotify) return;
-
-    if (Notification.permission !== 'granted') return;
+    if (!('Notification' in window) || !window.isSecureContext) return false;
+    if (!isNotificationPreferenceEnabled() || Notification.permission !== 'granted') return false;
 
     const notificationOptions = {
         body: message,
@@ -107,13 +112,16 @@ async function maybeBrowserNotification(title, message, options = {}) {
 
     try {
         if ('serviceWorker' in navigator) {
-            const registration = await navigator.serviceWorker.ready;
+            let registration = await navigator.serviceWorker.getRegistration();
+            if (!registration) registration = await navigator.serviceWorker.register('sw.js');
             await registration.showNotification(title, notificationOptions);
-            return;
+            return true;
         }
         new Notification(title, notificationOptions);
+        return true;
     } catch (error) {
-        console.debug('Browser notification unavailable:', error);
+        console.error('Browser notification unavailable:', error);
+        return false;
     }
 }
 
@@ -272,7 +280,11 @@ function subscribeOwnerRealtime() {
                 loadOrders();
             }
         )
-        .subscribe();
+        .subscribe((status) => {
+            if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
+                console.error('Owner realtime notification channel:', status);
+            }
+        });
 }
 
 // Cleanup Realtime on page unload
