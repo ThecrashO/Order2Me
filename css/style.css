@@ -2252,14 +2252,8 @@ textarea {
 }
 
 @media (max-width: 379.98px) {
-    /* One column prevents unreadably narrow food cards on small phones. */
-    #menu-container > .col-6 {
-        flex: 0 0 100%;
-        max-width: 100%;
-    }
-
     .menu-card-img {
-        height: 150px;
+        height: 105px;
     }
 
     .navbar-role-text,
@@ -2274,6 +2268,30 @@ textarea {
 
     .hist-stat-card {
         padding: 12px 8px;
+    }
+}
+
+/* Keep the student menu consistently two columns on every phone. */
+@media (max-width: 575.98px) {
+    #menu-container > .col-6 {
+        flex: 0 0 50%;
+        width: 50%;
+        max-width: 50%;
+        padding-left: .3rem;
+        padding-right: .3rem;
+    }
+
+    #menu-container {
+        margin-left: -.3rem;
+        margin-right: -.3rem;
+    }
+
+    #menu-container .menu-card-title {
+        min-height: 2.15em;
+    }
+
+    #menu-container .menu-card-price {
+        white-space: nowrap;
     }
 }
 
