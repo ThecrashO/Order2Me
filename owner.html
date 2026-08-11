@@ -224,7 +224,8 @@
                     <button class="btn btn-sm btn-outline-warning order-filter" data-status="pending">Pending</button>
                     <button class="btn btn-sm btn-outline-info order-filter" data-status="preparing">Preparing</button>
                     <button class="btn btn-sm btn-outline-success order-filter" data-status="ready">Ready</button>
-                    <button class="btn btn-sm btn-outline-secondary order-filter" data-status="delivered">Delivered</button>
+                    <button class="btn btn-sm btn-outline-primary order-filter" data-status="out_for_delivery">Sent</button>
+                    <button class="btn btn-sm btn-outline-secondary order-filter" data-status="delivered">Received</button>
                     <button class="btn btn-sm btn-outline-danger order-filter" data-status="cancelled">Cancelled</button>
                 </div>
             </div>
@@ -839,7 +840,7 @@
             <div class="hist-stat-card"><div class="hist-stat-icon">📦</div><div class="hist-stat-value">${total}</div><div class="hist-stat-label">Total Orders</div></div>
             <div class="hist-stat-card"><div class="hist-stat-icon">💰</div><div class="hist-stat-value">${revenue.toLocaleString()}</div><div class="hist-stat-label">Revenue (MMK)</div></div>
             <div class="hist-stat-card"><div class="hist-stat-icon">📊</div><div class="hist-stat-value">${Math.round(avg).toLocaleString()}</div><div class="hist-stat-label">Avg Order</div></div>
-            <div class="hist-stat-card"><div class="hist-stat-icon">✅</div><div class="hist-stat-value">${delivered}</div><div class="hist-stat-label">Delivered</div></div>
+            <div class="hist-stat-card"><div class="hist-stat-icon">✅</div><div class="hist-stat-value">${delivered}</div><div class="hist-stat-label">Received</div></div>
             <div class="hist-stat-card"><div class="hist-stat-icon">❌</div><div class="hist-stat-value">${cancelled}</div><div class="hist-stat-label">Cancelled</div></div>
         </div>`;
 
@@ -852,7 +853,8 @@
             pending:   { bg: '#f59e0b', label: 'Pending'   },
             preparing: { bg: '#06b6d4', label: 'Preparing' },
             ready:     { bg: '#10b981', label: 'Ready'     },
-            delivered: { bg: '#64748b', label: 'Delivered' },
+            out_for_delivery: { bg: '#3b82f6', label: 'Sent' },
+            delivered: { bg: '#64748b', label: 'Received' },
             cancelled: { bg: '#ef4444', label: 'Cancelled' },
         };
 

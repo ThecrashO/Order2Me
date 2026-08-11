@@ -337,10 +337,22 @@ function subscribeOwnerRealtime() {
             { event: 'UPDATE', schema: 'public', table: 'orders', filter: `shop_id=eq.${ownerShop.id}` },
             (payload) => {
                 const updated = payload.new;
+                const previous = payload.old;
                 if (!updated) return;
 
                 // Refresh orders list to reflect status change
                 loadOrders();
+
+                if (updated.status === 'delivered' && previous?.status === 'out_for_delivery') {
+                    const customerName = updated.customer_name || 'The customer';
+                    showToast(`✅ ${customerName} confirmed Order #${updated.id} was received.`, 'success');
+                    if (isNotificationPreferenceEnabled()) playNotificationSound('success');
+                    maybeBrowserNotification(
+                        'Order received',
+                        `${customerName} confirmed receipt of Order #${updated.id}.`,
+                        { tag: `order2me-received-${updated.id}`, url: 'owner.html#orders' }
+                    );
+                }
             }
         )
         .subscribe((status) => {
@@ -550,7 +562,7 @@ function renderOrders() {
         ? allOrders.filter(o => isTodayOrder(o))
         : allOrders;
 
-    // Status sub-filter (all/pending/preparing/ready/delivered/cancelled)
+    // Status sub-filter (all/pending/preparing/ready/sent/received/cancelled)
     let filtered = (activeFilter === 'all' || activeFilter === 'today')
         ? base
         : base.filter(o => o.status === activeFilter);
@@ -633,7 +645,8 @@ function buildOrderCard(order) {
         pending:   { color: 'warning',   label: 'Pending'   },
         preparing: { color: 'info',      label: 'Preparing' },
         ready:     { color: 'success',   label: 'Ready'     },
-        delivered: { color: 'secondary', label: 'Delivered' },
+        out_for_delivery: { color: 'primary', label: 'Sent · Awaiting confirmation' },
+        delivered: { color: 'secondary', label: 'Received' },
         cancelled: { color: 'danger',    label: 'Cancelled' }
     };
     const cfg = statusConfig[order.status] || { color: 'secondary', label: order.status };
@@ -667,10 +680,14 @@ function buildOrderCard(order) {
             </button>`;
     } else if (order.status === 'ready') {
         actionHtml = `
-            <button class="btn btn-sm btn-secondary"
-                    onclick="updateStatus(${order.id}, 'delivered')">
-                Mark Delivered
+            <button class="btn btn-sm btn-primary"
+                    onclick="updateStatus(${order.id}, 'out_for_delivery')">
+                🛵 Mark Sent
             </button>`;
+    } else if (order.status === 'out_for_delivery') {
+        actionHtml = '<span class="badge bg-primary-subtle text-primary-emphasis">Waiting for customer confirmation</span>';
+    } else if (order.status === 'delivered') {
+        actionHtml = '<span class="badge bg-success">✓ Customer confirmed receipt</span>';
     } else if (order.status === 'cancelled') {
         actionHtml = `<span class="badge bg-danger">Cancelled / Rejected</span>`;
     }
@@ -757,7 +774,8 @@ async function updateStatus(orderId, newStatus) {
     if (order) order.status = newStatus;
     updatePendingBadge();
     renderOrders();
-    showToast(`Order #${orderId} updated to ${newStatus}.`, 'success');
+    const statusLabel = newStatus === 'out_for_delivery' ? 'sent' : newStatus;
+    showToast(`Order #${orderId} updated to ${statusLabel}.`, 'success');
     console.log(`Order ${orderId} updated to ${newStatus}`);
 }
 

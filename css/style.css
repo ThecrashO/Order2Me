@@ -1899,6 +1899,32 @@ body::before {
     .hist-card { padding: 12px 12px; }
 }
 
+.receipt-confirm-panel {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: .85rem;
+    margin-top: .85rem;
+    padding: .8rem;
+    border: 1px solid #86efac;
+    border-radius: 13px;
+    background: #f0fdf4;
+}
+.receipt-confirm-panel strong,
+.receipt-confirm-panel span { display: block; }
+.receipt-confirm-panel strong { color: #166534; font-size: .86rem; }
+.receipt-confirm-panel span { margin-top: .15rem; color: #4b5563; font-size: .72rem; }
+.receipt-confirm-panel .btn { flex: 0 0 auto; }
+.receipt-confirmed-note {
+    margin-top: .8rem;
+    padding: .65rem .75rem;
+    border-radius: 11px;
+    background: #ecfdf5;
+    color: #047857;
+    font-size: .78rem;
+    font-weight: 750;
+}
+
 /* ============================================================
    Mobile UX polish
    ============================================================ */
@@ -2723,6 +2749,19 @@ textarea {
 }
 
 @media (max-width: 575.98px) {
+    .receipt-confirm-panel {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .receipt-confirm-panel .btn { width: 100%; }
+
+    .order-step-dot {
+        width: 25px;
+        height: 25px;
+        font-size: 11px;
+    }
+
     .shop-picker { padding: .8rem; border-radius: 15px; }
     .shop-picker-heading { align-items: flex-start; flex-direction: column; gap: .45rem; }
     .approval-shell { align-items: start; padding: .75rem; }

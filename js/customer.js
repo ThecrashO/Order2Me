@@ -481,12 +481,21 @@ function displayTodayOrders(orders) {
 
     // Status order for progress steps
     const STEPS = [
-        { key: 'pending',   icon: '⏳', label: 'Pending'  },
-        { key: 'preparing', icon: '🍳', label: 'Preparing'},
-        { key: 'ready',     icon: '✅', label: 'Ready'   },
-        { key: 'delivered', icon: '📦', label: 'Delivered'}
+        { key: 'pending',          icon: '⏳', label: 'Pending'  },
+        { key: 'preparing',        icon: '🍳', label: 'Preparing'},
+        { key: 'ready',            icon: '✅', label: 'Ready'   },
+        { key: 'out_for_delivery', icon: '🛵', label: 'Sent'    },
+        { key: 'delivered',        icon: '📦', label: 'Received'}
     ];
-    const STATUS_ORDER = { pending: 0, preparing: 1, ready: 2, delivered: 3, cancelled: -1 };
+    const STATUS_ORDER = { pending: 0, preparing: 1, ready: 2, out_for_delivery: 3, delivered: 4, cancelled: -1 };
+    const STATUS_LABELS = {
+        pending: 'Pending',
+        preparing: 'Preparing',
+        ready: 'Ready',
+        out_for_delivery: 'Sent',
+        delivered: 'Received',
+        cancelled: 'Cancelled'
+    };
 
     container.innerHTML = orders.map(order => {
         const isCancelled = order.status === 'cancelled';
@@ -546,7 +555,22 @@ function displayTodayOrders(orders) {
 
         const statusLabel = isCancelled
             ? '<span class="badge bg-danger">Cancelled</span>'
-            : `<span class="badge" style="background:var(--brand);">${order.status.charAt(0).toUpperCase() + order.status.slice(1)}</span>`;
+            : `<span class="badge" style="background:var(--brand);">${STATUS_LABELS[order.status] || escapeHtml(order.status)}</span>`;
+
+        const receiptActionHtml = order.status === 'out_for_delivery'
+            ? `<div class="receipt-confirm-panel" role="status">
+                   <div>
+                       <strong>🛵 Your order has been sent</strong>
+                       <span>Confirm only after the order reaches you.</span>
+                   </div>
+                   <button type="button" class="btn btn-success btn-sm"
+                       id="confirm-received-${order.id}" onclick="confirmOrderReceived(${order.id})">
+                       ✓ Confirm received
+                   </button>
+               </div>`
+            : order.status === 'delivered'
+                ? `<div class="receipt-confirmed-note">✓ You confirmed that this order was received.</div>`
+                : '';
 
         return `
         <div class="order-tracker-card">
@@ -567,6 +591,7 @@ function displayTodayOrders(orders) {
                 <div class="order-tracker-items">${itemsText || '—'}</div>
                 <div class="order-tracker-total">💰 ${Number(order.total_amount).toLocaleString()} MMK</div>
                 ${noteHtml}
+                ${receiptActionHtml}
             </div>
         </div>`;
     }).join('');
@@ -1004,6 +1029,40 @@ async function uploadPaymentScreenshot(file) {
     };
 }
 
+async function confirmOrderReceived(orderId) {
+    if (!currentCustomerProfile) return;
+    if (!window.confirm(`Confirm that Order #${orderId} has reached you?`)) return;
+
+    const button = document.getElementById(`confirm-received-${orderId}`);
+    if (button) {
+        button.disabled = true;
+        button.textContent = 'Confirming…';
+    }
+
+    const { data, error } = await supabaseClient
+        .from('orders')
+        .update({ status: 'delivered' })
+        .eq('id', orderId)
+        .eq('customer_id', currentCustomerProfile.id)
+        .eq('status', 'out_for_delivery')
+        .select('id, status')
+        .maybeSingle();
+
+    if (error || !data) {
+        console.error('Could not confirm order receipt:', error || 'No matching sent order');
+        showToast(error?.message || 'This order can no longer be confirmed. Refresh and try again.', 'danger');
+        if (button) {
+            button.disabled = false;
+            button.textContent = '✓ Confirm received';
+        }
+        return;
+    }
+
+    showToast(`Order #${orderId} marked as received. The shop has been notified.`, 'success');
+    playNotificationSound('success');
+    await loadCustomerOrders();
+}
+
 async function createOrder(deliveryNote, paymentMethod, screenshotFile) {
     const errorBanner = document.getElementById('checkout-error');
 
@@ -1403,9 +1462,14 @@ const STATUS_MESSAGES = {
         msg: '✅ Your order is ready. Please come and pick it up!',
         type: 'success'
     },
+    out_for_delivery: {
+        title: 'Order sent',
+        msg: '🛵 The shop marked your order as sent. Confirm when it reaches you.',
+        type: 'success'
+    },
     delivered: {
-        title: 'Order completed',
-        msg: '📦 Your order has been completed. Enjoy your meal!',
+        title: 'Receipt confirmed',
+        msg: '📦 Receipt confirmed. The shop has been notified.',
         type: 'success'
     },
     cancelled: {

@@ -47,7 +47,7 @@ CREATE TABLE public.menu_items (
 -- Stores each order placed by a customer.
 --
 -- Status flow:
---   pending -> preparing -> ready -> delivered
+--   pending -> preparing -> ready -> out_for_delivery -> delivered
 -- ============================================================
 CREATE TABLE public.orders (
   id            bigint GENERATED ALWAYS AS IDENTITY NOT NULL,
@@ -60,6 +60,7 @@ CREATE TABLE public.orders (
                             'pending'::text,
                             'preparing'::text,
                             'ready'::text,
+                            'out_for_delivery'::text,
                             'delivered'::text
                         ])),
   created_at    timestamp WITHOUT TIME ZONE DEFAULT now(),
@@ -128,6 +129,9 @@ CREATE TABLE public.payments (
 --     |
 --     v
 --   ready
+--     |
+--     v
+--   out_for_delivery
 --     |
 --     v
 --   delivered
@@ -368,6 +372,7 @@ ALTER TABLE public.orders
     'pending'::text,
     'preparing'::text,
     'ready'::text,
+    'out_for_delivery'::text,
     'delivered'::text,
     'cancelled'::text
   ]));

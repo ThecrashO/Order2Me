@@ -188,7 +188,7 @@ function renderOwnerHistory(orders) {
         <div class="hist-stat-card"><div class="hist-stat-icon">\ud83d\udce6</div><div class="hist-stat-value">${total}</div><div class="hist-stat-label">Total Orders</div></div>
         <div class="hist-stat-card"><div class="hist-stat-icon">\ud83d\udcb0</div><div class="hist-stat-value">${revenue.toLocaleString()}</div><div class="hist-stat-label">Revenue (MMK)</div></div>
         <div class="hist-stat-card"><div class="hist-stat-icon">\ud83d\udcca</div><div class="hist-stat-value">${Math.round(avg).toLocaleString()}</div><div class="hist-stat-label">Avg Order (MMK)</div></div>
-        <div class="hist-stat-card"><div class="hist-stat-icon">\u2705</div><div class="hist-stat-value">${delivered}</div><div class="hist-stat-label">Delivered</div></div>
+        <div class="hist-stat-card"><div class="hist-stat-icon">\u2705</div><div class="hist-stat-value">${delivered}</div><div class="hist-stat-label">Received</div></div>
         <div class="hist-stat-card"><div class="hist-stat-icon">\u274c</div><div class="hist-stat-value">${cancelled}</div><div class="hist-stat-label">Cancelled</div></div>
     </div>`;
 
@@ -201,7 +201,8 @@ function renderOwnerHistory(orders) {
         pending:   { bg: '#f59e0b', label: 'Pending'   },
         preparing: { bg: '#06b6d4', label: 'Preparing' },
         ready:     { bg: '#10b981', label: 'Ready'     },
-        delivered: { bg: '#64748b', label: 'Delivered' },
+        out_for_delivery: { bg: '#3b82f6', label: 'Sent' },
+        delivered: { bg: '#64748b', label: 'Received' },
         cancelled: { bg: '#ef4444', label: 'Cancelled' },
     };
 
@@ -273,7 +274,8 @@ function renderCustomerHistory(orders) {
         pending:   { bg: '#f59e0b', label: 'Pending'   },
         preparing: { bg: '#06b6d4', label: 'Preparing' },
         ready:     { bg: '#10b981', label: 'Ready'     },
-        delivered: { bg: '#64748b', label: 'Delivered' },
+        out_for_delivery: { bg: '#3b82f6', label: 'Sent' },
+        delivered: { bg: '#64748b', label: 'Received' },
         cancelled: { bg: '#ef4444', label: 'Cancelled' },
     };
 

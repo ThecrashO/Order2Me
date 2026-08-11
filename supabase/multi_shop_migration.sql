@@ -101,6 +101,11 @@ $$;
 ALTER TABLE public.menu_items ALTER COLUMN shop_id SET NOT NULL;
 ALTER TABLE public.orders ALTER COLUMN shop_id SET NOT NULL;
 
+ALTER TABLE public.orders DROP CONSTRAINT IF EXISTS orders_status_check;
+ALTER TABLE public.orders
+  ADD CONSTRAINT orders_status_check
+  CHECK (status IN ('pending', 'preparing', 'ready', 'out_for_delivery', 'delivered', 'cancelled'));
+
 CREATE INDEX IF NOT EXISTS idx_menu_items_shop_id ON public.menu_items(shop_id);
 CREATE INDEX IF NOT EXISTS idx_orders_shop_id ON public.orders(shop_id);
 CREATE INDEX IF NOT EXISTS idx_orders_shop_created_at ON public.orders(shop_id, created_at DESC);
@@ -228,8 +233,12 @@ RETURNS trigger
 LANGUAGE plpgsql
 SET search_path = ''
 AS $$
+DECLARE
+  actor_role text;
 BEGIN
   IF auth.uid() IS NOT NULL AND NOT public.is_admin() THEN
+    actor_role := public.current_profile_role();
+
     NEW.customer_id := OLD.customer_id;
     NEW.customer_name := OLD.customer_name;
     NEW.shop_id := OLD.shop_id;
@@ -237,12 +246,27 @@ BEGIN
     NEW.delivery_note := OLD.delivery_note;
     NEW.created_at := OLD.created_at;
 
-    IF NEW.status IS DISTINCT FROM OLD.status AND NOT (
-      (OLD.status = 'pending'   AND NEW.status IN ('preparing', 'cancelled')) OR
-      (OLD.status = 'preparing' AND NEW.status IN ('ready', 'cancelled')) OR
-      (OLD.status = 'ready'     AND NEW.status = 'delivered')
-    ) THEN
-      RAISE EXCEPTION 'Invalid order status transition: % -> %', OLD.status, NEW.status;
+    IF NEW.status IS DISTINCT FROM OLD.status THEN
+      IF actor_role = 'owner' THEN
+        IF NOT (
+          (OLD.status = 'pending' AND NEW.status IN ('preparing', 'cancelled')) OR
+          (OLD.status = 'preparing' AND NEW.status IN ('ready', 'cancelled')) OR
+          (OLD.status = 'ready' AND NEW.status = 'out_for_delivery')
+        ) THEN
+          RAISE EXCEPTION 'Owner cannot change order status from % to %', OLD.status, NEW.status
+            USING ERRCODE = '42501';
+        END IF;
+      ELSIF actor_role = 'customer' THEN
+        IF OLD.customer_id <> public.current_profile_id()
+           OR OLD.status <> 'out_for_delivery'
+           OR NEW.status <> 'delivered' THEN
+          RAISE EXCEPTION 'Customer can only confirm receipt of their own sent order'
+            USING ERRCODE = '42501';
+        END IF;
+      ELSE
+        RAISE EXCEPTION 'This role cannot update order status'
+          USING ERRCODE = '42501';
+      END IF;
     END IF;
   END IF;
   RETURN NEW;
@@ -375,6 +399,7 @@ WITH CHECK (public.is_admin());
 -- 10. Order policies: customers own their orders; approved owners are
 --     restricted to their shop; admins can audit everything.
 ALTER TABLE public.orders ENABLE ROW LEVEL SECURITY;
+GRANT SELECT, INSERT, UPDATE ON public.orders TO authenticated;
 
 DROP POLICY IF EXISTS "Customers can insert own orders" ON public.orders;
 DROP POLICY IF EXISTS "Customers can view own orders" ON public.orders;
@@ -384,6 +409,7 @@ DROP POLICY IF EXISTS "Customers create orders at approved shops" ON public.orde
 DROP POLICY IF EXISTS "Customers read own orders" ON public.orders;
 DROP POLICY IF EXISTS "Approved owners read shop orders" ON public.orders;
 DROP POLICY IF EXISTS "Approved owners update shop orders" ON public.orders;
+DROP POLICY IF EXISTS "Customers confirm received own orders" ON public.orders;
 DROP POLICY IF EXISTS "Admins manage all orders" ON public.orders;
 
 CREATE POLICY "Customers create orders at approved shops"
@@ -397,6 +423,17 @@ WITH CHECK (
 CREATE POLICY "Customers read own orders"
 ON public.orders FOR SELECT TO authenticated
 USING (customer_id = public.current_profile_id());
+
+CREATE POLICY "Customers confirm received own orders"
+ON public.orders FOR UPDATE TO authenticated
+USING (
+  customer_id = public.current_profile_id()
+  AND status = 'out_for_delivery'
+)
+WITH CHECK (
+  customer_id = public.current_profile_id()
+  AND status = 'delivered'
+);
 
 CREATE POLICY "Approved owners read shop orders"
 ON public.orders FOR SELECT TO authenticated
