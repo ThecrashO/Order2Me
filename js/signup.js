@@ -4,7 +4,7 @@
 
     const profile = await getCurrentProfile();
     if (profile) {
-        window.location.href = profile.role === 'owner' ? 'owner.html' : 'customer.html';
+        window.location.href = dashboardForProfile(profile);
         return;
     }
 
@@ -17,6 +17,10 @@
 
         const name = document.getElementById('signup-name').value.trim();
         const phone = document.getElementById('signup-phone').value.trim();
+        const role = document.getElementById('signup-role').value;
+        const shopName = document.getElementById('signup-shop-name').value.trim();
+        const shopAddress = document.getElementById('signup-shop-address').value.trim();
+        const shopDescription = document.getElementById('signup-shop-description').value.trim();
         const email = document.getElementById('signup-email').value.trim();
         const password = document.getElementById('signup-password').value.trim();
         const confirmPassword = document.getElementById('signup-confirm-password').value.trim();
@@ -39,7 +43,17 @@
             return;
         }
 
-        const result = await signUpCustomer(name, email, phone, password);
+        if (role === 'owner' && (!shopName || !shopAddress)) {
+            status.textContent = 'Shop name and address are required for owner registration.';
+            if (submitButton) submitButton.disabled = false;
+            return;
+        }
+
+        const result = await signUpAccount({
+            name, phone, email, password, role,
+            shopName, shopAddress, shopDescription,
+            shopPhone: phone
+        });
 
         if (result.error) {
             status.textContent = result.error.message;
@@ -50,16 +64,37 @@
         // Email confirmation required — Supabase will send a verification email
         if (result.emailConfirmationRequired) {
             status.className = 'text-success mb-3';
-            status.textContent = '✅ Account created! Please check your email and click the confirmation link, then sign in.';
+            status.textContent = role === 'owner'
+                ? '✅ Owner application created! Confirm your email, then wait for admin approval.'
+                : '✅ Account created! Please check your email and confirm it, then sign in.';
             form.reset();
             if (submitButton) submitButton.disabled = false;
             return;
         }
 
         // No email confirmation required — profile created, go to login
-        alert('Registration successful! Please sign in to continue.');
-        window.location.href = 'login.html';
+        if (role === 'owner') {
+            window.location.href = 'pending.html';
+        } else {
+            alert('Registration successful! Please sign in to continue.');
+            window.location.href = 'login.html';
+        }
     });
 }
 
-document.addEventListener('DOMContentLoaded', initSignupPage);
+function toggleOwnerFields() {
+    const isOwner = document.getElementById('signup-role')?.value === 'owner';
+    const fields = document.getElementById('owner-signup-fields');
+    if (!fields) return;
+    fields.classList.toggle('d-none', !isOwner);
+    fields.querySelectorAll('[data-owner-required]').forEach(input => {
+        input.required = isOwner;
+    });
+    const title = document.getElementById('signup-page-title');
+    if (title) title.textContent = isOwner ? 'Owner & Shop Sign Up' : 'Customer Sign Up';
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    toggleOwnerFields();
+    initSignupPage();
+});

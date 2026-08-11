@@ -1,5 +1,6 @@
 ﻿-- ============================================================
 -- Order2Me - Supabase Database Schema
+-- Existing projects: run supabase/multi_shop_migration.sql after this file.
 -- University Canteen Digital Ordering System
 -- ============================================================
 -- This file reflects the ACTUAL tables created in Supabase.

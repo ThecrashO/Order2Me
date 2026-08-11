@@ -36,7 +36,7 @@
             <span class="o2m-logo-nav" aria-hidden="true">
                 <img src="images/logo.png" alt="Order2Me logo" class="o2m-logo-image">
             </span>
-            <span class="navbar-role-text">Owner</span>
+            <span class="navbar-role-text">Owner · <span id="owner-shop-name">Shop</span></span>
         </div>
 
         <!-- Navbar right: refresh + profile dropdown -->
@@ -372,8 +372,28 @@
                         </div>
                     </div>
                 </div>
-                <div class="small text-muted">
-                    When enabled, Order2Me can play a short sound and show a browser notification only while the app is not in the foreground.
+                <div class="card border-0 shadow-sm rounded-4">
+                    <div class="card-body p-3">
+                        <h6 class="fw-bold mb-3">Shop details</h6>
+                        <div class="mb-2">
+                            <label class="form-label small" for="owner-shop-settings-name">Shop name</label>
+                            <input class="form-control" id="owner-shop-settings-name" maxlength="100">
+                        </div>
+                        <div class="mb-2">
+                            <label class="form-label small" for="owner-shop-settings-phone">Payment / contact phone</label>
+                            <input class="form-control" id="owner-shop-settings-phone" type="tel" maxlength="30">
+                        </div>
+                        <div class="mb-2">
+                            <label class="form-label small" for="owner-shop-settings-address">Location</label>
+                            <input class="form-control" id="owner-shop-settings-address" maxlength="200">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label small" for="owner-shop-settings-description">Description</label>
+                            <textarea class="form-control" id="owner-shop-settings-description" rows="3" maxlength="500"></textarea>
+                        </div>
+                        <div class="alert small d-none" id="owner-shop-settings-status"></div>
+                        <button class="btn btn-primary w-100" type="button" onclick="saveOwnerShopSettings()">Save shop details</button>
+                    </div>
                 </div>
             </div>
             <div class="modal-footer border-0 px-4 pb-4 pt-0">
@@ -783,6 +803,7 @@
             .select(`id, customer_name, status, total_amount, delivery_note, created_at,
                 order_items ( quantity, price, menu_items ( name ) ),
                 payments ( payment_method, screenshot_url )`)
+            .eq('shop_id', ownerShop.id)
             .order('created_at', { ascending: false });
 
         if (startISO) query = query.gte('created_at', startISO);

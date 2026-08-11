@@ -1,8 +1,8 @@
 ﻿{
     "name": "Order2Me",
     "short_name": "Order2Me",
-    "description": "Canteen ordering system for customers and owners",
-    "start_url": "./customer.html",
+    "description": "Multi-shop canteen ordering system for customers, owners and administrators",
+    "start_url": "./login.html",
     "scope": "./",
     "display": "standalone",
     "orientation": "portrait",

@@ -27,11 +27,18 @@
                             </div>
                             <div>
                                 <div class="auth-badge">New account</div>
-                                <h3 class="auth-title mb-0">Customer Sign Up</h3>
+                                <h3 class="auth-title mb-0" id="signup-page-title">Customer Sign Up</h3>
                             </div>
                         </div>
                         <p class="auth-subtitle">Join the queue-free ordering experience.</p>
                         <form id="signup-form">
+                            <div class="mb-3">
+                                <label for="signup-role" class="form-label">Account Type</label>
+                                <select id="signup-role" class="form-select" onchange="toggleOwnerFields()">
+                                    <option value="customer">Customer</option>
+                                    <option value="owner">Shop Owner</option>
+                                </select>
+                            </div>
                             <div class="mb-3">
                                 <label for="signup-name" class="form-label">Name</label>
                                 <input type="text" id="signup-name" class="form-control" required>
@@ -39,6 +46,24 @@
                             <div class="mb-3">
                                 <label for="signup-phone" class="form-label">Phone Number</label>
                                 <input type="tel" id="signup-phone" class="form-control">
+                            </div>
+                            <div id="owner-signup-fields" class="d-none">
+                                <div class="owner-application-note mb-3">
+                                    Your shop will be reviewed by an administrator before the owner dashboard is unlocked.
+                                </div>
+                                <div class="mb-3">
+                                    <label for="signup-shop-name" class="form-label">Shop Name</label>
+                                    <input type="text" id="signup-shop-name" class="form-control" data-owner-required>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="signup-shop-address" class="form-label">Shop Address / Location</label>
+                                    <input type="text" id="signup-shop-address" class="form-control" data-owner-required>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="signup-shop-description" class="form-label">Shop Description</label>
+                                    <textarea id="signup-shop-description" class="form-control" rows="3"
+                                        placeholder="What does your shop serve?"></textarea>
+                                </div>
                             </div>
                             <div class="mb-3">
                                 <label for="signup-email" class="form-label">Email</label>

@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Order2Me — Admin</title>
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#4f46e5">
+    <link rel="apple-touch-icon" href="images/logo.png">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body class="admin-page">
+<nav class="navbar navbar-dark admin-navbar">
+    <div class="container-fluid px-3 px-md-4">
+        <a class="navbar-brand d-flex align-items-center gap-2" href="admin.html">
+            <span class="o2m-logo-nav"><img src="images/logo.png" alt="" class="o2m-logo-image"></span>
+            <span>Order2Me Admin</span>
+        </a>
+        <button class="btn btn-outline-light btn-sm" onclick="signOut()">Sign out</button>
+    </div>
+</nav>
+
+<main class="admin-main container-fluid">
+    <div class="admin-welcome">
+        <div>
+            <span class="admin-eyebrow">Platform control</span>
+            <h1>Shop approvals</h1>
+            <p>Review owner applications and control which shops appear to customers.</p>
+        </div>
+        <button class="btn btn-light" onclick="loadAdminShops()">↻ Refresh</button>
+    </div>
+
+    <section class="admin-stats" aria-label="Shop statistics">
+        <article><span>All shops</span><strong id="admin-stat-all">0</strong></article>
+        <article class="pending"><span>Pending</span><strong id="admin-stat-pending">0</strong></article>
+        <article class="approved"><span>Approved</span><strong id="admin-stat-approved">0</strong></article>
+        <article class="blocked"><span>Restricted</span><strong id="admin-stat-restricted">0</strong></article>
+    </section>
+
+    <section class="admin-panel">
+        <div class="admin-toolbar">
+            <div class="admin-filter-row" id="admin-filter-row">
+                <button class="admin-filter active" data-status="all">All</button>
+                <button class="admin-filter" data-status="pending">Pending</button>
+                <button class="admin-filter" data-status="approved">Approved</button>
+                <button class="admin-filter" data-status="rejected">Rejected</button>
+                <button class="admin-filter" data-status="suspended">Suspended</button>
+            </div>
+            <input class="form-control" id="admin-shop-search" type="search" placeholder="Search shop or owner…">
+        </div>
+        <div id="admin-shop-list" class="admin-shop-list">
+            <div class="hist-loading"><div class="hist-spinner"></div><span>Loading shops…</span></div>
+        </div>
+    </section>
+</main>
+
+<div class="toast-container position-fixed bottom-0 end-0 p-3" id="app-toast-container"></div>
+
+<div class="modal fade" id="adminReasonModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="admin-reason-title">Reason</h5>
+                <button class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="admin-reason-shop-id">
+                <input type="hidden" id="admin-reason-status">
+                <label for="admin-reason-text" class="form-label">Explain this decision to the owner</label>
+                <textarea class="form-control" id="admin-reason-text" rows="4" required></textarea>
+                <div class="text-danger small mt-2 d-none" id="admin-reason-error">A reason is required.</div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button class="btn btn-danger" onclick="submitAdminDecision()">Confirm</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/js/bootstrap.bundle.min.js"></script>
+<script src="js/supabase.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/admin.js"></script>
+</body>
+</html>

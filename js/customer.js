@@ -164,6 +164,10 @@ let cart                  = [];
 let selectedPaymentMethod = null; // 'KBZPay' | 'WavePay' | 'Cash'
 let allMenuItems          = [];   // full list for client-side category filter
 let activeCategory        = 'all';
+let approvedShops         = [];
+let activeShop            = null;
+let activeShopId          = null;
+const ACTIVE_SHOP_KEY     = 'order2me-active-shop-id';
 
 // ── Date helpers ─────────────────────────────────────────────
 function getTodayBounds() {
@@ -179,14 +183,91 @@ function goToHistory() {
 
 // -- 1. MENU --------------------------------------------------
 
+async function loadApprovedShops() {
+    const list = document.getElementById('shop-picker-list');
+    const { data, error } = await supabaseClient
+        .from('shops')
+        .select('id, name, description, address, phone_number, logo_url, status')
+        .eq('status', 'approved')
+        .order('name', { ascending: true });
+
+    if (error) {
+        console.error('Error loading shops:', error);
+        if (list) list.innerHTML = '<div class="shop-picker-empty">Unable to load shops. Please refresh.</div>';
+        return;
+    }
+
+    approvedShops = data || [];
+    renderShopPicker();
+
+    if (!approvedShops.length) {
+        activeShop = null;
+        activeShopId = null;
+        document.getElementById('menu-container').innerHTML = '<div class="shop-picker-empty">No approved shops are available yet.</div>';
+        return;
+    }
+
+    const savedId = Number(localStorage.getItem(ACTIVE_SHOP_KEY));
+    const initial = approvedShops.find(shop => shop.id === savedId) || approvedShops[0];
+    selectShop(initial.id, true);
+}
+
+function renderShopPicker() {
+    const list = document.getElementById('shop-picker-list');
+    if (!list) return;
+    if (!approvedShops.length) {
+        list.innerHTML = '<div class="shop-picker-empty">No approved shops yet.</div>';
+        return;
+    }
+    list.innerHTML = approvedShops.map(shop => `
+        <button type="button" class="shop-choice ${shop.id === activeShopId ? 'active' : ''}"
+            role="option" aria-selected="${shop.id === activeShopId}"
+            onclick="selectShop(${shop.id})">
+            <span class="shop-choice-icon">${shop.logo_url
+                ? `<img src="${escapeHtml(shop.logo_url)}" alt="">`
+                : '🏪'}</span>
+            <span class="shop-choice-copy">
+                <strong>${escapeHtml(shop.name)}</strong>
+                <small>${escapeHtml(shop.address || shop.description || 'Open for orders')}</small>
+            </span>
+            <span class="shop-choice-check">✓</span>
+        </button>`).join('');
+}
+
+function selectShop(shopId, initial = false) {
+    const nextShop = approvedShops.find(shop => shop.id === Number(shopId));
+    if (!nextShop || nextShop.id === activeShopId) return;
+
+    if (!initial && cart.length > 0) {
+        const confirmed = window.confirm('Changing shops will clear your current cart. Continue?');
+        if (!confirmed) return;
+        cart = [];
+        updateCartCount();
+    }
+
+    activeShop = nextShop;
+    activeShopId = nextShop.id;
+    activeCategory = 'all';
+    localStorage.setItem(ACTIVE_SHOP_KEY, String(activeShopId));
+    document.getElementById('active-shop-label').textContent = nextShop.name;
+    document.getElementById('menu-search').value = '';
+    renderShopPicker();
+    fetchOwnerPhone();
+    loadMenu();
+}
+
 async function loadMenu() {
+    const container = document.getElementById('menu-container');
+    if (!activeShopId) {
+        container.innerHTML = "<p class='text-muted'>Choose a shop to view its menu.</p>";
+        return;
+    }
     const { data, error } = await supabaseClient
         .from('menu_items')
         .select('*')
+        .eq('shop_id', activeShopId)
         .eq('is_available', true)
         .order('name', { ascending: true });
-
-    const container = document.getElementById('menu-container');
 
     if (error) {
         console.error('Error fetching menu:', error);
@@ -306,7 +387,7 @@ const CAT_OUTLINE_CLASSES = {
 
 function setupCategoryFilters() {
     document.querySelectorAll('.category-filter-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
+        btn.onclick = () => {
             // Update active state visually
             document.querySelectorAll('.category-filter-btn').forEach(b => {
                 const cat = b.dataset.category;
@@ -323,7 +404,7 @@ function setupCategoryFilters() {
                 ? allMenuItems
                 : allMenuItems.filter(item => (item.category || 'food') === cat);
             displayMenuItems(filtered);
-        });
+        };
     });
 }
 
@@ -350,6 +431,7 @@ async function loadCustomerOrders() {
             total_amount,
             delivery_note,
             created_at,
+            shops (name),
             order_items (
                 quantity,
                 price,
@@ -466,7 +548,7 @@ function displayTodayOrders(orders) {
             <div class="order-tracker-header">
                 <div>
                     <div class="order-tracker-id">📋 Order #${order.id}</div>
-                    <div class="order-tracker-time">⏰ Placed at ${time}</div>
+                    <div class="order-tracker-time">🏪 ${escapeHtml(order.shops?.name || 'Shop')} · ⏰ ${time}</div>
                 </div>
                 <div class="d-flex align-items-center gap-2">
                     ${statusLabel}
@@ -498,11 +580,15 @@ function escapeHtml(text) {
 // -- 2. CART --------------------------------------------------
 
 function addToCart(itemId, itemName, price) {
+    if (!activeShopId) {
+        showToast('Please choose a shop first.', 'warning');
+        return;
+    }
     const existing = cart.find(i => i.id === itemId);
     if (existing) {
         existing.quantity += 1;
     } else {
-        cart.push({ id: itemId, name: itemName, price: price, quantity: 1 });
+        cart.push({ id: itemId, name: itemName, price: price, quantity: 1, shopId: activeShopId });
     }
     updateCartCount();
 }
@@ -882,7 +968,7 @@ async function submitCheckout() {
 
 async function uploadPaymentScreenshot(file, orderId) {
     const ext      = file.name.split('.').pop();
-    const fileName = `order_${orderId}_${Date.now()}.${ext}`;
+    const fileName = `${activeShopId}/order_${orderId}_${Date.now()}.${ext}`;
 
     const { error: uploadError } = await supabaseClient.storage
         .from('payment-screenshots')
@@ -903,6 +989,12 @@ async function uploadPaymentScreenshot(file, orderId) {
 async function createOrder(deliveryNote, paymentMethod, screenshotFile) {
     const errorBanner = document.getElementById('checkout-error');
 
+    if (!activeShopId || !activeShop || cart.some(item => item.shopId !== activeShopId)) {
+        errorBanner.textContent = 'Your cart does not match the selected shop. Please clear it and try again.';
+        errorBanner.classList.remove('d-none');
+        return;
+    }
+
     // Calculate total
     const totalAmount = cart.reduce((s, i) => s + i.price * i.quantity, 0);
 
@@ -912,6 +1004,7 @@ async function createOrder(deliveryNote, paymentMethod, screenshotFile) {
         .insert({
             customer_id:    currentCustomerProfile.id,
             customer_name:  currentCustomerProfile.name,
+            shop_id:        activeShopId,
             total_amount:  totalAmount,
             delivery_note: deliveryNote,
             status:        'pending'
@@ -1052,19 +1145,7 @@ function closeImageLightbox() {
 // ── Fetch owner phone number from DB ───────────────────────────
 
 async function fetchOwnerPhone() {
-    const { data, error } = await supabaseClient
-        .from('users')
-        .select('phone_number')
-        .eq('role', 'owner')
-        .order('id', { ascending: true })
-        .limit(1)
-        .single();
-
-    if (error) {
-        console.warn('Could not fetch owner phone number:', error.message);
-        return;
-    }
-    ownerPhoneNumber = data?.phone_number || null;
+    ownerPhoneNumber = activeShop?.phone_number || null;
 
     // Update the displayed numbers in the payment panels
     const displayNum = ownerPhoneNumber || '—';
@@ -1253,10 +1334,7 @@ async function initCustomerPage() {
         profileNameEl.textContent = currentCustomerProfile.name;
     }
 
-    // Load owner phone number from DB (used for KBZPay / WavePay deep links)
-    await fetchOwnerPhone();
-
-    loadMenu();
+    await loadApprovedShops();
     loadCustomerOrders();
 
     // Subscribe to Realtime order status changes

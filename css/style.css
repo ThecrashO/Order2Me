@@ -2305,3 +2305,291 @@ textarea {
         transition-duration: .01ms !important;
     }
 }
+
+/* ============================================================
+   Multi-shop customer experience
+   ============================================================ */
+.shop-picker {
+    padding: 1rem;
+    border: 1px solid rgba(249,115,22,.2);
+    border-radius: 18px;
+    background: linear-gradient(135deg, rgba(255,255,255,.96), rgba(255,247,237,.92));
+    box-shadow: 0 10px 28px rgba(249,115,22,.08);
+}
+
+.shop-picker-heading {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: .85rem;
+}
+
+.shop-picker-kicker,
+.admin-eyebrow {
+    display: block;
+    color: var(--brand-dark);
+    font-size: .68rem;
+    font-weight: 900;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+}
+
+.shop-picker-heading h3 {
+    margin: .18rem 0 0;
+    font-size: 1rem;
+    font-weight: 800;
+}
+
+.active-shop-label {
+    padding: .35rem .75rem;
+    border-radius: 999px;
+    background: var(--brand-light);
+    color: var(--brand-dark);
+    font-size: .75rem;
+    font-weight: 800;
+    white-space: nowrap;
+}
+
+.shop-picker-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+    gap: .65rem;
+}
+
+.shop-choice {
+    display: flex;
+    align-items: center;
+    gap: .7rem;
+    min-height: 68px;
+    padding: .65rem .75rem;
+    border: 1.5px solid var(--border);
+    border-radius: 14px;
+    background: #fff;
+    color: var(--text-main);
+    text-align: left;
+    cursor: pointer;
+    transition: border-color .18s, box-shadow .18s, transform .18s;
+}
+
+.shop-choice:hover {
+    border-color: rgba(249,115,22,.55);
+    transform: translateY(-1px);
+}
+
+.shop-choice.active {
+    border-color: var(--brand);
+    background: linear-gradient(135deg, #fff7ed, #fff);
+    box-shadow: 0 0 0 3px var(--brand-light);
+}
+
+.shop-choice-icon {
+    width: 44px;
+    height: 44px;
+    display: grid;
+    place-items: center;
+    flex: 0 0 44px;
+    overflow: hidden;
+    border-radius: 12px;
+    background: var(--brand-soft);
+    font-size: 1.35rem;
+}
+
+.shop-choice-icon img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.shop-choice-copy {
+    display: flex;
+    flex: 1;
+    min-width: 0;
+    flex-direction: column;
+}
+
+.shop-choice-copy strong,
+.shop-choice-copy small {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.shop-choice-copy small { color: var(--text-muted); }
+.shop-choice-check { color: var(--brand); opacity: 0; font-weight: 900; }
+.shop-choice.active .shop-choice-check { opacity: 1; }
+.shop-picker-empty { padding: 1rem; color: var(--text-muted); text-align: center; }
+
+.owner-application-note {
+    padding: .75rem .85rem;
+    border-left: 4px solid #6366f1;
+    border-radius: 0 12px 12px 0;
+    background: #eef2ff;
+    color: #4338ca;
+    font-size: .82rem;
+    line-height: 1.5;
+}
+
+/* ============================================================
+   Owner approval page
+   ============================================================ */
+.approval-shell {
+    min-height: 100dvh;
+    display: grid;
+    place-items: center;
+    padding: 1.25rem;
+    background:
+        radial-gradient(circle at 15% 15%, rgba(249,115,22,.2), transparent 28%),
+        radial-gradient(circle at 90% 90%, rgba(99,102,241,.16), transparent 30%),
+        #f8fafc;
+}
+
+.approval-card {
+    width: min(100%, 520px);
+    padding: 2rem;
+    border: 1px solid rgba(148,163,184,.25);
+    border-radius: 26px;
+    background: rgba(255,255,255,.96);
+    box-shadow: 0 24px 70px rgba(15,23,42,.14);
+    text-align: center;
+}
+
+.approval-logo {
+    width: 58px;
+    height: 58px;
+    margin: 0 auto 1rem;
+    overflow: hidden;
+    border-radius: 50%;
+    box-shadow: 0 8px 24px rgba(249,115,22,.24);
+}
+.approval-logo img { width: 100%; height: 100%; object-fit: cover; }
+.approval-status-icon { font-size: 2.65rem; }
+.approval-kicker { margin-top: .5rem; color: #6366f1; font-size: .7rem; font-weight: 900; letter-spacing: .12em; text-transform: uppercase; }
+.approval-card h1 { margin: .35rem 0 .5rem; font-size: 1.55rem; font-weight: 900; }
+.approval-card > p { color: var(--text-muted); line-height: 1.6; }
+
+.approval-shop-details {
+    display: grid;
+    gap: .65rem;
+    margin-top: 1.25rem;
+    padding: 1rem;
+    border-radius: 16px;
+    background: #f8fafc;
+    text-align: left;
+}
+.approval-shop-details div { display: flex; justify-content: space-between; gap: 1rem; }
+.approval-shop-details span { color: var(--text-muted); font-size: .78rem; }
+.approval-shop-details strong { text-align: right; font-size: .85rem; text-transform: capitalize; }
+
+/* ============================================================
+   Admin shop approval dashboard
+   ============================================================ */
+.admin-page { background: #f4f6fb; }
+.admin-navbar { background: linear-gradient(135deg, #312e81, #4f46e5) !important; }
+.admin-main { max-width: 1320px; padding: 1.4rem 1rem 3rem; }
+
+.admin-welcome {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 1.4rem;
+    border-radius: 22px;
+    background: linear-gradient(135deg, #312e81, #6366f1);
+    color: #fff;
+    box-shadow: 0 18px 40px rgba(79,70,229,.22);
+}
+.admin-welcome .admin-eyebrow { color: #c7d2fe; }
+.admin-welcome h1 { margin: .2rem 0; font-size: 1.55rem; font-weight: 900; }
+.admin-welcome p { margin: 0; color: #e0e7ff; font-size: .9rem; }
+
+.admin-stats {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: .8rem;
+    margin: 1rem 0;
+}
+.admin-stats article {
+    padding: 1rem;
+    border: 1px solid #e2e8f0;
+    border-radius: 16px;
+    background: #fff;
+    box-shadow: 0 7px 20px rgba(15,23,42,.05);
+}
+.admin-stats span { display: block; color: var(--text-muted); font-size: .75rem; font-weight: 700; }
+.admin-stats strong { display: block; margin-top: .25rem; font-size: 1.65rem; line-height: 1; }
+.admin-stats .pending strong { color: #d97706; }
+.admin-stats .approved strong { color: #059669; }
+.admin-stats .blocked strong { color: #dc2626; }
+
+.admin-panel {
+    padding: 1rem;
+    border: 1px solid #e2e8f0;
+    border-radius: 20px;
+    background: #fff;
+}
+.admin-toolbar { display: flex; justify-content: space-between; gap: 1rem; margin-bottom: 1rem; }
+.admin-toolbar > .form-control { width: min(100%, 300px); }
+.admin-filter-row { display: flex; gap: .4rem; overflow-x: auto; scrollbar-width: none; }
+.admin-filter-row::-webkit-scrollbar { display: none; }
+.admin-filter {
+    flex: 0 0 auto;
+    padding: .48rem .8rem;
+    border: 1px solid #dbe2ea;
+    border-radius: 999px;
+    background: #fff;
+    color: var(--text-muted);
+    font-size: .78rem;
+    font-weight: 800;
+}
+.admin-filter.active { border-color: #4f46e5; background: #4f46e5; color: #fff; }
+.admin-shop-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: .9rem; }
+
+.admin-shop-card {
+    padding: 1rem;
+    border: 1px solid #e2e8f0;
+    border-left: 4px solid #f59e0b;
+    border-radius: 16px;
+    background: #fff;
+}
+.admin-shop-card.status-approved { border-left-color: #10b981; }
+.admin-shop-card.status-rejected,
+.admin-shop-card.status-suspended { border-left-color: #ef4444; }
+.admin-shop-card-head { display: flex; align-items: center; gap: .7rem; }
+.admin-shop-avatar { width: 44px; height: 44px; display: grid; place-items: center; flex: 0 0 44px; border-radius: 13px; background: #eef2ff; color: #4338ca; font-weight: 900; }
+.admin-shop-card h2 { margin: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 1rem; font-weight: 850; }
+.admin-shop-card-head p { margin: .12rem 0 0; overflow: hidden; color: var(--text-muted); font-size: .75rem; text-overflow: ellipsis; white-space: nowrap; }
+.admin-status-badge { margin-left: auto; padding: .3rem .55rem; border-radius: 999px; background: #f1f5f9; font-size: .68rem; font-weight: 850; text-transform: capitalize; }
+.admin-shop-description { min-height: 2.7em; margin: .85rem 0; color: #475569; font-size: .8rem; line-height: 1.45; }
+.admin-owner-grid { display: grid; grid-template-columns: 1fr 1fr; gap: .6rem; padding: .75rem; border-radius: 12px; background: #f8fafc; }
+.admin-owner-grid span { display: block; color: var(--text-muted); font-size: .65rem; text-transform: uppercase; }
+.admin-owner-grid strong { display: block; overflow: hidden; font-size: .75rem; text-overflow: ellipsis; white-space: nowrap; }
+.admin-reason-note { margin-top: .7rem; padding: .6rem; border-radius: 10px; background: #fef2f2; color: #b91c1c; font-size: .75rem; }
+.admin-card-actions { display: flex; flex-wrap: wrap; gap: .5rem; margin-top: .8rem; }
+.admin-card-actions .btn { flex: 1; }
+.admin-empty { grid-column: 1/-1; display: grid; place-items: center; gap: .5rem; padding: 3rem 1rem; color: var(--text-muted); font-size: 2rem; text-align: center; }
+.admin-empty strong { color: var(--text-main); font-size: 1rem; }
+.admin-empty span { font-size: .8rem; }
+
+@media (max-width: 767.98px) {
+    .shop-picker-list { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; }
+    .shop-picker-list::-webkit-scrollbar { display: none; }
+    .shop-choice { flex: 0 0 min(82vw, 280px); scroll-snap-align: start; }
+    .admin-stats { grid-template-columns: 1fr 1fr; }
+    .admin-toolbar { flex-direction: column; }
+    .admin-toolbar > .form-control { width: 100%; }
+}
+
+@media (max-width: 575.98px) {
+    .shop-picker { padding: .8rem; border-radius: 15px; }
+    .shop-picker-heading { align-items: flex-start; flex-direction: column; gap: .45rem; }
+    .approval-shell { align-items: start; padding: .75rem; }
+    .approval-card { padding: 1.35rem 1rem; border-radius: 20px; }
+    .admin-main { padding: .8rem .65rem 2rem; }
+    .admin-welcome { align-items: flex-start; padding: 1rem; }
+    .admin-welcome p { display: none; }
+    .admin-welcome h1 { font-size: 1.25rem; }
+    .admin-panel { padding: .7rem; border-radius: 16px; }
+    .admin-shop-list { grid-template-columns: 1fr; }
+    .admin-owner-grid { grid-template-columns: 1fr; }
+}

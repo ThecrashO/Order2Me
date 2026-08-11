@@ -162,6 +162,7 @@ let menuItemsData     = new Map(); // id -> full item object (used for edit/imag
 let allMenuItemsArr   = [];  // flat array cache for menu search
 let allCustomersArr    = [];  // flat array cache for customer search
 let ownerRealtimeChannel = null; // Supabase Realtime channel reference
+let ownerShop          = null;
 
 // ── Date helpers ──────────────────────────────────────────────
 function getTodayBounds() {
@@ -196,10 +197,13 @@ async function initializeApp() {
     // Auth guard: must be an owner
     ownerProfile = await requireOwner();
     if (!ownerProfile) return; // requireOwner redirects to login
+    ownerShop = ownerProfile.shop;
 
     // Populate owner name in sidebar profile dropdown
     const nameEl = document.getElementById('owner-profile-name');
     if (nameEl && ownerProfile.name) nameEl.textContent = ownerProfile.name;
+    const shopNameEl = document.getElementById('owner-shop-name');
+    if (shopNameEl) shopNameEl.textContent = ownerShop.name;
 
     syncOwnerNotificationSettingUI();
 
@@ -247,7 +251,7 @@ function subscribeOwnerRealtime() {
         .channel('owner-orders-realtime')
         .on(
             'postgres_changes',
-            { event: 'INSERT', schema: 'public', table: 'orders' },
+            { event: 'INSERT', schema: 'public', table: 'orders', filter: `shop_id=eq.${ownerShop.id}` },
             (payload) => {
                 const newOrder = payload.new;
                 if (!newOrder) return;
@@ -271,7 +275,7 @@ function subscribeOwnerRealtime() {
         )
         .on(
             'postgres_changes',
-            { event: 'UPDATE', schema: 'public', table: 'orders' },
+            { event: 'UPDATE', schema: 'public', table: 'orders', filter: `shop_id=eq.${ownerShop.id}` },
             (payload) => {
                 const updated = payload.new;
                 if (!updated) return;
@@ -316,6 +320,7 @@ async function loadOrders() {
                 screenshot_url
             )
         `)
+        .eq('shop_id', ownerShop.id)
         .order('created_at', { ascending: false });
 
     if (error) {
@@ -376,10 +381,52 @@ function openOwnerProfileInfo() {
 function openOwnerSettings() {
     closeOwnerProfileDropdown();
     syncOwnerNotificationSettingUI();
+    document.getElementById('owner-shop-settings-name').value = ownerShop?.name || '';
+    document.getElementById('owner-shop-settings-phone').value = ownerShop?.phone_number || '';
+    document.getElementById('owner-shop-settings-address').value = ownerShop?.address || '';
+    document.getElementById('owner-shop-settings-description').value = ownerShop?.description || '';
+    const statusEl = document.getElementById('owner-shop-settings-status');
+    statusEl.className = 'alert small d-none';
+    statusEl.textContent = '';
     const modalEl = document.getElementById('ownerSettingsModal');
     if (!modalEl) return;
     const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
     modal.show();
+}
+
+async function saveOwnerShopSettings() {
+    if (!ownerShop) return;
+    const statusEl = document.getElementById('owner-shop-settings-status');
+    const payload = {
+        name: document.getElementById('owner-shop-settings-name').value.trim(),
+        phone_number: document.getElementById('owner-shop-settings-phone').value.trim() || null,
+        address: document.getElementById('owner-shop-settings-address').value.trim(),
+        description: document.getElementById('owner-shop-settings-description').value.trim() || null
+    };
+    if (!payload.name || !payload.address) {
+        statusEl.className = 'alert alert-danger small';
+        statusEl.textContent = 'Shop name and location are required.';
+        return;
+    }
+
+    const { data, error } = await supabaseClient
+        .from('shops')
+        .update(payload)
+        .eq('id', ownerShop.id)
+        .select('id, owner_id, name, slug, description, address, phone_number, logo_url, status, rejection_reason, approved_at, created_at')
+        .single();
+
+    if (error) {
+        statusEl.className = 'alert alert-danger small';
+        statusEl.textContent = error.message;
+        return;
+    }
+    ownerShop = data;
+    ownerProfile.shop = data;
+    document.getElementById('owner-shop-name').textContent = data.name;
+    statusEl.className = 'alert alert-success small';
+    statusEl.textContent = 'Shop details updated.';
+    showToast('Shop details updated.', 'success');
 }
 
 function refreshOrders() {
@@ -560,7 +607,8 @@ async function updateStatus(orderId, newStatus) {
     const { error } = await supabaseClient
         .from('orders')
         .update({ status: newStatus })
-        .eq('id', orderId);
+        .eq('id', orderId)
+        .eq('shop_id', ownerShop.id);
 
     if (error) {
         console.error('Error updating status:', error);
@@ -609,7 +657,8 @@ async function confirmReject() {
     const { error } = await supabaseClient
         .from('orders')
         .update({ status: 'cancelled' })
-        .eq('id', orderId);
+        .eq('id', orderId)
+        .eq('shop_id', ownerShop.id);
 
     btn.disabled = false;
     spinner.classList.add('d-none');
@@ -636,6 +685,7 @@ async function loadMenuItems() {
     const { data, error } = await supabaseClient
         .from('menu_items')
         .select('*')
+        .eq('shop_id', ownerShop.id)
         .order('created_at', { ascending: false });
 
     const menuList = document.getElementById('menu-list');
@@ -938,7 +988,7 @@ function previewEditImage(input) {
 
 async function uploadMenuItemImage(file, itemId) {
     const ext      = file.name.split('.').pop();
-    const fileName = `menu_${itemId}_${Date.now()}.${ext}`;
+    const fileName = `${ownerShop.id}/menu_${itemId}_${Date.now()}.${ext}`;
 
     const { error: uploadError } = await supabaseClient.storage
         .from('menu-images')
@@ -973,7 +1023,7 @@ async function handleAddFood() {
     // Insert first to get the new item id for the image filename
     const { data: insertedItem, error } = await supabaseClient
         .from('menu_items')
-        .insert([{ name, description, price, is_available: isAvailable, category }])
+        .insert([{ shop_id: ownerShop.id, name, description, price, is_available: isAvailable, category }])
         .select()
         .single();
 
@@ -990,7 +1040,8 @@ async function handleAddFood() {
             await supabaseClient
                 .from('menu_items')
                 .update({ image_url: imageUrl })
-                .eq('id', insertedItem.id);
+                .eq('id', insertedItem.id)
+                .eq('shop_id', ownerShop.id);
         }
     }
 
@@ -1051,7 +1102,8 @@ async function handleEditFood() {
     const { error } = await supabaseClient
         .from('menu_items')
         .update({ name, description, price, is_available: isAvailable, image_url: imageUrl, category })
-        .eq('id', itemId);
+        .eq('id', itemId)
+        .eq('shop_id', ownerShop.id);
 
     if (error) {
         console.error('Error editing food:', error);
@@ -1071,7 +1123,8 @@ async function toggleAvailability(event) {
     const { error } = await supabaseClient
         .from('menu_items')
         .update({ is_available: isAvailable })
-        .eq('id', itemId);
+        .eq('id', itemId)
+        .eq('shop_id', ownerShop.id);
 
     if (error) {
         console.error('Error toggling availability:', error);
@@ -1085,7 +1138,8 @@ async function deleteItem(id) {
     const { error } = await supabaseClient
         .from('menu_items')
         .delete()
-        .eq('id', id);
+        .eq('id', id)
+        .eq('shop_id', ownerShop.id);
 
     if (error) {
         console.error('Error deleting food:', error);

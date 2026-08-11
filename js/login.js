@@ -4,7 +4,7 @@
 
     const profile = await getCurrentProfile();
     if (profile) {
-        window.location.href = profile.role === 'owner' ? 'owner.html' : 'customer.html';
+        window.location.href = dashboardForProfile(profile);
         return;
     }
 
@@ -38,11 +38,7 @@
             return;
         }
 
-        if (userProfile.role === 'owner') {
-            window.location.href = 'owner.html';
-        } else {
-            window.location.href = 'customer.html';
-        }
+        window.location.href = dashboardForProfile(userProfile);
     });
 }
 

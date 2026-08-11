@@ -83,6 +83,12 @@ async function initHistoryPage() {
     currentProfile = profile;
     currentRole    = profile.role;
 
+    if (currentRole === 'admin') { window.location.href = 'admin.html'; return; }
+    if (currentRole === 'owner' && profile.shop?.status !== 'approved') {
+        window.location.href = 'pending.html';
+        return;
+    }
+
     const roleEl = document.getElementById('hist-role-badge');
     if (roleEl) roleEl.textContent = currentRole === 'owner' ? '\ud83d\udc51 Owner View' : '\ud83c\udf93 Customer View';
 
@@ -156,6 +162,8 @@ async function loadOwnerHistory(startISO, endISO) {
             order_items ( quantity, price, menu_items ( name ) ),
             payments ( payment_method, screenshot_url )`)
         .order('created_at', { ascending: false });
+
+    query = query.eq('shop_id', currentProfile.shop.id);
 
     if (startISO) query = query.gte('created_at', startISO);
     if (endISO)   query = query.lt('created_at', endISO);
@@ -235,7 +243,7 @@ async function loadCustomerHistory() {
 
     const { data, error } = await supabaseClient
         .from('orders')
-        .select(`id, status, total_amount, delivery_note, created_at,
+        .select(`id, status, total_amount, delivery_note, created_at, shops (name),
             order_items ( quantity, price, menu_items (name) ),
             payments ( payment_method )`)
         .eq('customer_id', currentProfile.id)
@@ -289,7 +297,7 @@ function renderCustomerHistory(orders) {
                 <div class="hist-card-header">
                     <div>
                         <div class="hist-card-id">Order #${order.id}</div>
-                        <div class="hist-card-meta">\ud83d\udd50 ${time}</div>
+                        <div class="hist-card-meta">Shop: ${escapeHtml(order.shops?.name || 'Shop')} · ${time}</div>
                     </div>
                     <div style="display:flex;flex-direction:column;align-items:flex-end;gap:5px">
                         <span class="hist-badge" style="background:${s.bg}">${s.label}</span>

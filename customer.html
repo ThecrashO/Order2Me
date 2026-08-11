@@ -194,6 +194,18 @@
                     </div>
                 </div>
 
+                <!-- Approved shop selector -->
+                <section class="shop-picker mb-3" aria-labelledby="shop-picker-title">
+                    <div class="shop-picker-heading">
+                        <div>
+                            <span class="shop-picker-kicker">Choose a canteen</span>
+                            <h3 id="shop-picker-title">Where would you like to order?</h3>
+                        </div>
+                        <span id="active-shop-label" class="active-shop-label">Loading shops…</span>
+                    </div>
+                    <div id="shop-picker-list" class="shop-picker-list" role="listbox" aria-label="Approved shops"></div>
+                </section>
+
                 <!-- Category Filter Bar -->
                 <div class="cat-filter-strip mb-3" id="category-filter-bar">
                     <button class="btn btn-primary category-filter-btn active" data-category="all">🍽️ All</button>
@@ -808,7 +820,7 @@
 
             const { data, error } = await supabaseClient
                 .from('orders')
-                .select(`id, status, total_amount, delivery_note, created_at,
+                .select(`id, status, total_amount, delivery_note, created_at, shops (name),
                     order_items ( quantity, price, menu_items (name) ),
                     payments ( payment_method )`)
                 .eq('customer_id', profile.id)
@@ -860,7 +872,7 @@
                         <div class="hist-card-header">
                             <div>
                                 <div class="hist-card-id">Order #${order.id}</div>
-                                <div class="hist-card-meta">🕐 ${time}</div>
+                                <div class="hist-card-meta">🏪 ${_hEsc(order.shops?.name || 'Shop')} · 🕐 ${time}</div>
                             </div>
                             <div style="display:flex;flex-direction:column;align-items:flex-end;gap:5px">
                                 <span class="hist-badge" style="background:${s.bg}">${s.label}</span>
