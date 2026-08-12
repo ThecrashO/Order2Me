@@ -21,7 +21,27 @@
             <span class="o2m-logo-nav"><img src="images/logo.png" alt="" class="o2m-logo-image"></span>
             <span>Order2Me Admin</span>
         </a>
-        <button class="btn btn-outline-light btn-sm" onclick="signOut()">Sign out</button>
+        <div class="profile-dropdown ms-auto" id="admin-profile-dropdown-wrap">
+            <button class="profile-avatar-btn" id="admin-profile-avatar-btn" onclick="toggleAdminProfileDropdown()"
+                aria-haspopup="true" aria-expanded="false" aria-controls="admin-profile-dropdown-menu" aria-label="Open profile menu">
+                <span class="profile-navbar-avatar" data-current-profile-avatar><span>?</span></span>
+                <span class="profile-avatar-caret" aria-hidden="true">⌄</span>
+            </button>
+            <div class="profile-dropdown-menu" id="admin-profile-dropdown-menu" role="menu" aria-hidden="true">
+                <div class="profile-dropdown-header">
+                    <div class="profile-dropdown-avatar" data-current-profile-avatar><span>?</span></div>
+                    <div class="profile-dropdown-userinfo">
+                        <div class="profile-dropdown-name" id="admin-profile-name">—</div>
+                        <div class="profile-dropdown-role">Administrator</div>
+                    </div>
+                </div>
+                <div class="profile-dropdown-divider"></div>
+                <button class="profile-dropdown-item" role="menuitem" onclick="openAdminProfile()">👤 My Profile</button>
+                <button class="profile-dropdown-item" role="menuitem" onclick="openAdminSettings()">⚙ Settings</button>
+                <div class="profile-dropdown-divider"></div>
+                <button class="profile-dropdown-item profile-dropdown-signout" role="menuitem" onclick="signOut()">↪ Sign out</button>
+            </div>
+        </div>
     </div>
 </nav>
 
@@ -114,6 +134,65 @@
 
 <div class="toast-container position-fixed bottom-0 end-0 p-3" id="app-toast-container"></div>
 
+<div class="modal fade" id="adminProfileModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
+            <div class="modal-header border-0 px-4 pt-4 pb-3 profile-modal-header">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="profile-modal-avatar" data-current-profile-avatar><span>?</span></div>
+                    <div><h5 class="modal-title mb-0">My Profile</h5><div class="small text-muted">Administrator account</div></div>
+                </div>
+                <button class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body px-4 py-4">
+                <div class="profile-hero">
+                    <div class="profile-avatar-xl" data-current-profile-avatar><span>?</span></div>
+                    <div><strong id="admin-profile-view-name">—</strong><span>Order2Me administrator</span></div>
+                </div>
+                <div class="profile-detail-card">
+                    <div><span>Email address</span><strong id="admin-profile-view-email">—</strong></div>
+                    <div><span>Phone number</span><strong id="admin-profile-view-phone">—</strong></div>
+                    <div><span>Access role</span><strong>Administrator</strong></div>
+                </div>
+            </div>
+            <div class="modal-footer border-0 px-4 pb-4 pt-0">
+                <button class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button class="btn btn-primary" onclick="openAdminSettings()">Edit profile</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="adminSettingsModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
+            <div class="modal-header border-0 px-4 pt-4 pb-3 profile-modal-header">
+                <div><h5 class="modal-title mb-0">Settings</h5><div class="small text-muted">Manage your admin profile</div></div>
+                <button class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body px-4 py-4">
+                <div class="alert small d-none" id="admin-profile-edit-status"></div>
+                <div class="profile-photo-editor">
+                    <div class="profile-avatar-xl" id="admin-profile-edit-avatar"><span>?</span></div>
+                    <div class="profile-photo-copy">
+                        <label class="btn btn-outline-primary btn-sm mb-1" for="admin-profile-avatar-input">Choose photo</label>
+                        <input class="visually-hidden" id="admin-profile-avatar-input" type="file"
+                            accept="image/jpeg,image/png,image/webp" onchange="handleAdminAvatarPreview(this)">
+                        <small>JPG, PNG or WebP · maximum 3 MB</small>
+                    </div>
+                </div>
+                <div class="mb-3"><label class="form-label fw-semibold" for="admin-profile-name-input">Name</label><input class="form-control" id="admin-profile-name-input" maxlength="100"></div>
+                <div class="mb-3"><label class="form-label fw-semibold" for="admin-profile-phone-input">Phone number</label><input class="form-control" id="admin-profile-phone-input" type="tel" maxlength="30"></div>
+                <div><label class="form-label fw-semibold" for="admin-profile-email-readonly">Email address</label><input class="form-control" id="admin-profile-email-readonly" type="email" readonly><div class="form-text">Email cannot be changed here.</div></div>
+            </div>
+            <div class="modal-footer border-0 px-4 pb-4 pt-0">
+                <button class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button class="btn btn-primary" id="admin-profile-save-btn" onclick="saveAdminProfile()">Save changes</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <div class="modal fade" id="adminReasonModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
@@ -138,8 +217,10 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/js/bootstrap.bundle.min.js"></script>
+<script src="/api/config"></script>
 <script src="js/supabase.js"></script>
 <script src="js/auth.js"></script>
+<script src="js/profile.js"></script>
 <script src="js/admin.js"></script>
 </body>
 </html>

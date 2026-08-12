@@ -2679,6 +2679,114 @@ textarea {
 .approval-shop-details strong { text-align: right; font-size: .85rem; text-transform: capitalize; }
 
 /* ============================================================
+   Shared profile and settings UI
+   ============================================================ */
+.customer-avatar img,
+.admin-user-avatar img,
+.admin-shop-avatar img {
+    width: 100%;
+    height: 100%;
+    border-radius: inherit;
+    object-fit: cover;
+}
+
+.profile-navbar-avatar,
+.profile-dropdown-avatar,
+.profile-modal-avatar,
+.profile-avatar-xl {
+    display: grid;
+    place-items: center;
+    overflow: hidden;
+    flex: 0 0 auto;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--brand-dark), var(--brand-hover));
+    color: #fff;
+    font-weight: 850;
+    letter-spacing: .02em;
+}
+
+.profile-navbar-avatar { width: 28px; height: 28px; font-size: .68rem; }
+.profile-modal-avatar { width: 46px; height: 46px; font-size: .82rem; }
+.profile-avatar-xl {
+    width: 82px;
+    height: 82px;
+    border: 4px solid #fff;
+    box-shadow: 0 8px 24px rgba(15,23,42,.16);
+    font-size: 1.2rem;
+}
+
+.profile-navbar-avatar img,
+.profile-dropdown-avatar img,
+.profile-modal-avatar img,
+.profile-avatar-xl img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.profile-hero {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1rem;
+    padding: 1rem;
+    border: 1px solid rgba(249,115,22,.16);
+    border-radius: 18px;
+    background: linear-gradient(135deg, #fff7ed, #fff);
+}
+
+.profile-hero > div:last-child { min-width: 0; }
+.profile-hero strong { display: block; overflow: hidden; color: var(--text-main); font-size: 1.05rem; text-overflow: ellipsis; white-space: nowrap; }
+.profile-hero span { display: block; margin-top: .18rem; color: var(--text-muted); font-size: .78rem; }
+
+.profile-photo-editor {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1.25rem;
+    padding: 1rem;
+    border: 1px dashed rgba(249,115,22,.42);
+    border-radius: 18px;
+    background: var(--brand-soft);
+}
+
+.profile-photo-copy { display: flex; min-width: 0; flex-direction: column; align-items: flex-start; }
+.profile-photo-copy small { color: var(--text-muted); font-size: .72rem; }
+.profile-modal-header { background: linear-gradient(135deg, #fff7ed, #f8fafc); }
+
+.settings-account-link {
+    display: flex;
+    width: 100%;
+    align-items: center;
+    gap: .75rem;
+    margin-bottom: 1rem;
+    padding: .8rem;
+    border: 1px solid #e2e8f0;
+    border-radius: 16px;
+    background: #fff;
+    color: var(--text-main);
+    text-align: left;
+    transition: border-color .18s, background .18s;
+}
+
+.settings-account-link:hover { border-color: rgba(249,115,22,.48); background: var(--brand-soft); }
+.settings-account-link > span:nth-child(2) { display: flex; min-width: 0; flex: 1; flex-direction: column; }
+.settings-account-link strong { font-size: .88rem; }
+.settings-account-link small { overflow: hidden; color: var(--text-muted); font-size: .72rem; text-overflow: ellipsis; white-space: nowrap; }
+.settings-account-link > span:last-child { color: var(--brand-dark); font-size: 1.5rem; line-height: 1; }
+
+.profile-detail-card {
+    display: grid;
+    gap: .8rem;
+    padding: 1rem;
+    border: 1px solid #e2e8f0;
+    border-radius: 16px;
+    background: #f8fafc;
+}
+.profile-detail-card span { display: block; color: var(--text-muted); font-size: .66rem; font-weight: 750; letter-spacing: .04em; text-transform: uppercase; }
+.profile-detail-card strong { display: block; overflow-wrap: anywhere; color: var(--text-main); font-size: .86rem; }
+
+/* ============================================================
    Admin shop approval dashboard
    ============================================================ */
 .admin-page { background: linear-gradient(135deg, var(--brand-soft), #f8fafc); }

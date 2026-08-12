@@ -263,6 +263,7 @@ async function initializeApp() {
     if (nameEl && ownerProfile.name) nameEl.textContent = ownerProfile.name;
     const shopNameEl = document.getElementById('owner-shop-name');
     if (shopNameEl) shopNameEl.textContent = ownerShop.name;
+    await refreshCurrentProfileAvatars(ownerProfile);
 
     syncOwnerNotificationSettingUI();
 
@@ -452,16 +453,22 @@ async function loadOwnerProfileView() {
     try {
         const { data, error } = await supabaseClient
             .from('users')
-            .select('id, name, email, phone_number, role')
+            .select('id, name, email, phone_number, role, avatar_path')
             .eq('id', ownerProfile.id)
             .single();
 
         if (error) throw error;
 
         const profile = data || ownerProfile;
+        ownerProfile = { ...ownerProfile, ...profile, shop: ownerShop };
         if (nameEl) nameEl.textContent = profile.name || '—';
         if (emailEl) emailEl.textContent = profile.email || '—';
         if (phoneEl) phoneEl.textContent = profile.phone_number || '—';
+        const heroNameEl = document.getElementById('owner-profile-hero-name');
+        if (heroNameEl) heroNameEl.textContent = profile.name || '—';
+        const dropdownNameEl = document.getElementById('owner-profile-name');
+        if (dropdownNameEl) dropdownNameEl.textContent = profile.name || '—';
+        await refreshCurrentProfileAvatars(ownerProfile);
 
         if (statusEl) {
             statusEl.className = 'alert small d-none';
@@ -500,6 +507,79 @@ function openOwnerSettings() {
     if (!modalEl) return;
     const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
     modal.show();
+}
+
+function openOwnerProfileEdit() {
+    bootstrap.Modal.getInstance(document.getElementById('ownerSettingsModal'))?.hide();
+    bootstrap.Modal.getInstance(document.getElementById('ownerProfileViewModal'))?.hide();
+
+    document.getElementById('owner-profile-name-input').value = ownerProfile?.name || '';
+    document.getElementById('owner-profile-phone-input').value = ownerProfile?.phone_number || '';
+    document.getElementById('owner-profile-email-readonly').value = ownerProfile?.email || '';
+    document.getElementById('owner-profile-avatar-input').value = '';
+    const statusEl = document.getElementById('owner-profile-edit-status');
+    statusEl.className = 'alert small d-none';
+    statusEl.textContent = '';
+    renderProfileAvatarElement(
+        document.getElementById('owner-profile-edit-avatar'),
+        ownerProfile,
+        ownerProfile?.avatar_url
+    );
+    bootstrap.Modal.getOrCreateInstance(document.getElementById('ownerProfileEditModal')).show();
+}
+
+function handleOwnerAvatarPreview(input) {
+    const statusEl = document.getElementById('owner-profile-edit-status');
+    try {
+        previewSelectedProfileImage(input, 'owner-profile-edit-avatar', ownerProfile);
+        statusEl.className = 'alert small d-none';
+        statusEl.textContent = '';
+    } catch (error) {
+        statusEl.className = 'alert alert-danger small';
+        statusEl.textContent = error.message;
+    }
+}
+
+async function saveOwnerProfile() {
+    const name = document.getElementById('owner-profile-name-input').value.trim();
+    const phone = document.getElementById('owner-profile-phone-input').value.trim();
+    const imageFile = document.getElementById('owner-profile-avatar-input').files?.[0] || null;
+    const statusEl = document.getElementById('owner-profile-edit-status');
+    const saveBtn = document.getElementById('owner-profile-save-btn');
+    const phonePattern = /^\+?[0-9()\-\s]{7,20}$/;
+
+    if (!name || !phone || !phonePattern.test(phone)) {
+        statusEl.className = 'alert alert-danger small';
+        statusEl.textContent = !name ? 'Name is required.' : 'Enter a valid phone number.';
+        return;
+    }
+
+    saveBtn.disabled = true;
+    saveBtn.textContent = 'Saving…';
+    statusEl.className = 'alert alert-info small';
+    statusEl.textContent = 'Saving your profile…';
+
+    try {
+        const updatedProfile = await updateProfileWithAvatar(
+            ownerProfile,
+            { name, phone_number: phone },
+            imageFile
+        );
+        ownerProfile = { ...ownerProfile, ...updatedProfile, shop: ownerShop };
+        document.getElementById('owner-profile-name').textContent = ownerProfile.name;
+        await refreshCurrentProfileAvatars(ownerProfile);
+        bootstrap.Modal.getInstance(document.getElementById('ownerProfileEditModal'))?.hide();
+        await loadOwnerProfileView();
+        bootstrap.Modal.getOrCreateInstance(document.getElementById('ownerProfileViewModal')).show();
+        showToast('Profile updated successfully.', 'success');
+    } catch (error) {
+        console.error('Owner profile update failed:', error);
+        statusEl.className = 'alert alert-danger small';
+        statusEl.textContent = error?.message || 'Unable to update your profile.';
+    } finally {
+        saveBtn.disabled = false;
+        saveBtn.textContent = 'Save changes';
+    }
 }
 
 async function saveOwnerShopSettings() {
@@ -973,6 +1053,7 @@ async function loadCustomers() {
             name,
             email,
             phone_number,
+            avatar_path,
             created_at,
             orders ( id )
         `)
@@ -988,6 +1069,7 @@ async function loadCustomers() {
         ...s,
         order_count: Array.isArray(s.orders) ? s.orders.length : 0
     }));
+    await hydrateProfileAvatars(allCustomersArr);
 
     // Update sidebar count badge
     const badge = document.getElementById('customers-count-badge');
@@ -1052,7 +1134,9 @@ function renderCustomers(customers, query = '') {
                     <!-- Avatar + Name row -->
                     <div class="d-flex align-items-center gap-3 mb-3">
                         <div class="customer-avatar" style="background:${bg};">
-                            ${initials}
+                            ${s.avatar_url
+                                ? `<img src="${escapeHtml(s.avatar_url)}" alt="${escapeHtml(s.name || 'Customer')} profile photo" loading="lazy">`
+                                : escapeHtml(initials)}
                         </div>
                         <div class="min-w-0">
                             <div class="fw-bold customer-card-name">${escapeHtml(s.name || '—')}</div>

@@ -64,7 +64,7 @@ async function createProfileAndShop(user, metadata = {}) {
     const { data: profile, error: profileError } = await supabaseClient
         .from('users')
         .insert(profilePayload)
-        .select('id, name, email, phone_number, role')
+        .select('id, name, email, phone_number, role, avatar_path')
         .single();
 
     if (profileError) throw profileError;
@@ -82,7 +82,7 @@ async function getCurrentProfile() {
 
     const { data, error } = await supabaseClient
         .from('users')
-        .select('id, name, email, phone_number, role')
+        .select('id, name, email, phone_number, role, avatar_path')
         .eq('auth_user_id', user.id)
         .maybeSingle();
 

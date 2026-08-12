@@ -6,7 +6,7 @@
 //   2. Offline fallback for cached assets
 // ============================================================
 
-const CACHE_NAME = 'order2me-v10';
+const CACHE_NAME = 'order2me-v11';
 
 // Assets to cache on install (app shell)
 const APP_SHELL = [
@@ -24,6 +24,7 @@ const APP_SHELL = [
     './images/logo.png',
     './js/supabase.js',
     './js/auth.js',
+    './js/profile.js',
     './js/customer.js',
     './js/owner.js',
     './js/history.js',
@@ -61,6 +62,7 @@ self.addEventListener('fetch', (event) => {
     if (event.request.method !== 'GET') return;
     const url = new URL(event.request.url);
     if (url.origin !== self.location.origin) return;
+    if (url.pathname === '/api/config') return;
 
     event.respondWith(
         fetch(event.request)

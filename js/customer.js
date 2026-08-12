@@ -1294,7 +1294,7 @@ async function loadCustomerProfileView() {
     try {
         const { data, error } = await supabaseClient
             .from('users')
-            .select('id, name, email, phone_number, role')
+            .select('id, name, email, phone_number, role, avatar_path')
             .eq('id', currentCustomerProfile.id)
             .single();
 
@@ -1304,12 +1304,15 @@ async function loadCustomerProfileView() {
         const nameEl = document.getElementById('profile-view-name');
         const phoneEl = document.getElementById('profile-view-phone');
         const emailEl = document.getElementById('profile-view-email');
+        const heroNameEl = document.getElementById('profile-hero-name');
         if (nameEl) nameEl.textContent = data.name || '—';
         if (phoneEl) phoneEl.textContent = data.phone_number || '—';
         if (emailEl) emailEl.textContent = data.email || '—';
+        if (heroNameEl) heroNameEl.textContent = data.name || '—';
 
         const profileNameEl = document.getElementById('profile-name');
         if (profileNameEl) profileNameEl.textContent = data.name || '—';
+        await refreshCurrentProfileAvatars(currentCustomerProfile);
 
         setProfileLoadingState(false);
         if (contentEl) contentEl.classList.remove('d-none');
@@ -1333,6 +1336,13 @@ function openEditProfileDialog() {
     if (nameInput) nameInput.value = currentCustomerProfile?.name || '';
     if (phoneInput) phoneInput.value = currentCustomerProfile?.phone_number || '';
     if (emailInput) emailInput.value = currentCustomerProfile?.email || '';
+    const avatarInput = document.getElementById('profile-avatar-input');
+    if (avatarInput) avatarInput.value = '';
+    renderProfileAvatarElement(
+        document.getElementById('profile-edit-avatar'),
+        currentCustomerProfile,
+        currentCustomerProfile?.avatar_url
+    );
     clearProfileAlert(statusEl);
 
     const viewModalInstance = bootstrap.Modal.getInstance(document.getElementById('profileViewModal'));
@@ -1340,6 +1350,21 @@ function openEditProfileDialog() {
 
     const editModalInstance = bootstrap.Modal.getOrCreateInstance(editModalEl);
     editModalInstance.show();
+}
+
+function openEditProfileFromSettings() {
+    bootstrap.Modal.getInstance(document.getElementById('settingsModal'))?.hide();
+    openEditProfileDialog();
+}
+
+function handleCustomerAvatarPreview(input) {
+    const statusEl = document.getElementById('profile-edit-status');
+    try {
+        previewSelectedProfileImage(input, 'profile-edit-avatar', currentCustomerProfile);
+        clearProfileAlert(statusEl);
+    } catch (error) {
+        setProfileAlert(statusEl, 'danger', error.message);
+    }
 }
 
 function validateCustomerProfileInputs(name, phone) {
@@ -1366,6 +1391,7 @@ async function saveCustomerProfile() {
     const phoneInput = document.getElementById('profile-phone-input');
     const statusEl = document.getElementById('profile-edit-status');
     const saveBtn = document.getElementById('profile-save-btn');
+    const imageFile = document.getElementById('profile-avatar-input')?.files?.[0] || null;
 
     const name = nameInput?.value.trim() || '';
     const phone = phoneInput?.value.trim() || '';
@@ -1384,19 +1410,12 @@ async function saveCustomerProfile() {
     setProfileAlert(statusEl, 'info', 'Saving your profile changes...');
 
     try {
-        const { data, error } = await supabaseClient
-            .from('users')
-            .update({
-                name,
-                phone_number: phone
-            })
-            .eq('id', currentCustomerProfile.id)
-            .select('id, name, email, phone_number, role')
-            .single();
-
-        if (error) throw error;
-
-        currentCustomerProfile = data;
+        currentCustomerProfile = await updateProfileWithAvatar(
+            currentCustomerProfile,
+            { name, phone_number: phone },
+            imageFile
+        );
+        const data = currentCustomerProfile;
         const profileNameEl = document.getElementById('profile-name');
         if (profileNameEl) profileNameEl.textContent = data.name || '—';
 
@@ -1439,6 +1458,7 @@ async function initCustomerPage() {
     if (profileNameEl && currentCustomerProfile.name) {
         profileNameEl.textContent = currentCustomerProfile.name;
     }
+    await refreshCurrentProfileAvatars(currentCustomerProfile);
 
     await loadApprovedShops();
     loadCustomerOrders();

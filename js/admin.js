@@ -7,6 +7,102 @@ let adminUserChannel = null;
 let adminUsers = [];
 let adminActiveUserRole = 'all';
 
+function toggleAdminProfileDropdown() {
+    const menu = document.getElementById('admin-profile-dropdown-menu');
+    const button = document.getElementById('admin-profile-avatar-btn');
+    const isOpen = menu.classList.toggle('dropdown-open');
+    button.setAttribute('aria-expanded', String(isOpen));
+    menu.setAttribute('aria-hidden', String(!isOpen));
+}
+
+function closeAdminProfileDropdown() {
+    const menu = document.getElementById('admin-profile-dropdown-menu');
+    const button = document.getElementById('admin-profile-avatar-btn');
+    menu?.classList.remove('dropdown-open');
+    button?.setAttribute('aria-expanded', 'false');
+    menu?.setAttribute('aria-hidden', 'true');
+}
+
+function syncAdminProfileUI() {
+    if (!adminProfile) return;
+    document.getElementById('admin-profile-name').textContent = adminProfile.name || '—';
+    document.getElementById('admin-profile-view-name').textContent = adminProfile.name || '—';
+    document.getElementById('admin-profile-view-email').textContent = adminProfile.email || '—';
+    document.getElementById('admin-profile-view-phone').textContent = adminProfile.phone_number || '—';
+    refreshCurrentProfileAvatars(adminProfile);
+}
+
+function openAdminProfile() {
+    closeAdminProfileDropdown();
+    syncAdminProfileUI();
+    bootstrap.Modal.getOrCreateInstance(document.getElementById('adminProfileModal')).show();
+}
+
+function openAdminSettings() {
+    closeAdminProfileDropdown();
+    bootstrap.Modal.getInstance(document.getElementById('adminProfileModal'))?.hide();
+    document.getElementById('admin-profile-name-input').value = adminProfile?.name || '';
+    document.getElementById('admin-profile-phone-input').value = adminProfile?.phone_number || '';
+    document.getElementById('admin-profile-email-readonly').value = adminProfile?.email || '';
+    document.getElementById('admin-profile-avatar-input').value = '';
+    const statusEl = document.getElementById('admin-profile-edit-status');
+    statusEl.className = 'alert small d-none';
+    statusEl.textContent = '';
+    renderProfileAvatarElement(document.getElementById('admin-profile-edit-avatar'), adminProfile, adminProfile?.avatar_url);
+    bootstrap.Modal.getOrCreateInstance(document.getElementById('adminSettingsModal')).show();
+}
+
+function handleAdminAvatarPreview(input) {
+    const statusEl = document.getElementById('admin-profile-edit-status');
+    try {
+        previewSelectedProfileImage(input, 'admin-profile-edit-avatar', adminProfile);
+        statusEl.className = 'alert small d-none';
+        statusEl.textContent = '';
+    } catch (error) {
+        statusEl.className = 'alert alert-danger small';
+        statusEl.textContent = error.message;
+    }
+}
+
+async function saveAdminProfile() {
+    const name = document.getElementById('admin-profile-name-input').value.trim();
+    const phone = document.getElementById('admin-profile-phone-input').value.trim();
+    const imageFile = document.getElementById('admin-profile-avatar-input').files?.[0] || null;
+    const statusEl = document.getElementById('admin-profile-edit-status');
+    const saveBtn = document.getElementById('admin-profile-save-btn');
+    const phonePattern = /^\+?[0-9()\-\s]{7,20}$/;
+
+    if (!name || (phone && !phonePattern.test(phone))) {
+        statusEl.className = 'alert alert-danger small';
+        statusEl.textContent = !name ? 'Name is required.' : 'Enter a valid phone number.';
+        return;
+    }
+
+    saveBtn.disabled = true;
+    saveBtn.textContent = 'Saving…';
+    statusEl.className = 'alert alert-info small';
+    statusEl.textContent = 'Saving your profile…';
+    try {
+        adminProfile = await updateProfileWithAvatar(
+            adminProfile,
+            { name, phone_number: phone || null },
+            imageFile
+        );
+        syncAdminProfileUI();
+        bootstrap.Modal.getInstance(document.getElementById('adminSettingsModal'))?.hide();
+        bootstrap.Modal.getOrCreateInstance(document.getElementById('adminProfileModal')).show();
+        adminToast('Profile updated successfully.');
+        await loadAdminUsers();
+    } catch (error) {
+        console.error('Admin profile update failed:', error);
+        statusEl.className = 'alert alert-danger small';
+        statusEl.textContent = error?.message || 'Unable to update your profile.';
+    } finally {
+        saveBtn.disabled = false;
+        saveBtn.textContent = 'Save changes';
+    }
+}
+
 function openAdminSidebar() {
     document.getElementById('admin-sidebar').classList.add('sidebar-open');
     document.getElementById('admin-sidebar-backdrop').classList.add('sidebar-backdrop-show');
@@ -90,7 +186,9 @@ function renderAdminUsers() {
         const shop = Array.isArray(user.shops) ? user.shops[0] : user.shops;
         const joined = new Date(user.created_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
         return `<article class="admin-user-card role-${user.role}">
-            <div class="admin-user-avatar">${adminEscape((user.name || user.email || '?').charAt(0).toUpperCase())}</div>
+            <div class="admin-user-avatar">${user.avatar_url
+                ? `<img src="${adminEscape(user.avatar_url)}" alt="${adminEscape(user.name || 'User')} profile photo" loading="lazy">`
+                : adminEscape((user.name || user.email || '?').charAt(0).toUpperCase())}</div>
             <div class="admin-user-copy">
                 <div class="admin-user-title"><strong>${adminEscape(user.name || 'Unnamed user')}</strong><span>${adminEscape(user.role)}</span></div>
                 <div>${adminEscape(user.email || '—')}</div>
@@ -106,7 +204,7 @@ async function loadAdminUsers() {
     container.innerHTML = '<div class="hist-loading"><div class="hist-spinner"></div><span>Loading users…</span></div>';
     const { data, error } = await supabaseClient
         .from('users')
-        .select(`id, name, email, phone_number, role, created_at,
+        .select(`id, name, email, phone_number, role, avatar_path, created_at,
             shops!shops_owner_id_fkey (name, status)`)
         .order('created_at', { ascending: false });
     if (error) {
@@ -115,6 +213,7 @@ async function loadAdminUsers() {
         return;
     }
     adminUsers = data || [];
+    await hydrateProfileAvatars(adminUsers);
     updateAdminUserStats();
     renderAdminUsers();
 }
@@ -153,7 +252,9 @@ function renderAdminShops() {
 
         return `<article class="admin-shop-card status-${shop.status}">
             <div class="admin-shop-card-head">
-                <div class="admin-shop-avatar">${adminEscape(shop.name.charAt(0).toUpperCase())}</div>
+                <div class="admin-shop-avatar">${owner.avatar_url
+                    ? `<img src="${adminEscape(owner.avatar_url)}" alt="${adminEscape(owner.name || 'Owner')} profile photo" loading="lazy">`
+                    : adminEscape(shop.name.charAt(0).toUpperCase())}</div>
                 <div class="min-w-0"><h2>${adminEscape(shop.name)}</h2><p>${adminEscape(shop.address || 'No location provided')}</p></div>
                 <span class="admin-status-badge">${adminEscape(shop.status)}</span>
             </div>
@@ -176,7 +277,7 @@ async function loadAdminShops() {
     const { data, error } = await supabaseClient
         .from('shops')
         .select(`id, owner_id, name, slug, description, address, phone_number, status, rejection_reason, approved_at, created_at,
-            users!shops_owner_id_fkey (id, name, email, phone_number)`)
+            users!shops_owner_id_fkey (id, name, email, phone_number, avatar_path)`)
         .order('created_at', { ascending: false });
 
     if (error) {
@@ -185,6 +286,7 @@ async function loadAdminShops() {
         return;
     }
     adminShops = data || [];
+    await hydrateProfileAvatars(adminShops.map(shop => shop.users).filter(Boolean));
     updateAdminStats();
     renderAdminShops();
 }
@@ -231,6 +333,7 @@ async function submitAdminDecision() {
 async function initAdminPage() {
     adminProfile = await requireAdmin();
     if (!adminProfile) return;
+    syncAdminProfileUI();
     adminReasonModal = new bootstrap.Modal(document.getElementById('adminReasonModal'));
 
     document.querySelectorAll('.admin-filter').forEach(button => {
@@ -251,6 +354,11 @@ async function initAdminPage() {
         });
     });
     document.getElementById('admin-user-search').addEventListener('input', renderAdminUsers);
+    document.addEventListener('click', event => {
+        if (!document.getElementById('admin-profile-dropdown-wrap')?.contains(event.target)) {
+            closeAdminProfileDropdown();
+        }
+    });
 
     await loadAdminShops();
     await loadAdminUsers();

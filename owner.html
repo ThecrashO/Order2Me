@@ -58,12 +58,7 @@
                     aria-haspopup="true" aria-expanded="false"
                     aria-controls="owner-profile-dropdown-menu"
                     aria-label="Open profile menu">
-                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none"
-                        stroke="currentColor" stroke-width="2"
-                        stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
-                        <circle cx="12" cy="7" r="4"/>
-                    </svg>
+                    <span class="profile-navbar-avatar" data-current-profile-avatar><span>?</span></span>
                     <span class="profile-avatar-caret" aria-hidden="true">
                         <svg width="12" height="12" viewBox="0 0 24 24" fill="none"
                             stroke="currentColor" stroke-width="2.5"
@@ -76,14 +71,7 @@
                 <!-- Dropdown panel -->
                 <div class="profile-dropdown-menu" id="owner-profile-dropdown-menu" role="menu" aria-hidden="true">
                     <div class="profile-dropdown-header">
-                        <div class="profile-dropdown-avatar">
-                            <svg width="26" height="26" viewBox="0 0 24 24" fill="none"
-                                stroke="currentColor" stroke-width="1.8"
-                                stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
-                                <circle cx="12" cy="7" r="4"/>
-                            </svg>
-                        </div>
+                        <div class="profile-dropdown-avatar" data-current-profile-avatar><span>?</span></div>
                         <div class="profile-dropdown-userinfo">
                             <div class="profile-dropdown-name" id="owner-profile-name">—</div>
                             <div class="profile-dropdown-role">Owner</div>
@@ -361,6 +349,11 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body px-4 py-4" style="background:linear-gradient(180deg,#ffffff 0%, #f8fafc 100%);">
+                <button type="button" class="settings-account-link mb-3" onclick="openOwnerProfileEdit()">
+                    <span class="profile-dropdown-avatar" data-current-profile-avatar><span>?</span></span>
+                    <span><strong>Owner account</strong><small>Update your name, phone and profile photo</small></span>
+                    <span aria-hidden="true">›</span>
+                </button>
                 <div class="card border-0 shadow-sm rounded-4 mb-3">
                     <div class="card-body p-3">
                         <div class="d-flex align-items-center justify-content-between gap-3">
@@ -421,10 +414,7 @@
         <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
             <div class="modal-header border-0 px-4 pt-4 pb-3" style="background:linear-gradient(135deg,#fff7ed,#fffaf6);">
                 <div class="d-flex align-items-center gap-3">
-                    <div class="rounded-circle d-flex align-items-center justify-content-center text-white fw-bold"
-                         style="width:46px;height:46px;background:linear-gradient(135deg,#f97316,#c2410c);">
-                        👤
-                    </div>
+                    <div class="profile-modal-avatar" data-current-profile-avatar><span>?</span></div>
                     <div>
                         <h5 class="modal-title mb-0">My Profile</h5>
                         <div class="small text-muted">Account details</div>
@@ -434,6 +424,10 @@
             </div>
             <div class="modal-body px-4 py-4" style="background:linear-gradient(180deg,#ffffff 0%, #fffaf6 100%);">
                 <div id="owner-profile-view-status" class="alert small d-none"></div>
+                <div class="profile-hero">
+                    <div class="profile-avatar-xl" data-current-profile-avatar><span>?</span></div>
+                    <div><strong id="owner-profile-hero-name">—</strong><span>Shop owner account</span></div>
+                </div>
                 <div class="card border-0 rounded-4 shadow-sm" style="background:rgba(249,115,22,0.06);">
                     <div class="card-body p-4">
                         <div class="mb-3">
@@ -453,6 +447,48 @@
             </div>
             <div class="modal-footer border-0 px-4 pb-4 pt-0" style="background:linear-gradient(180deg,#fffaf6 0%, #ffffff 100%);">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" onclick="openOwnerProfileEdit()">Edit profile</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ── Owner Profile Edit Modal ── -->
+<div class="modal fade" id="ownerProfileEditModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
+            <div class="modal-header border-0 px-4 pt-4 pb-3 profile-modal-header">
+                <div><h5 class="modal-title mb-0">Edit profile</h5><div class="small text-muted">Your owner account details</div></div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body px-4 py-4">
+                <div class="alert small d-none" id="owner-profile-edit-status"></div>
+                <div class="profile-photo-editor">
+                    <div class="profile-avatar-xl" id="owner-profile-edit-avatar"><span>?</span></div>
+                    <div class="profile-photo-copy">
+                        <label class="btn btn-outline-primary btn-sm mb-1" for="owner-profile-avatar-input">Choose photo</label>
+                        <input class="visually-hidden" id="owner-profile-avatar-input" type="file"
+                            accept="image/jpeg,image/png,image/webp" onchange="handleOwnerAvatarPreview(this)">
+                        <small>JPG, PNG or WebP · maximum 3 MB</small>
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-semibold" for="owner-profile-name-input">Name</label>
+                    <input class="form-control" id="owner-profile-name-input" maxlength="100">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-semibold" for="owner-profile-phone-input">Phone number</label>
+                    <input class="form-control" id="owner-profile-phone-input" type="tel" maxlength="30">
+                </div>
+                <div>
+                    <label class="form-label fw-semibold" for="owner-profile-email-readonly">Email address</label>
+                    <input class="form-control" id="owner-profile-email-readonly" type="email" readonly>
+                    <div class="form-text">Email cannot be changed here.</div>
+                </div>
+            </div>
+            <div class="modal-footer border-0 px-4 pb-4 pt-0">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="owner-profile-save-btn" onclick="saveOwnerProfile()">Save changes</button>
             </div>
         </div>
     </div>
@@ -720,8 +756,10 @@
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/js/bootstrap.bundle.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="/api/config"></script>
 <script src="js/supabase.js"></script>
 <script src="js/auth.js"></script>
+<script src="js/profile.js"></script>
 <script src="js/owner.js"></script>
 <script>
     if ('serviceWorker' in navigator) {

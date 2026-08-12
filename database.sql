@@ -20,6 +20,7 @@ CREATE TABLE public.users (
   name           text        NOT NULL,
   email          text        NOT NULL UNIQUE,
   phone_number   text        UNIQUE,
+  avatar_path    text,
   role           text        NOT NULL CHECK (role = ANY (ARRAY['customer'::text, 'owner'::text])),
   created_at     timestamp   WITHOUT TIME ZONE DEFAULT now(),
   CONSTRAINT users_pkey PRIMARY KEY (id)
