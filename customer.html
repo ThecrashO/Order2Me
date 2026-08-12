@@ -9,7 +9,7 @@
 
     <!-- PWA -->
     <link rel="manifest" href="manifest.json">
-    <meta name="theme-color" content="#f97316">
+    <meta name="theme-color" content="#0f172a">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
@@ -411,7 +411,7 @@
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
                 <div class="modal-header border-0 px-4 pt-4 pb-3"
-                    style="background:linear-gradient(135deg,#f8fafc,#eef2ff);">
+                    style="background:linear-gradient(135deg,#f8fafc,#fff7ed);">
                     <div>
                         <h5 class="modal-title mb-0">Settings</h5>
                         <div class="small text-muted">Manage your app preferences</div>
@@ -454,7 +454,7 @@
                     style="background:linear-gradient(135deg,#fff7ed,#fffaf6);">
                     <div class="d-flex align-items-center gap-3">
                         <div class="rounded-circle d-flex align-items-center justify-content-center text-white fw-bold"
-                            style="width:46px;height:46px;background:linear-gradient(135deg,#f97316,#f43f5e);">
+                            style="width:46px;height:46px;background:linear-gradient(135deg,#f97316,#c2410c);">
                             👤
                         </div>
                         <div>
@@ -600,15 +600,15 @@
                             💳 Payment Method <span class="text-danger">*</span>
                         </label>
                         <div class="d-flex gap-2 flex-wrap">
-                            <button type="button" class="btn btn-outline-primary payment-method-btn"
+                            <button type="button" class="btn btn-outline-secondary payment-method-btn"
                                 data-method="KBZPay" onclick="selectPaymentMethod('KBZPay')">
                                 📱 KBZPay
                             </button>
-                            <button type="button" class="btn btn-outline-success payment-method-btn"
+                            <button type="button" class="btn btn-outline-secondary payment-method-btn"
                                 data-method="WavePay" onclick="selectPaymentMethod('WavePay')">
                                 🌊 WavePay
                             </button>
-                            <button type="button" class="btn btn-outline-warning payment-method-btn" data-method="Cash"
+                            <button type="button" class="btn btn-outline-secondary payment-method-btn" data-method="Cash"
                                 onclick="selectPaymentMethod('Cash')">
                                 ✅ Already Paid
                             </button>
@@ -623,16 +623,15 @@
 
                         <!-- KBZPay -->
                         <div id="kbzpay-panel" class="d-none">
-                            <div class="border border-primary rounded-3 p-3"
-                                style="background:linear-gradient(135deg,#e8f0fe,#f0f4ff)">
+                            <div class="border rounded-3 p-3 payment-detail-card payment-detail-card--kbz">
                                 <div class="d-flex align-items-center mb-2">
                                     <span style="font-size:24px;">📱</span>
-                                    <span class="fw-bold ms-2 text-primary">KBZPay</span>
+                                    <span class="fw-bold ms-2 payment-brand-name">KBZPay</span>
                                 </div>
                                 <div class="small text-muted mb-1">Owner's KBZPay Number</div>
                                 <div class="d-flex align-items-center gap-2 mb-2">
                                     <span id="kbz-display-number" class="fs-4 fw-bold text-dark"></span>
-                                    <button type="button" class="btn btn-sm btn-outline-primary"
+                                    <button type="button" class="btn btn-sm btn-outline-secondary"
                                         onclick="copyOwnerNumber(this)">
                                         📋 Copy
                                     </button>
@@ -643,7 +642,7 @@
                                 <ol class="small mb-0 ps-3 text-dark">
                                     <li>Open <strong>KBZPay</strong> app on your phone</li>
                                     <li>Go to <strong>Send Money / Transfer</strong></li>
-                                    <li>Enter the number above &amp; send <strong><span class="text-primary">the exact
+                                    <li>Enter the number above &amp; send <strong><span class="payment-amount-emphasis">the exact
                                                 amount</span></strong></li>
                                     <li>Screenshot the success screen</li>
                                     <li>Upload the screenshot below ↓</li>
@@ -653,16 +652,15 @@
 
                         <!-- WavePay -->
                         <div id="wavepay-panel" class="d-none">
-                            <div class="border border-success rounded-3 p-3"
-                                style="background:linear-gradient(135deg,#e8f5e9,#f0fdf4)">
+                            <div class="border rounded-3 p-3 payment-detail-card payment-detail-card--wave">
                                 <div class="d-flex align-items-center mb-2">
                                     <span style="font-size:24px;">🌊</span>
-                                    <span class="fw-bold ms-2 text-success">WavePay</span>
+                                    <span class="fw-bold ms-2 payment-brand-name">WavePay</span>
                                 </div>
                                 <div class="small text-muted mb-1">Owner's WavePay Number</div>
                                 <div class="d-flex align-items-center gap-2 mb-2">
                                     <span id="wave-display-number" class="fs-4 fw-bold text-dark"></span>
-                                    <button type="button" class="btn btn-sm btn-outline-success"
+                                    <button type="button" class="btn btn-sm btn-outline-secondary"
                                         onclick="copyOwnerNumber(this)">
                                         📋 Copy
                                     </button>
@@ -673,7 +671,7 @@
                                 <ol class="small mb-0 ps-3 text-dark">
                                     <li>Open <strong>WavePay</strong> app on your phone</li>
                                     <li>Go to <strong>Send Money / Transfer</strong></li>
-                                    <li>Enter the number above &amp; send <strong><span class="text-success">the exact
+                                    <li>Enter the number above &amp; send <strong><span class="payment-amount-emphasis">the exact
                                                 amount</span></strong></li>
                                     <li>Screenshot the success screen</li>
                                     <li>Upload the screenshot below ↓</li>
@@ -845,12 +843,12 @@
             }
 
             const STATUS_BADGE = {
-                pending: { bg: '#f59e0b', label: 'Pending' },
-                preparing: { bg: '#06b6d4', label: 'Preparing' },
-                ready: { bg: '#10b981', label: 'Ready' },
-                out_for_delivery: { bg: '#3b82f6', label: 'Sent' },
-                delivered: { bg: '#64748b', label: 'Received' },
-                cancelled: { bg: '#ef4444', label: 'Cancelled' },
+                pending: { key: 'pending', label: 'Pending' },
+                preparing: { key: 'preparing', label: 'Preparing' },
+                ready: { key: 'ready', label: 'Ready' },
+                out_for_delivery: { key: 'sent', label: 'Sent' },
+                delivered: { key: 'received', label: 'Received' },
+                cancelled: { key: 'cancelled', label: 'Cancelled' }
             };
 
             // Group by date
@@ -864,11 +862,11 @@
             Object.entries(grouped).forEach(([day, dayOrders]) => {
                 html += `<div class="hist-date-group"><div class="hist-date-label">📅 ${day}</div>`;
                 dayOrders.forEach(order => {
-                    const s = STATUS_BADGE[order.status] || { bg: '#94a3b8', label: order.status };
+                    const s = STATUS_BADGE[order.status] || { key: 'unknown', label: order.status };
                     const payment = order.payments ? (Array.isArray(order.payments) ? order.payments[0] : order.payments) : null;
                     const items = (order.order_items || []).map(oi => `${oi.menu_items?.name || 'Item'} ×${oi.quantity}`).join(' • ');
                     const time = new Date(order.created_at).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
-                    const payBadge = payment ? `<span class="hist-badge" style="background:#1e293b;font-size:.7rem">${_hEsc(payment.payment_method)}</span>` : '';
+                    const payBadge = payment ? `<span class="hist-payment-badge">${_hEsc(payment.payment_method)}</span>` : '';
                     html += `
                     <div class="hist-card">
                         <div class="hist-card-header">
@@ -877,7 +875,7 @@
                                 <div class="hist-card-meta">🏪 ${_hEsc(order.shops?.name || 'Shop')} · 🕐 ${time}</div>
                             </div>
                             <div style="display:flex;flex-direction:column;align-items:flex-end;gap:5px">
-                                <span class="hist-badge" style="background:${s.bg}">${s.label}</span>
+                                <span class="order-status order-status--${s.key}">${s.label}</span>
                                 ${payBadge}
                             </div>
                         </div>

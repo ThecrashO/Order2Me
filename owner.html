@@ -7,7 +7,7 @@
     <title>Order2Me — Owner Dashboard</title>
     <!-- PWA -->
     <link rel="manifest" href="manifest.json">
-    <meta name="theme-color" content="#f97316">
+    <meta name="theme-color" content="#0f172a">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
@@ -353,7 +353,7 @@
 <div class="modal fade" id="ownerSettingsModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
-            <div class="modal-header border-0 px-4 pt-4 pb-3" style="background:linear-gradient(135deg,#f8fafc,#eef2ff);">
+            <div class="modal-header border-0 px-4 pt-4 pb-3" style="background:linear-gradient(135deg,#f8fafc,#fff7ed);">
                 <div>
                     <h5 class="modal-title mb-0">Settings</h5>
                     <div class="small text-muted">Manage your app notification preferences</div>
@@ -422,7 +422,7 @@
             <div class="modal-header border-0 px-4 pt-4 pb-3" style="background:linear-gradient(135deg,#fff7ed,#fffaf6);">
                 <div class="d-flex align-items-center gap-3">
                     <div class="rounded-circle d-flex align-items-center justify-content-center text-white fw-bold"
-                         style="width:46px;height:46px;background:linear-gradient(135deg,#f97316,#f43f5e);">
+                         style="width:46px;height:46px;background:linear-gradient(135deg,#f97316,#c2410c);">
                         👤
                     </div>
                     <div>
@@ -850,22 +850,22 @@
         }
 
         const STATUS_BADGE = {
-            pending:   { bg: '#f59e0b', label: 'Pending'   },
-            preparing: { bg: '#06b6d4', label: 'Preparing' },
-            ready:     { bg: '#10b981', label: 'Ready'     },
-            out_for_delivery: { bg: '#3b82f6', label: 'Sent' },
-            delivered: { bg: '#64748b', label: 'Received' },
-            cancelled: { bg: '#ef4444', label: 'Cancelled' },
+            pending:   { key: 'pending', label: 'Pending' },
+            preparing: { key: 'preparing', label: 'Preparing' },
+            ready:     { key: 'ready', label: 'Ready' },
+            out_for_delivery: { key: 'sent', label: 'Sent' },
+            delivered: { key: 'received', label: 'Received' },
+            cancelled: { key: 'cancelled', label: 'Cancelled' }
         };
 
         const cardsHtml = orders.map(order => {
-            const s = STATUS_BADGE[order.status] || { bg: '#94a3b8', label: order.status };
+            const s = STATUS_BADGE[order.status] || { key: 'unknown', label: order.status };
             const payment = order.payments ? (Array.isArray(order.payments) ? order.payments[0] : order.payments) : null;
             const itemsHtml = (order.order_items || []).map(oi => {
                 const name = oi.menu_items ? oi.menu_items.name : 'Item';
                 return `<div class="hist-item-row"><span>${_oHEsc(name)} &times; ${oi.quantity}</span><span>${(oi.price*oi.quantity).toLocaleString()} MMK</span></div>`;
             }).join('');
-            const payHtml  = payment ? `<span class="hist-badge" style="background:#1e293b">${_oHEsc(payment.payment_method)}</span>` : '';
+            const payHtml  = payment ? `<span class="hist-payment-badge">${_oHEsc(payment.payment_method)}</span>` : '';
             const noteHtml = order.delivery_note ? `<div class="hist-note">📍 ${_oHEsc(order.delivery_note)}</div>` : '';
             return `
             <div class="hist-card">
@@ -876,7 +876,7 @@
                         <div class="hist-card-meta">🕐 ${_oFmtDate(order.created_at)}</div>
                     </div>
                     <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px">
-                        <span class="hist-badge" style="background:${s.bg}">${s.label}</span>
+                        <span class="order-status order-status--${s.key}">${s.label}</span>
                         ${payHtml}
                     </div>
                 </div>

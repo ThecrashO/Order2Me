@@ -54,11 +54,20 @@ let currentRole     = null;
 let historyOrders   = [];
 let activeRangeMode = 'yesterday';
 
+const HISTORY_STATUS = {
+    pending:   { key: 'pending', label: 'Pending' },
+    preparing: { key: 'preparing', label: 'Preparing' },
+    ready:     { key: 'ready', label: 'Ready' },
+    out_for_delivery: { key: 'sent', label: 'Sent' },
+    delivered: { key: 'received', label: 'Received' },
+    cancelled: { key: 'cancelled', label: 'Cancelled' }
+};
+
 // ── Toast ─────────────────────────────────────────────────────
 function showToast(message, type = 'info') {
     const container = document.getElementById('hist-toast-container');
     if (!container) return;
-    const colors = { success: '#10b981', danger: '#ef4444', warning: '#f59e0b', info: '#6366f1' };
+    const colors = { success: '#047857', danger: '#b91c1c', warning: '#b45309', info: '#0e7490' };
     const toast = document.createElement('div');
     toast.style.cssText = `display:flex;align-items:center;gap:10px;padding:12px 18px;border-radius:14px;
         margin-bottom:8px;background:${colors[type]||colors.info};color:#fff;font-weight:600;
@@ -197,23 +206,14 @@ function renderOwnerHistory(orders) {
         return;
     }
 
-    const STATUS_BADGE = {
-        pending:   { bg: '#f59e0b', label: 'Pending'   },
-        preparing: { bg: '#06b6d4', label: 'Preparing' },
-        ready:     { bg: '#10b981', label: 'Ready'     },
-        out_for_delivery: { bg: '#3b82f6', label: 'Sent' },
-        delivered: { bg: '#64748b', label: 'Received' },
-        cancelled: { bg: '#ef4444', label: 'Cancelled' },
-    };
-
     const cardsHtml = orders.map(order => {
-        const s = STATUS_BADGE[order.status] || { bg: '#94a3b8', label: order.status };
+        const s = HISTORY_STATUS[order.status] || { key: 'unknown', label: order.status };
         const payment = order.payments ? (Array.isArray(order.payments) ? order.payments[0] : order.payments) : null;
         const itemsHtml = (order.order_items || []).map(oi => {
             const name = oi.menu_items ? oi.menu_items.name : 'Item';
             return `<div class="hist-item-row"><span>${escapeHtml(name)} &times; ${oi.quantity}</span><span>${(oi.price*oi.quantity).toLocaleString()} MMK</span></div>`;
         }).join('');
-        const payHtml  = payment ? `<span class="hist-badge" style="background:#1e293b">${escapeHtml(payment.payment_method)}</span>` : '';
+        const payHtml  = payment ? `<span class="hist-payment-badge">${escapeHtml(payment.payment_method)}</span>` : '';
         const noteHtml = order.delivery_note ? `<div class="hist-note">\ud83d\udccd ${escapeHtml(order.delivery_note)}</div>` : '';
         return `
         <div class="hist-card">
@@ -224,7 +224,7 @@ function renderOwnerHistory(orders) {
                     <div class="hist-card-meta">\ud83d\udd50 ${formatDateLabel(order.created_at)}</div>
                 </div>
                 <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px">
-                    <span class="hist-badge" style="background:${s.bg}">${s.label}</span>
+                    <span class="order-status order-status--${s.key}">${s.label}</span>
                     ${payHtml}
                 </div>
             </div>
@@ -270,15 +270,6 @@ function renderCustomerHistory(orders) {
         return;
     }
 
-    const STATUS_BADGE = {
-        pending:   { bg: '#f59e0b', label: 'Pending'   },
-        preparing: { bg: '#06b6d4', label: 'Preparing' },
-        ready:     { bg: '#10b981', label: 'Ready'     },
-        out_for_delivery: { bg: '#3b82f6', label: 'Sent' },
-        delivered: { bg: '#64748b', label: 'Received' },
-        cancelled: { bg: '#ef4444', label: 'Cancelled' },
-    };
-
     const grouped = {};
     orders.forEach(o => {
         const k = formatDateOnly(o.created_at);
@@ -289,11 +280,11 @@ function renderCustomerHistory(orders) {
     Object.entries(grouped).forEach(([day, dayOrders]) => {
         html += `<div class="hist-date-group"><div class="hist-date-label">\ud83d\udcc5 ${day}</div>`;
         dayOrders.forEach(order => {
-            const s = STATUS_BADGE[order.status] || { bg: '#94a3b8', label: order.status };
+            const s = HISTORY_STATUS[order.status] || { key: 'unknown', label: order.status };
             const payment = order.payments ? (Array.isArray(order.payments) ? order.payments[0] : order.payments) : null;
             const items = (order.order_items||[]).map(oi => `${oi.menu_items?.name||'Item'} \xd7${oi.quantity}`).join(' \u2022 ');
             const time  = new Date(order.created_at).toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});
-            const payBadge = payment ? `<span class="hist-badge" style="background:#1e293b;font-size:.7rem">${escapeHtml(payment.payment_method)}</span>` : '';
+            const payBadge = payment ? `<span class="hist-payment-badge">${escapeHtml(payment.payment_method)}</span>` : '';
             html += `
             <div class="hist-card">
                 <div class="hist-card-header">
@@ -302,7 +293,7 @@ function renderCustomerHistory(orders) {
                         <div class="hist-card-meta">Shop: ${escapeHtml(order.shops?.name || 'Shop')} · ${time}</div>
                     </div>
                     <div style="display:flex;flex-direction:column;align-items:flex-end;gap:5px">
-                        <span class="hist-badge" style="background:${s.bg}">${s.label}</span>
+                        <span class="order-status order-status--${s.key}">${s.label}</span>
                         ${payBadge}
                     </div>
                 </div>

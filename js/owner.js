@@ -192,7 +192,7 @@ function showToast(message, type = 'info') {
         success: 'text-bg-success',
         danger: 'text-bg-danger',
         warning: 'text-bg-warning text-dark',
-        info: 'text-bg-primary'
+        info: 'text-bg-info'
     };
 
     const toast = document.createElement('div');
@@ -642,14 +642,14 @@ async function hydratePaymentScreenshotUrls(orders) {
 
 function buildOrderCard(order) {
     const statusConfig = {
-        pending:   { color: 'warning',   label: 'Pending'   },
-        preparing: { color: 'info',      label: 'Preparing' },
-        ready:     { color: 'success',   label: 'Ready'     },
-        out_for_delivery: { color: 'primary', label: 'Sent · Awaiting confirmation' },
-        delivered: { color: 'secondary', label: 'Received' },
-        cancelled: { color: 'danger',    label: 'Cancelled' }
+        pending:   { key: 'pending',   label: 'Pending'   },
+        preparing: { key: 'preparing', label: 'Preparing' },
+        ready:     { key: 'ready',     label: 'Ready'     },
+        out_for_delivery: { key: 'sent', label: 'Sent · Awaiting confirmation' },
+        delivered: { key: 'received', label: 'Received' },
+        cancelled: { key: 'cancelled', label: 'Cancelled' }
     };
-    const cfg = statusConfig[order.status] || { color: 'secondary', label: order.status };
+    const cfg = statusConfig[order.status] || { key: 'unknown', label: order.status };
 
     // Build items list
     const itemsHtml = (order.order_items || []).map(oi => {
@@ -685,16 +685,16 @@ function buildOrderCard(order) {
                 🛵 Mark Sent
             </button>`;
     } else if (order.status === 'out_for_delivery') {
-        actionHtml = '<span class="badge bg-primary-subtle text-primary-emphasis">Waiting for customer confirmation</span>';
+        actionHtml = '<span class="order-status order-status--sent">Waiting for customer confirmation</span>';
     } else if (order.status === 'delivered') {
-        actionHtml = '<span class="badge bg-success">✓ Customer confirmed receipt</span>';
+        actionHtml = '<span class="order-status order-status--received">✓ Customer confirmed receipt</span>';
     } else if (order.status === 'cancelled') {
-        actionHtml = `<span class="badge bg-danger">Cancelled / Rejected</span>`;
+        actionHtml = `<span class="order-status order-status--cancelled">Cancelled / Rejected</span>`;
     }
 
     // Delivery note (now always required — display prominently)
     const deliveryNoteHtml = order.delivery_note
-        ? `<div class="p-2 mb-2 rounded" style="background:#fff8e1;border-left:4px solid #ffc107">
+        ? `<div class="order-delivery-note mb-2">
                <strong>📍 Delivery Note:</strong><br>
                <span class="small">${escapeHtml(order.delivery_note)}</span>
            </div>`
@@ -736,13 +736,13 @@ function buildOrderCard(order) {
     });
 
     return `
-        <div class="card mb-3 border-${cfg.color}" id="order-card-${order.id}">
-            <div class="card-header d-flex justify-content-between align-items-center bg-${cfg.color} bg-opacity-10">
+        <div class="card mb-3 order-card--${cfg.key}" id="order-card-${order.id}">
+            <div class="card-header d-flex justify-content-between align-items-center order-card-status-surface">
                 <div>
                     <span class="fw-semibold">Order #${order.id}</span>
                     <span class="text-muted small ms-2">— ${escapeHtml(order.customer_name || 'Unknown')}</span>
                 </div>
-                <span class="badge bg-${cfg.color} text-dark">${cfg.label}</span>
+                <span class="order-status order-status--${cfg.key}">${cfg.label}</span>
             </div>
             <div class="card-body py-2">
                 <ul class="list-group list-group-flush mb-2">${itemsHtml}</ul>
@@ -1029,13 +1029,11 @@ function renderCustomers(customers, query = '') {
     }
 
     const palettes = [
-        { bg: '#3b82f6', light: '#eff6ff' },
-        { bg: '#8b5cf6', light: '#f5f3ff' },
-        { bg: '#10b981', light: '#ecfdf5' },
-        { bg: '#f59e0b', light: '#fffbeb' },
-        { bg: '#ef4444', light: '#fef2f2' },
-        { bg: '#06b6d4', light: '#ecfeff' },
-        { bg: '#f97316', light: '#fff7ed' },
+        { bg: '#1e3a5f', light: '#f1f5f9' },
+        { bg: '#c2410c', light: '#fff7ed' },
+        { bg: '#047857', light: '#ecfdf5' },
+        { bg: '#0e7490', light: '#ecfeff' },
+        { bg: '#1d4ed8', light: '#eff6ff' }
     ];
 
     const cards = customers.map((s, idx) => {

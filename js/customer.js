@@ -137,7 +137,7 @@ function showToast(message, type = 'info') {
         success: 'text-bg-success',
         danger: 'text-bg-danger',
         warning: 'text-bg-warning text-dark',
-        info: 'text-bg-primary'
+        info: 'text-bg-info'
     };
 
     const toast = document.createElement('div');
@@ -496,6 +496,14 @@ function displayTodayOrders(orders) {
         delivered: 'Received',
         cancelled: 'Cancelled'
     };
+    const STATUS_CLASSES = {
+        pending: 'order-status--pending',
+        preparing: 'order-status--preparing',
+        ready: 'order-status--ready',
+        out_for_delivery: 'order-status--sent',
+        delivered: 'order-status--received',
+        cancelled: 'order-status--cancelled'
+    };
 
     container.innerHTML = orders.map(order => {
         const isCancelled = order.status === 'cancelled';
@@ -553,9 +561,7 @@ function displayTodayOrders(orders) {
             hour: '2-digit', minute: '2-digit'
         });
 
-        const statusLabel = isCancelled
-            ? '<span class="badge bg-danger">Cancelled</span>'
-            : `<span class="badge" style="background:var(--brand);">${STATUS_LABELS[order.status] || escapeHtml(order.status)}</span>`;
+        const statusLabel = `<span class="order-status ${STATUS_CLASSES[order.status] || 'order-status--unknown'}">${STATUS_LABELS[order.status] || escapeHtml(order.status)}</span>`;
 
         const receiptActionHtml = order.status === 'out_for_delivery'
             ? `<div class="receipt-confirm-panel" role="status">
@@ -853,11 +859,8 @@ function openCheckout() {
 
     // Reset payment method buttons
     selectedPaymentMethod = null;
-    document.querySelectorAll('.payment-method-btn').forEach(b => b.classList.remove('active', 'btn-primary', 'btn-success', 'btn-warning'));
-    document.querySelectorAll('.payment-method-btn').forEach(b => {
-        if (b.dataset.method === 'KBZPay')  { b.className = 'btn btn-outline-primary payment-method-btn'; }
-        if (b.dataset.method === 'WavePay') { b.className = 'btn btn-outline-success payment-method-btn'; }
-        if (b.dataset.method === 'Cash')    { b.className = 'btn btn-outline-warning payment-method-btn'; }
+    document.querySelectorAll('.payment-method-btn').forEach(button => {
+        button.className = 'btn btn-outline-secondary payment-method-btn';
     });
 
     // Close cart, open checkout
@@ -874,18 +877,12 @@ function selectPaymentMethod(method) {
 
     // Update button styles
     document.querySelectorAll('.payment-method-btn').forEach(btn => {
-        const m = btn.dataset.method;
-        btn.classList.remove('active');
-        if (m === 'KBZPay')  btn.className = 'btn btn-outline-primary payment-method-btn';
-        if (m === 'WavePay') btn.className = 'btn btn-outline-success payment-method-btn';
-        if (m === 'Cash')    btn.className = 'btn btn-outline-warning payment-method-btn';
+        btn.className = 'btn btn-outline-secondary payment-method-btn';
     });
 
     const activeBtn = document.querySelector(`.payment-method-btn[data-method="${method}"]`);
     if (activeBtn) {
-        if (method === 'KBZPay')  activeBtn.className = 'btn btn-primary payment-method-btn active';
-        if (method === 'WavePay') activeBtn.className = 'btn btn-success payment-method-btn active';
-        if (method === 'Cash')    activeBtn.className = 'btn btn-warning payment-method-btn active';
+        activeBtn.className = 'btn btn-outline-secondary payment-method-btn active';
     }
 
     // Show/hide payment panels
