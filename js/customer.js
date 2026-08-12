@@ -14,6 +14,7 @@
 let ownerPhoneNumber = null; // loaded in initCustomerPage()
 const NOTIFICATION_PREF_KEY = 'order2me-notifications-enabled';
 let customerRealtimeChannel = null;
+let customerShopRefreshTimer = null;
 
 function isNotificationPreferenceEnabled() {
     return localStorage.getItem(NOTIFICATION_PREF_KEY) === 'true';
@@ -22,38 +23,98 @@ function isNotificationPreferenceEnabled() {
 function syncNotificationSettingUI() {
     const checkbox = document.getElementById('notification-toggle');
     const statusEl = document.getElementById('notification-setting-status');
+    const enableButton = document.getElementById('customer-enable-notifications-btn');
     if (!checkbox || !statusEl) return;
 
-    const supported = 'Notification' in window && window.isSecureContext;
-    checkbox.disabled = !supported;
-    checkbox.checked = supported && Notification.permission === 'granted' && isNotificationPreferenceEnabled();
-    statusEl.textContent = !supported
-        ? 'Notifications require HTTPS or localhost.'
-        : Notification.permission === 'denied'
-            ? 'Notifications are blocked in your browser settings.'
-            : checkbox.checked
-                ? 'Notifications are enabled.'
-                : 'Turn this on to receive order status alerts.';
+    const environment = getNotificationEnvironment();
+    const permission = environment.permission || 'unsupported';
+    checkbox.disabled = !environment.supported || permission === 'denied';
+    checkbox.checked = environment.supported && permission === 'granted' && isNotificationPreferenceEnabled();
+    statusEl.textContent = getNotificationStatusMessage()
+        || (checkbox.checked ? 'Notifications are enabled.' : 'Turn this on to receive order status alerts.');
+
+    if (enableButton) {
+        enableButton.textContent = !environment.supported
+            ? 'View setup instructions'
+            : permission === 'denied'
+                ? 'How to unblock notifications'
+                : checkbox.checked
+                    ? 'Send test notification'
+                    : 'Enable notifications';
+    }
+
+    if (environment.supported && permission !== 'denied') {
+        hideNotificationPermissionHelp('customer-notification-help');
+    }
 }
 
 async function toggleNotificationPreference() {
     const checkbox = document.getElementById('notification-toggle');
-    const statusEl = document.getElementById('notification-setting-status');
-    if (!checkbox || !statusEl) return;
+    await setCustomerNotificationPreference(Boolean(checkbox?.checked));
+}
 
-    if (!('Notification' in window) || !window.isSecureContext) {
-        checkbox.checked = false;
-        statusEl.textContent = 'Notifications require HTTPS or localhost.';
-        localStorage.setItem(NOTIFICATION_PREF_KEY, 'false');
-        showToast('Use HTTPS or localhost to enable notifications.', 'warning');
+async function enableCustomerNotifications() {
+    const environment = getNotificationEnvironment();
+    if (!environment.supported || environment.permission === 'denied') {
+        showNotificationPermissionHelp('customer-notification-help');
+        syncNotificationSettingUI();
         return;
     }
 
-    const enable = checkbox.checked;
+    if (environment.permission === 'granted' && isNotificationPreferenceEnabled()) {
+        playNotificationSound('success');
+        const shown = await maybeBrowserNotification(
+            'Order2Me customer test',
+            'Customer notifications are working correctly.',
+            { tag: `order2me-customer-test-${Date.now()}`, url: 'customer.html#orders' }
+        );
+        document.getElementById('notification-setting-status').textContent = shown
+            ? 'Test notification sent successfully.'
+            : 'The test could not be displayed. Check your device notification settings.';
+        return;
+    }
+
+    await setCustomerNotificationPreference(true);
+}
+
+async function setCustomerNotificationPreference(enable) {
+    const checkbox = document.getElementById('notification-toggle');
+    const statusEl = document.getElementById('notification-setting-status');
+    if (!checkbox || !statusEl) return;
+
+    const environment = getNotificationEnvironment();
+    if (!environment.supported) {
+        checkbox.checked = false;
+        localStorage.setItem(NOTIFICATION_PREF_KEY, 'false');
+        syncNotificationSettingUI();
+        showNotificationPermissionHelp('customer-notification-help');
+        showToast(getNotificationStatusMessage(), 'warning');
+        return;
+    }
+
+    if (enable && environment.permission === 'denied') {
+        checkbox.checked = false;
+        localStorage.setItem(NOTIFICATION_PREF_KEY, 'false');
+        syncNotificationSettingUI();
+        showNotificationPermissionHelp('customer-notification-help');
+        showToast('Notifications must be allowed in the device settings first.', 'warning');
+        return;
+    }
+
     if (enable) {
-        const permission = await Notification.requestPermission();
+        statusEl.textContent = 'Requesting browser permission…';
+        let permission;
+        try {
+            // This function is reached directly from a click/change event.
+            permission = await Notification.requestPermission();
+        } catch (error) {
+            console.error('Notification permission request failed:', error);
+            permission = 'default';
+        }
+
         if (permission === 'granted') {
             localStorage.setItem(NOTIFICATION_PREF_KEY, 'true');
+            checkbox.checked = true;
             syncNotificationSettingUI();
             showToast('Notifications enabled.', 'success');
             playNotificationSound('success');
@@ -65,13 +126,18 @@ async function toggleNotificationPreference() {
         } else {
             checkbox.checked = false;
             localStorage.setItem(NOTIFICATION_PREF_KEY, 'false');
-            statusEl.textContent = 'Notification permission was denied.';
-            showToast('Browser notification permission was denied.', 'warning');
+            syncNotificationSettingUI();
+            if (permission === 'denied') showNotificationPermissionHelp('customer-notification-help');
+            statusEl.textContent = permission === 'denied'
+                ? 'Notifications were blocked. Follow the instructions below to allow them.'
+                : 'Permission was not granted. Tap Enable notifications to try again.';
+            showToast('Notification permission was not enabled.', 'warning');
         }
         return;
     }
 
     localStorage.setItem(NOTIFICATION_PREF_KEY, 'false');
+    checkbox.checked = false;
     syncNotificationSettingUI();
     showToast('Notifications disabled.', 'info');
 }
@@ -185,11 +251,7 @@ function goToHistory() {
 
 async function loadApprovedShops() {
     const list = document.getElementById('shop-picker-list');
-    const { data, error } = await supabaseClient
-        .from('shops')
-        .select('id, name, description, address, phone_number, logo_url, status')
-        .eq('status', 'approved')
-        .order('name', { ascending: true });
+    const { data, error } = await supabaseClient.rpc('get_approved_shops_with_owner');
 
     if (error) {
         console.error('Error loading shops:', error);
@@ -197,7 +259,15 @@ async function loadApprovedShops() {
         return;
     }
 
-    approvedShops = data || [];
+    approvedShops = (data || []).map(shop => ({
+        ...shop,
+        users: {
+            id: shop.owner_id,
+            name: shop.owner_name,
+            avatar_path: shop.owner_avatar_path
+        }
+    }));
+    await hydrateProfileAvatars(approvedShops.map(shop => shop.users).filter(Boolean));
     renderShopPicker();
 
     if (!approvedShops.length) {
@@ -223,8 +293,10 @@ function renderShopPicker() {
         <button type="button" class="shop-choice ${shop.id === activeShopId ? 'active' : ''}"
             role="option" aria-selected="${shop.id === activeShopId}"
             onclick="selectShop(${shop.id})">
-            <span class="shop-choice-icon">${shop.logo_url
-                ? `<img src="${escapeHtml(shop.logo_url)}" alt="">`
+            <span class="shop-choice-icon">${shop.users?.avatar_url
+                ? `<img src="${escapeHtml(shop.users.avatar_url)}" alt="${escapeHtml(shop.users.name || 'Shop owner')} profile photo">`
+                : shop.logo_url
+                ? `<img src="${escapeHtml(shop.logo_url)}" alt="${escapeHtml(shop.name)} logo">`
                 : '🏪'}</span>
             <span class="shop-choice-copy">
                 <strong>${escapeHtml(shop.name)}</strong>
@@ -1452,6 +1524,7 @@ async function initCustomerPage() {
     if (!currentCustomerProfile) return; // requireCustomer redirects to login
 
     syncNotificationSettingUI();
+    watchNotificationPermission(syncNotificationSettingUI);
 
     // Populate profile dropdown name
     const profileNameEl = document.getElementById('profile-name');
@@ -1465,6 +1538,20 @@ async function initCustomerPage() {
 
     // Subscribe to Realtime order status changes
     subscribeCustomerRealtime();
+    subscribeCustomerShopProfiles();
+}
+
+function subscribeCustomerShopProfiles() {
+    if (customerShopRefreshTimer) window.clearInterval(customerShopRefreshTimer);
+    customerShopRefreshTimer = window.setInterval(() => {
+        if (document.visibilityState === 'visible') loadApprovedShops();
+    }, 30000);
+
+    const refreshWhenReturning = () => {
+        if (document.visibilityState === 'visible') loadApprovedShops();
+    };
+    window.addEventListener('focus', refreshWhenReturning);
+    document.addEventListener('visibilitychange', refreshWhenReturning);
 }
 
 // ── Realtime: listen for status changes on own orders ───────
@@ -1551,6 +1638,7 @@ window.addEventListener('beforeunload', () => {
     if (customerRealtimeChannel) {
         supabaseClient.removeChannel(customerRealtimeChannel);
     }
+    if (customerShopRefreshTimer) window.clearInterval(customerShopRefreshTimer);
 });
 
 document.addEventListener('DOMContentLoaded', initCustomerPage);

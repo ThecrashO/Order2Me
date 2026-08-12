@@ -20,23 +20,24 @@ function syncOwnerNotificationSettingUI() {
     const enableButton = document.getElementById('owner-enable-notifications-btn');
     if (!checkbox || !statusEl) return;
 
-    const supported = 'Notification' in window && window.isSecureContext;
-    checkbox.disabled = !supported;
-    checkbox.checked = supported && Notification.permission === 'granted' && isNotificationPreferenceEnabled();
-    statusEl.textContent = !supported
-        ? 'Notifications require HTTPS or localhost.'
-        : Notification.permission === 'denied'
-            ? 'Notifications are blocked in your browser settings.'
-            : checkbox.checked
-                ? 'Notifications are enabled.'
-                : 'Turn this on to receive new-order alerts.';
+    const environment = getNotificationEnvironment();
+    const permission = environment.permission || 'unsupported';
+    checkbox.disabled = !environment.supported || permission === 'denied';
+    checkbox.checked = environment.supported && permission === 'granted' && isNotificationPreferenceEnabled();
+    statusEl.textContent = getNotificationStatusMessage()
+        || (checkbox.checked ? 'Notifications are enabled.' : 'Turn this on to receive new-order alerts.');
     if (enableButton) {
-        enableButton.disabled = !supported;
-        enableButton.textContent = Notification.permission === 'denied'
-            ? 'Notifications blocked — view instructions'
+        enableButton.disabled = false;
+        enableButton.textContent = !environment.supported
+            ? 'View setup instructions'
+            : permission === 'denied'
+            ? 'How to unblock notifications'
             : checkbox.checked
                 ? 'Send test notification'
                 : 'Enable notifications';
+    }
+    if (environment.supported && permission !== 'denied') {
+        hideNotificationPermissionHelp('owner-notification-help');
     }
 }
 
@@ -46,9 +47,16 @@ async function toggleOwnerNotificationPreference() {
 }
 
 async function enableOwnerNotifications() {
-    const alreadyEnabled = 'Notification' in window
+    const environment = getNotificationEnvironment();
+    if (!environment.supported || environment.permission === 'denied') {
+        showNotificationPermissionHelp('owner-notification-help');
+        syncOwnerNotificationSettingUI();
+        return;
+    }
+
+    const alreadyEnabled = environment.supported
         && isNotificationPreferenceEnabled()
-        && Notification.permission === 'granted';
+        && environment.permission === 'granted';
     if (alreadyEnabled) {
         playNotificationSound('success');
         const shown = await maybeBrowserNotification(
@@ -70,20 +78,23 @@ async function setOwnerNotificationPreference(enable) {
     const statusEl = document.getElementById('owner-notification-setting-status');
     if (!checkbox || !statusEl) return;
 
-    if (!('Notification' in window) || !window.isSecureContext) {
-        checkbox.checked = false;
-        statusEl.textContent = 'Notifications require HTTPS or localhost.';
-        localStorage.setItem(NOTIFICATION_PREF_KEY, 'false');
-        showToast('Use HTTPS or localhost to enable notifications.', 'warning');
-        return;
-    }
-
-    if (enable && Notification.permission === 'denied') {
+    const environment = getNotificationEnvironment();
+    if (!environment.supported) {
         checkbox.checked = false;
         localStorage.setItem(NOTIFICATION_PREF_KEY, 'false');
         syncOwnerNotificationSettingUI();
-        statusEl.textContent = 'Notifications are blocked. Open this site in browser settings, choose Permissions, then set Notifications to Allow.';
-        showToast('Allow notifications from the browser Site Settings, then try again.', 'warning');
+        showNotificationPermissionHelp('owner-notification-help');
+        showToast(getNotificationStatusMessage(), 'warning');
+        return;
+    }
+
+    if (enable && environment.permission === 'denied') {
+        checkbox.checked = false;
+        localStorage.setItem(NOTIFICATION_PREF_KEY, 'false');
+        syncOwnerNotificationSettingUI();
+        showNotificationPermissionHelp('owner-notification-help');
+        statusEl.textContent = 'Notifications were blocked. Follow the instructions below to allow them.';
+        showToast('Notifications must be allowed in the device settings first.', 'warning');
         return;
     }
 
@@ -118,8 +129,12 @@ async function setOwnerNotificationPreference(enable) {
         } else {
             checkbox.checked = false;
             localStorage.setItem(NOTIFICATION_PREF_KEY, 'false');
-            statusEl.textContent = 'Notification permission was denied.';
-            showToast('Browser notification permission was denied.', 'warning');
+            syncOwnerNotificationSettingUI();
+            if (permission === 'denied') showNotificationPermissionHelp('owner-notification-help');
+            statusEl.textContent = permission === 'denied'
+                ? 'Notifications were blocked. Follow the instructions below to allow them.'
+                : 'Permission was not granted. Tap Enable notifications to try again.';
+            showToast('Notification permission was not enabled.', 'warning');
         }
         return;
     }
@@ -496,6 +511,7 @@ function openOwnerProfileInfo() {
 function openOwnerSettings() {
     closeOwnerProfileDropdown();
     syncOwnerNotificationSettingUI();
+    watchNotificationPermission(syncOwnerNotificationSettingUI);
     document.getElementById('owner-shop-settings-name').value = ownerShop?.name || '';
     document.getElementById('owner-shop-settings-phone').value = ownerShop?.phone_number || '';
     document.getElementById('owner-shop-settings-address').value = ownerShop?.address || '';

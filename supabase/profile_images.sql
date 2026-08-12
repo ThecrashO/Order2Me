@@ -9,6 +9,47 @@ BEGIN;
 ALTER TABLE public.users
 ADD COLUMN IF NOT EXISTS avatar_path text;
 
+-- Return only the public shop fields needed by the customer picker plus the
+-- owner's display name/avatar. This avoids opening the whole users row to
+-- customers through a broad SELECT policy.
+CREATE OR REPLACE FUNCTION public.get_approved_shops_with_owner()
+RETURNS TABLE (
+  id bigint,
+  owner_id bigint,
+  name text,
+  description text,
+  address text,
+  phone_number text,
+  logo_url text,
+  status text,
+  owner_name text,
+  owner_avatar_path text
+)
+LANGUAGE sql
+STABLE
+SECURITY DEFINER
+SET search_path = ''
+AS $$
+  SELECT
+    s.id,
+    s.owner_id,
+    s.name,
+    s.description,
+    s.address,
+    s.phone_number,
+    s.logo_url,
+    s.status,
+    u.name AS owner_name,
+    u.avatar_path AS owner_avatar_path
+  FROM public.shops s
+  JOIN public.users u ON u.id = s.owner_id
+  WHERE s.status = 'approved'
+  ORDER BY s.name ASC;
+$$;
+
+REVOKE ALL ON FUNCTION public.get_approved_shops_with_owner() FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION public.get_approved_shops_with_owner() TO authenticated;
+
 -- The multi-shop migration intentionally restricts which profile columns an
 -- authenticated user may update. Add avatar_path to that safe list.
 REVOKE UPDATE ON public.users FROM authenticated;
@@ -79,8 +120,21 @@ BEGIN
   WHERE u.auth_user_id::text = folders[1]
   LIMIT 1;
 
-  RETURN target_profile_id IS NOT NULL
-    AND public.owner_can_view_customer(target_profile_id);
+  IF target_profile_id IS NULL THEN
+    RETURN false;
+  END IF;
+
+  -- Customers can see the avatar belonging to an approved shop owner.
+  IF public.current_profile_role() = 'customer' THEN
+    RETURN EXISTS (
+      SELECT 1
+      FROM public.shops s
+      WHERE s.owner_id = target_profile_id
+        AND s.status = 'approved'
+    );
+  END IF;
+
+  RETURN public.owner_can_view_customer(target_profile_id);
 END;
 $$;
 

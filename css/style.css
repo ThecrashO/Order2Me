@@ -2786,6 +2786,19 @@ textarea {
 .profile-detail-card span { display: block; color: var(--text-muted); font-size: .66rem; font-weight: 750; letter-spacing: .04em; text-transform: uppercase; }
 .profile-detail-card strong { display: block; overflow-wrap: anywhere; color: var(--text-main); font-size: .86rem; }
 
+.notification-help-panel {
+    padding: .8rem .9rem;
+    border: 1px solid #fed7aa;
+    border-radius: 12px;
+    background: #fff7ed;
+    color: #7c2d12;
+    font-size: .76rem;
+    line-height: 1.5;
+}
+.notification-help-panel strong { display: block; margin-bottom: .3rem; color: #9a3412; }
+.notification-help-panel ol { margin: 0; padding-left: 1.1rem; }
+.notification-help-panel li + li { margin-top: .2rem; }
+
 /* ============================================================
    Admin shop approval dashboard
    ============================================================ */
