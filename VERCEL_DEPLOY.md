@@ -31,7 +31,7 @@ After deployment:
 1. Open `https://YOUR-DOMAIN/api/config` and confirm it returns `window.__ORDER2ME_CONFIG__`.
 2. Open the app and sign in as customer, owner, and admin.
 3. Upload a JPG, PNG, or WebP profile image smaller than 3 MB.
-4. Hard-refresh once so service-worker cache `order2me-v14` replaces the old app shell.
+4. Hard-refresh once so service-worker cache `order2me-v15` replaces the old app shell.
 
 The publishable key returned by `/api/config` is intentionally visible to browsers. Security is enforced by the database and Storage RLS policies. The endpoint keeps configuration out of Git and lets each Vercel environment use a different Supabase project.
 

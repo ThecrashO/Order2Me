@@ -191,6 +191,89 @@ body::before {
     min-height: 300px;
 }
 
+.owner-menu-filter-shell {
+    margin-bottom: 1rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--border);
+}
+
+.owner-menu-filter-heading {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: .75rem;
+    margin-bottom: .7rem;
+    color: var(--text-main);
+}
+
+.owner-menu-filter-bar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .55rem;
+}
+
+.owner-menu-filter-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: .38rem;
+    min-height: 40px;
+    padding: .48rem .7rem;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    background: #fff;
+    color: var(--text-muted);
+    font-size: .78rem;
+    font-weight: 750;
+    line-height: 1;
+    white-space: nowrap;
+    transition: color .18s ease, background-color .18s ease, border-color .18s ease, box-shadow .18s ease, transform .18s ease;
+}
+
+.owner-menu-filter-btn:hover {
+    color: var(--brand-dark);
+    border-color: rgba(37,99,235,.45);
+    background: var(--brand-soft);
+    transform: translateY(-1px);
+}
+
+.owner-menu-filter-btn.active {
+    color: #fff;
+    border-color: var(--brand);
+    background: linear-gradient(135deg, var(--brand), var(--brand-dark));
+    box-shadow: 0 6px 16px rgba(37,99,235,.22);
+}
+
+.owner-menu-filter-count {
+    min-width: 1.45rem;
+    padding: .2rem .38rem;
+    border-radius: 999px;
+    background: #eff6ff;
+    color: var(--brand-dark);
+    font-size: .67rem;
+    font-weight: 850;
+    text-align: center;
+}
+
+.owner-menu-filter-btn.active .owner-menu-filter-count {
+    background: rgba(255,255,255,.2);
+    color: #fff;
+}
+
+.owner-menu-empty {
+    min-height: 220px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: .35rem;
+    padding: 2rem 1rem;
+    text-align: center;
+    color: var(--text-muted);
+}
+
+.owner-menu-empty strong { color: var(--text-main); }
+.owner-menu-empty-icon { font-size: 2rem; }
+
 /* ── Owner Menu Card Grid ─────────────────────────────────── */
 .owner-menu-card {
     border-radius: 14px;
@@ -336,6 +419,32 @@ body::before {
 
 /* ── Customer panel-header: stack on mobile ────────────────── */
 @media (max-width: 575.98px) {
+    .owner-menu-filter-shell {
+        margin-left: -.35rem;
+        margin-right: -.35rem;
+    }
+
+    .owner-menu-filter-heading {
+        padding-inline: .35rem;
+    }
+
+    .owner-menu-filter-bar {
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        overscroll-behavior-inline: contain;
+        scroll-snap-type: x proximity;
+        scrollbar-width: none;
+        padding: .1rem .35rem .45rem;
+    }
+
+    .owner-menu-filter-bar::-webkit-scrollbar { display: none; }
+
+    .owner-menu-filter-btn {
+        flex: 0 0 auto;
+        min-height: 42px;
+        scroll-snap-align: start;
+    }
+
     .panel-header {
         flex-direction: column;
         align-items: stretch;

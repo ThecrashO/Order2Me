@@ -234,6 +234,8 @@ let activeSearch      = '';   // search query for orders
 let ownerProfile      = null; // current logged-in owner
 let menuItemsData     = new Map(); // id -> full item object (used for edit/image lookups)
 let allMenuItemsArr   = [];  // flat array cache for menu search
+let activeOwnerMenuCategory = 'all';
+let activeOwnerMenuSearch   = '';
 let allCustomersArr    = [];  // flat array cache for customer search
 let ownerRealtimeChannel = null; // Supabase Realtime channel reference
 let ownerShop          = null;
@@ -307,6 +309,8 @@ async function initializeApp() {
             renderOrders();
         });
     });
+
+    setupOwnerMenuCategoryFilters();
 
     // Load both sections
     loadOrders();
@@ -945,39 +949,96 @@ async function loadMenuItems() {
         return;
     }
 
-    displayMenuItems(data);
+    allMenuItemsArr = Array.isArray(data) ? data : [];
+    menuItemsData.clear();
+    allMenuItemsArr.forEach(item => menuItemsData.set(item.id, item));
+    updateOwnerMenuCategoryCounts();
+    applyOwnerMenuFilters();
 }
 
 function filterMenuItems(query) {
-    const q = query.trim().toLowerCase();
-    const menuList = document.getElementById('menu-list');
-    if (!q) {
-        displayMenuItems(allMenuItemsArr);
-        return;
+    activeOwnerMenuSearch = query.trim().toLowerCase();
+    applyOwnerMenuFilters();
+}
+
+function normalizeOwnerMenuCategory(category) {
+    const normalized = String(category || 'food').trim().toLowerCase();
+    return CATEGORY_META[normalized] ? normalized : 'other';
+}
+
+function setupOwnerMenuCategoryFilters() {
+    document.querySelectorAll('.owner-menu-filter-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            activeOwnerMenuCategory = btn.dataset.category || 'all';
+            document.querySelectorAll('.owner-menu-filter-btn').forEach(filterBtn => {
+                const isActive = filterBtn === btn;
+                filterBtn.classList.toggle('active', isActive);
+                filterBtn.setAttribute('aria-pressed', String(isActive));
+            });
+            btn.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'nearest' });
+            applyOwnerMenuFilters();
+        });
+    });
+}
+
+function updateOwnerMenuCategoryCounts() {
+    const counts = { all: allMenuItemsArr.length, food: 0, drink: 0, salad: 0, snack: 0, dessert: 0, other: 0 };
+    allMenuItemsArr.forEach(item => {
+        counts[normalizeOwnerMenuCategory(item.category)] += 1;
+    });
+
+    Object.entries(counts).forEach(([category, count]) => {
+        const countEl = document.querySelector(`[data-menu-count="${category}"]`);
+        if (countEl) countEl.textContent = count;
+    });
+}
+
+function applyOwnerMenuFilters() {
+    const filtered = allMenuItemsArr.filter(item => {
+        const matchesCategory = activeOwnerMenuCategory === 'all'
+            || normalizeOwnerMenuCategory(item.category) === activeOwnerMenuCategory;
+        const matchesSearch = !activeOwnerMenuSearch
+            || String(item.name || '').toLowerCase().includes(activeOwnerMenuSearch)
+            || String(item.description || '').toLowerCase().includes(activeOwnerMenuSearch);
+        return matchesCategory && matchesSearch;
+    });
+
+    const summary = document.getElementById('owner-menu-result-summary');
+    if (summary) {
+        summary.textContent = filtered.length === allMenuItemsArr.length
+            ? `${filtered.length} item${filtered.length === 1 ? '' : 's'}`
+            : `${filtered.length} of ${allMenuItemsArr.length} items`;
     }
-    const filtered = allMenuItemsArr.filter(item =>
-        item.name.toLowerCase().includes(q) ||
-        (item.description || '').toLowerCase().includes(q)
-    );
-    if (filtered.length === 0) {
-        menuList.innerHTML = `<p class="text-muted">No items match "${escapeHtml(query)}".</p>`;
-        return;
-    }
+
     displayMenuItems(filtered);
+}
+
+function clearOwnerMenuFilters() {
+    activeOwnerMenuCategory = 'all';
+    activeOwnerMenuSearch = '';
+
+    const searchInput = document.getElementById('menu-search-owner');
+    if (searchInput) searchInput.value = '';
+
+    document.querySelectorAll('.owner-menu-filter-btn').forEach(btn => {
+        const isActive = btn.dataset.category === 'all';
+        btn.classList.toggle('active', isActive);
+        btn.setAttribute('aria-pressed', String(isActive));
+    });
+    document.querySelector('.owner-menu-filter-bar')?.scrollTo({ left: 0, behavior: 'smooth' });
+    applyOwnerMenuFilters();
 }
 
 function displayMenuItems(items) {
     const menuList = document.getElementById('menu-list');
 
     if (!items || items.length === 0) {
-        menuList.innerHTML = "<p class='text-muted'>No menu items yet. Click 'Add Food' to get started!</p>";
+        const hasFilters = activeOwnerMenuCategory !== 'all' || Boolean(activeOwnerMenuSearch);
+        menuList.innerHTML = allMenuItemsArr.length === 0
+            ? `<div class="owner-menu-empty"><span class="owner-menu-empty-icon">🍽️</span><strong>No menu items yet</strong><span>Add your first item to start building the menu.</span></div>`
+            : `<div class="owner-menu-empty"><span class="owner-menu-empty-icon">🔎</span><strong>No matching menu items</strong><span>Try another category or search term.</span>${hasFilters ? '<button type="button" class="btn btn-sm btn-outline-primary mt-2" onclick="clearOwnerMenuFilters()">Clear filters</button>' : ''}</div>`;
         return;
     }
-
-    // Store full item objects for later use by event listeners
-    menuItemsData.clear();
-    items.forEach(item => menuItemsData.set(item.id, item));
-    allMenuItemsArr = items; // cache for search
 
     menuList.innerHTML = `<div class="row g-3 owner-menu-grid">${items.map(item => {
         const catBadge = categoryBadge(item.category);
