@@ -396,10 +396,16 @@ function selectShop(shopId, initial = false) {
 
 async function loadMenu() {
     const container = document.getElementById('menu-container');
+    allMenuItems = [];
+    activeCategory = 'all';
+    setupCategoryFilters();
+
     if (!activeShopId) {
         container.innerHTML = "<p class='text-muted'>Choose a shop to view its menu.</p>";
         return;
     }
+
+    container.innerHTML = "<p class='text-muted'>Loading menu...</p>";
     const { data, error } = await supabaseClient
         .from('menu_items')
         .select('*')
@@ -413,14 +419,22 @@ async function loadMenu() {
         return;
     }
 
-    if (data.length === 0) {
+    allMenuItems = Array.isArray(data) ? data : [];
+    setupCategoryFilters();
+
+    if (allMenuItems.length === 0) {
         container.innerHTML = "<p class='text-muted'>No items available today.</p>";
         return;
     }
 
-    allMenuItems = data;
-    setupCategoryFilters();
-    displayMenuItems(data);
+    displayMenuItems(allMenuItems);
+}
+
+function normalizeCustomerMenuCategory(category) {
+    const normalized = String(category || 'food').trim().toLowerCase();
+    return ['food', 'drink', 'salad', 'snack', 'dessert', 'other'].includes(normalized)
+        ? normalized
+        : 'other';
 }
 
 function filterMenu(query) {
@@ -429,7 +443,7 @@ function filterMenu(query) {
     // Start from category-filtered list
     let base = activeCategory === 'all'
         ? allMenuItems
-        : allMenuItems.filter(item => (item.category || 'food') === activeCategory);
+        : allMenuItems.filter(item => normalizeCustomerMenuCategory(item.category) === activeCategory);
 
     if (!q) {
         displayMenuItems(base);
@@ -471,7 +485,7 @@ function displayMenuItems(items) {
         const card = document.createElement('div');
         card.className = 'col-6 col-md-4 mb-3 mb-md-4';
 
-        const catMeta = CATEGORY_META[food.category] || CATEGORY_META.other;
+        const catMeta = CATEGORY_META[normalizeCustomerMenuCategory(food.category)];
 
         // Small floating pill overlaid on the image corner
         const catPill = `<span class="menu-cat-pill ${catMeta.css}"><span class="menu-cat-pill-icon">${catMeta.icon}</span><span class="menu-cat-pill-label">${catMeta.label}</span></span>`;
@@ -524,23 +538,38 @@ const CAT_OUTLINE_CLASSES = {
 };
 
 function setupCategoryFilters() {
-    document.querySelectorAll('.category-filter-btn').forEach(btn => {
-        btn.onclick = () => {
-            // Update active state visually
-            document.querySelectorAll('.category-filter-btn').forEach(b => {
-                const cat = b.dataset.category;
-                b.classList.remove('active', ...CAT_ACTIVE_CLASSES[cat] || []);
-                b.classList.add(...(CAT_OUTLINE_CLASSES[cat] || ['btn-outline-secondary']));
-            });
-            const cat = btn.dataset.category;
-            btn.classList.remove(...(CAT_OUTLINE_CLASSES[cat] || []));
-            btn.classList.add('active', ...(CAT_ACTIVE_CLASSES[cat] || []));
+    const counts = { food: 0, drink: 0, salad: 0, snack: 0, dessert: 0, other: 0 };
+    allMenuItems.forEach(item => {
+        counts[normalizeCustomerMenuCategory(item.category)] += 1;
+    });
 
-            // Filter and render
+    if (activeCategory !== 'all' && !counts[activeCategory]) {
+        activeCategory = 'all';
+    }
+
+    const filterBar = document.getElementById('category-filter-bar');
+    if (filterBar) filterBar.hidden = allMenuItems.length === 0;
+
+    document.querySelectorAll('.category-filter-btn').forEach(btn => {
+        const category = btn.dataset.category || 'all';
+        const count = category === 'all' ? allMenuItems.length : (counts[category] || 0);
+        btn.hidden = count === 0;
+
+        const activeClasses = CAT_ACTIVE_CLASSES[category] || [];
+        const outlineClasses = CAT_OUTLINE_CLASSES[category] || ['btn-outline-secondary'];
+        const isActive = category === activeCategory;
+        btn.classList.remove('active', ...activeClasses, ...outlineClasses);
+        btn.classList.add(...(isActive ? activeClasses : outlineClasses));
+        btn.classList.toggle('active', isActive);
+        btn.setAttribute('aria-pressed', String(isActive));
+
+        btn.onclick = () => {
+            const cat = btn.dataset.category;
             activeCategory = cat;
+            setupCategoryFilters();
             const filtered = cat === 'all'
                 ? allMenuItems
-                : allMenuItems.filter(item => (item.category || 'food') === cat);
+                : allMenuItems.filter(item => normalizeCustomerMenuCategory(item.category) === cat);
             displayMenuItems(filtered);
         };
     });

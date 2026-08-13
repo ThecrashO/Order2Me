@@ -987,9 +987,24 @@ function updateOwnerMenuCategoryCounts() {
         counts[normalizeOwnerMenuCategory(item.category)] += 1;
     });
 
+    if (activeOwnerMenuCategory !== 'all' && !counts[activeOwnerMenuCategory]) {
+        activeOwnerMenuCategory = 'all';
+    }
+
+    const filterShell = document.querySelector('.owner-menu-filter-shell');
+    if (filterShell) filterShell.hidden = counts.all === 0;
+
     Object.entries(counts).forEach(([category, count]) => {
         const countEl = document.querySelector(`[data-menu-count="${category}"]`);
         if (countEl) countEl.textContent = count;
+
+        const button = document.querySelector(`.owner-menu-filter-btn[data-category="${category}"]`);
+        if (button) {
+            button.hidden = category !== 'all' && count === 0;
+            const isActive = category === activeOwnerMenuCategory;
+            button.classList.toggle('active', isActive);
+            button.setAttribute('aria-pressed', String(isActive));
+        }
     });
 }
 

@@ -197,6 +197,13 @@ body::before {
     border-bottom: 1px solid var(--border);
 }
 
+.owner-menu-filter-shell[hidden],
+.owner-menu-filter-btn[hidden],
+#category-filter-bar[hidden],
+.category-filter-btn[hidden] {
+    display: none !important;
+}
+
 .owner-menu-filter-heading {
     display: flex;
     align-items: center;
