@@ -8,7 +8,7 @@
     <meta name="description" content="Order2Me: The smart way to order food at your university canteen. Browse the menu and place orders in seconds.">
     <!-- PWA -->
     <link rel="manifest" href="manifest.json">
-    <meta name="theme-color" content="#0f172a">
+    <meta name="theme-color" content="#0b1f3a">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-title" content="Order2Me">
@@ -20,11 +20,11 @@
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
         :root {
-            --bg:      #0a0c12;
+            --bg:      #0b1f3a;
             --surface: rgba(255,255,255,0.06);
             --border:  rgba(255,255,255,0.10);
-            --accent:  #f97316;
-            --accent2: #fb923c;
+            --accent:  #2563eb;
+            --accent2: #60a5fa;
             --text:    #f1f5f9;
             --muted:   #94a3b8;
         }
@@ -42,9 +42,9 @@
             position: fixed;
             inset: 0;
             background:
-                radial-gradient(ellipse 80% 60% at 20% 10%,  rgba(249,115,22,.20) 0%, transparent 60%),
-                radial-gradient(ellipse 60% 50% at 80% 80%,  rgba(251,146,60,.13) 0%, transparent 55%),
-                radial-gradient(ellipse 50% 40% at 50% 50%,  rgba(15,23,42,1)     0%, transparent 80%);
+                radial-gradient(ellipse 80% 60% at 20% 10%,  rgba(37,99,235,.20) 0%, transparent 60%),
+                radial-gradient(ellipse 60% 50% at 80% 80%,  rgba(96,165,250,.13) 0%, transparent 55%),
+                radial-gradient(ellipse 50% 40% at 50% 50%,  rgba(11,31,58,1)     0%, transparent 80%);
             z-index: 0;
             animation: bgPulse 8s ease-in-out infinite alternate;
         }
@@ -87,8 +87,8 @@
             display: inline-flex;
             align-items: center;
             gap: .5rem;
-            background: rgba(249,115,22,.15);
-            border: 1px solid rgba(249,115,22,.35);
+            background: rgba(37,99,235,.15);
+            border: 1px solid rgba(37,99,235,.35);
             color: var(--accent2);
             font-size: .78rem;
             font-weight: 600;
@@ -131,8 +131,8 @@
             padding: 10px;
             border-radius: 50% !important;
             overflow: hidden;
-            background: radial-gradient(circle at top, rgba(255,255,255,0.96), rgba(249,115,22,0.18));
-            box-shadow: 0 0 0 8px rgba(249,115,22,0.14), 0 18px 42px rgba(249, 115, 22, 0.24);
+            background: radial-gradient(circle at top, rgba(255,255,255,0.96), rgba(37,99,235,0.18));
+            box-shadow: 0 0 0 8px rgba(37,99,235,0.14), 0 18px 42px rgba(37, 99, 235, 0.24);
             clip-path: circle(50% at center);
         }
 
@@ -146,13 +146,13 @@
 
         .brand-icon {
             width: 56px; height: 56px;
-            background: linear-gradient(135deg, var(--accent), #c2410c);
+            background: linear-gradient(135deg, var(--accent), #1d4ed8);
             border-radius: 16px;
             display: flex;
             align-items: center;
             justify-content: center;
             font-size: 1.6rem;
-            box-shadow: 0 8px 32px rgba(249,115,22,.42);
+            box-shadow: 0 8px 32px rgba(37,99,235,.42);
             flex-shrink: 0;
         }
 
@@ -182,7 +182,7 @@
             display: inline-flex;
             align-items: center;
             gap: .7rem;
-            background: linear-gradient(135deg, #c2410c 0%, #9a3412 100%);
+            background: linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%);
             color: #fff;
             font-size: 1.05rem;
             font-weight: 700;
@@ -192,7 +192,7 @@
             cursor: pointer;
             position: relative;
             overflow: hidden;
-            box-shadow: 0 0 0 0 rgba(249,115,22,.5);
+            box-shadow: 0 0 0 0 rgba(37,99,235,.5);
             transition: transform .22s ease, box-shadow .22s ease;
             animation: fadeDown .7s .3s ease both, pulseShadow 2.8s 1.5s ease-in-out infinite;
         }
@@ -208,7 +208,7 @@
 
         .cta-btn:hover {
             transform: translateY(-3px) scale(1.04);
-            box-shadow: 0 16px 40px rgba(249,115,22,.46);
+            box-shadow: 0 16px 40px rgba(37,99,235,.46);
             color: #fff;
             text-decoration: none;
         }
@@ -220,8 +220,8 @@
         .cta-btn:hover .cta-arrow { transform: translateX(4px); }
 
         @keyframes pulseShadow {
-            0%,100% { box-shadow: 0 0 0 0   rgba(249,115,22,.46); }
-            50%      { box-shadow: 0 0 0 14px rgba(249,115,22,0);  }
+            0%,100% { box-shadow: 0 0 0 0   rgba(37,99,235,.46); }
+            50%      { box-shadow: 0 0 0 14px rgba(37,99,235,0);  }
         }
 
         .owner-link {
@@ -280,7 +280,7 @@
             .brand-logo {
                 width: clamp(108px, 42vw, 150px);
                 padding: 8px;
-                box-shadow: 0 0 0 6px rgba(249,115,22,0.12), 0 10px 26px rgba(249, 115, 22, 0.22);
+                box-shadow: 0 0 0 6px rgba(37,99,235,0.12), 0 10px 26px rgba(37, 99, 235, 0.22);
             }
             .brand-icon { width: 44px; height: 44px; font-size: 1.2rem; }
             .cta-btn { font-size: .95rem; padding: .85rem 2rem; }

@@ -1127,11 +1127,11 @@ function renderCustomers(customers, query = '') {
     }
 
     const palettes = [
-        { bg: '#1e3a5f', light: '#f1f5f9' },
-        { bg: '#c2410c', light: '#fff7ed' },
+        { bg: '#163a63', light: '#f1f5f9' },
+        { bg: '#1d4ed8', light: '#eff6ff' },
         { bg: '#047857', light: '#ecfdf5' },
         { bg: '#0e7490', light: '#ecfeff' },
-        { bg: '#1d4ed8', light: '#eff6ff' }
+        { bg: '#1e40af', light: '#dbeafe' }
     ];
 
     const cards = customers.map((s, idx) => {

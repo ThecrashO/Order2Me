@@ -2,18 +2,18 @@
 
 /* ── Design Tokens ─────────────────────────────────────────── */
 :root {
-    --brand:       #f97316;
-    --brand-dark:  #c2410c;
-    --brand-hover: #9a3412;
-    --brand-light: rgba(249,115,22,.12);
-    --brand-soft:  #fff7ed;
-    --brand-surface:#fffaf6;
-    --navy:        #0f172a;
-    --navy-mid:    #1e3a5f;
+    --brand:       #2563eb;
+    --brand-dark:  #1d4ed8;
+    --brand-hover: #1e40af;
+    --brand-light: rgba(37,99,235,.12);
+    --brand-soft:  #eff6ff;
+    --brand-surface:#f8fafc;
+    --navy:        #0b1f3a;
+    --navy-mid:    #163a63;
     --surface:     #f8fafc;
     --card-bg:     #ffffff;
-    --border:      #e2e8f0;
-    --text-main:   #1e293b;
+    --border:      #dce6f2;
+    --text-main:   #172033;
     --text-muted:  #64748b;
     --success:     #047857;
     --success-dark:#065f46;
@@ -29,7 +29,7 @@
     --status-sent-soft:      #dbeafe;
     --status-received-soft:  #d1fae5;
     --status-cancelled-soft: #fee2e2;
-    --bs-primary-rgb: 194, 65, 12;
+    --bs-primary-rgb: 37, 99, 235;
     --bs-success-rgb: 4, 120, 87;
     --bs-danger-rgb: 185, 28, 28;
     --bs-info-rgb: 14, 116, 144;
@@ -39,8 +39,8 @@
 body {
     min-height: 100vh;
     background:
-        radial-gradient(circle at top left, rgba(249,115,22,.16), transparent 20%),
-        radial-gradient(circle at bottom right, rgba(251,146,60,.12), transparent 28%),
+        radial-gradient(circle at top left, rgba(37,99,235,.16), transparent 20%),
+        radial-gradient(circle at bottom right, rgba(96,165,250,.12), transparent 28%),
         linear-gradient(135deg, var(--brand-soft) 0%, #ffffff 48%, #f8fafc 100%);
     font-family: 'Inter', sans-serif;
     color: var(--text-main);
@@ -50,7 +50,7 @@ body::before {
     content: '';
     position: fixed;
     inset: 0;
-    background-image: linear-gradient(rgba(249,115,22,.03) 1px, transparent 1px), linear-gradient(90deg, rgba(249,115,22,.03) 1px, transparent 1px);
+    background-image: linear-gradient(rgba(37,99,235,.03) 1px, transparent 1px), linear-gradient(90deg, rgba(37,99,235,.03) 1px, transparent 1px);
     background-size: 24px 24px;
     pointer-events: none;
     z-index: -1;
@@ -74,17 +74,17 @@ body::before {
 }
 
 .card{
-    border: 1px solid rgba(249,115,22,.25);
+    border: 1px solid rgba(37,99,235,.25);
     border-radius: 18px;
-    background: linear-gradient(180deg, #fffefb 0%, #fff7ed 100%);
+    background: linear-gradient(180deg, #ffffff 0%, #eff6ff 100%);
     backdrop-filter: blur(10px);
-    box-shadow: 0 14px 40px rgba(249, 115, 22, 0.12);
+    box-shadow: 0 14px 40px rgba(37, 99, 235, 0.12);
     transition: transform 0.2s, box-shadow 0.2s;
 }
 
 .card:hover {
     transform: translateY(-5px);
-    box-shadow: 0 18px 34px rgba(249, 115, 22, 0.18) !important;
+    box-shadow: 0 18px 34px rgba(37, 99, 235, 0.18) !important;
 }
 
 .btn{
@@ -102,7 +102,7 @@ body::before {
     background: linear-gradient(135deg, var(--brand-dark), var(--brand-hover));
     border: none;
     color: #fff;
-    box-shadow: 0 10px 20px rgba(194,65,12,.22);
+    box-shadow: 0 10px 20px rgba(29,78,216,.22);
 }
 
 .btn-primary:hover {
@@ -137,8 +137,8 @@ body::before {
     padding: 12px;
     border-radius: 50%;
     overflow: hidden;
-    background: radial-gradient(circle at top, rgba(255,255,255,0.96), rgba(249,115,22,0.18));
-    box-shadow: 0 0 0 8px rgba(249,115,22,0.14), 0 18px 42px rgba(249, 115, 22, 0.24);
+    background: radial-gradient(circle at top, rgba(255,255,255,0.96), rgba(37,99,235,0.18));
+    box-shadow: 0 0 0 8px rgba(37,99,235,0.14), 0 18px 42px rgba(37, 99, 235, 0.24);
 }
 
 .brand-logo .o2m-logo-image {
@@ -158,8 +158,8 @@ body::before {
     padding: 4px;
     border-radius: 50% !important;
     overflow: hidden;
-    background: radial-gradient(circle at top, rgba(255,255,255,0.95), rgba(249,115,22,0.14));
-    box-shadow: 0 0 0 4px rgba(255,255,255,0.12), 0 8px 20px rgba(249, 115, 22, 0.18);
+    background: radial-gradient(circle at top, rgba(255,255,255,0.95), rgba(37,99,235,0.14));
+    box-shadow: 0 0 0 4px rgba(255,255,255,0.12), 0 8px 20px rgba(37, 99, 235, 0.18);
     clip-path: circle(50% at center);
 }
 
@@ -194,8 +194,8 @@ body::before {
 /* ── Owner Menu Card Grid ─────────────────────────────────── */
 .owner-menu-card {
     border-radius: 14px;
-    border: 1px solid rgba(249,115,22,.18);
-    background: linear-gradient(180deg, #fffdfb 0%, #fff7ed 100%);
+    border: 1px solid rgba(37,99,235,.18);
+    background: linear-gradient(180deg, #ffffff 0%, #eff6ff 100%);
     transition: transform 0.18s ease, box-shadow 0.18s ease;
 }
 
@@ -231,7 +231,7 @@ body::before {
 .owner-menu-card-name {
     font-size: 0.9rem;
     font-weight: 700;
-    color: #1e293b;
+    color: #172033;
     line-height: 1.3;
     flex: 1;
     min-width: 0;
@@ -256,8 +256,8 @@ body::before {
 /* ── Customer Card Grid ───────────────────────────────────── */
 .customer-card {
     border-radius: 14px;
-    border: 1px solid rgba(249,115,22,.18);
-    background: linear-gradient(180deg, #fffdfb 0%, #fff7ed 100%);
+    border: 1px solid rgba(37,99,235,.18);
+    background: linear-gradient(180deg, #ffffff 0%, #eff6ff 100%);
     transition: transform 0.18s ease, box-shadow 0.18s ease;
 }
 
@@ -283,7 +283,7 @@ body::before {
 
 .customer-card-name {
     font-size: 0.92rem;
-    color: #1e293b;
+    color: #172033;
     line-height: 1.3;
     white-space: nowrap;
     overflow: hidden;
@@ -374,7 +374,7 @@ body::before {
 .form-select:focus,
 .form-check-input:focus {
     border-color: var(--brand);
-    box-shadow: 0 0 0 0.25rem rgba(249,115,22,.22);
+    box-shadow: 0 0 0 0.25rem rgba(37,99,235,.22);
 }
 
 .input-group-text {
@@ -507,7 +507,7 @@ body::before {
 .profile-dropdown-name {
     font-size: 0.88rem;
     font-weight: 700;
-    color: #1e293b;
+    color: #172033;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -552,7 +552,7 @@ body::before {
 
 .profile-dropdown-item:hover {
     background: #f1f5f9;
-    color: #0f172a;
+    color: #0b1f3a;
 }
 
 .profile-dropdown-item:hover svg {
@@ -583,7 +583,7 @@ body::before {
 /* Layout wrapper: main fills full width; sidebar overlays it */
 .customer-layout {
     background:
-        radial-gradient(circle at top left, rgba(249,115,22,.10), transparent 20%),
+        radial-gradient(circle at top left, rgba(37,99,235,.10), transparent 20%),
         linear-gradient(180deg, rgba(255,247,237,.9), rgba(248,250,252,.96));
     min-height: calc(100vh - 56px);
 }
@@ -614,7 +614,7 @@ body::before {
     bottom: 0;
     z-index: 1050;
     width: 260px;
-    background: linear-gradient(175deg, #1e3a5f 0%, #0a1628 100%);
+    background: linear-gradient(175deg, #163a63 0%, #0a1628 100%);
     display: flex;
     flex-direction: column;
     padding: 0;
@@ -717,7 +717,7 @@ body::before {
     background: linear-gradient(135deg, var(--brand-dark), var(--brand-hover));
     color: #fff;
     font-weight: 700;
-    box-shadow: 0 4px 16px rgba(249,115,22,.4);
+    box-shadow: 0 4px 16px rgba(37,99,235,.4);
     transform: translateX(3px);
 }
 
@@ -818,7 +818,7 @@ body::before {
 .panel-title {
     font-size: 1.35rem;
     font-weight: 800;
-    color: #1e293b;
+    color: #172033;
     margin: 0;
 }
 
@@ -846,7 +846,7 @@ body::before {
     gap: 0.45rem;
     padding: 0.35rem 0.85rem;
     border-radius: 999px;
-    background: rgba(249,115,22,.12);
+    background: rgba(37,99,235,.12);
     color: var(--brand-dark);
     font-size: 0.72rem;
     font-weight: 800;
@@ -857,7 +857,7 @@ body::before {
 
 .auth-title {
     font-weight: 800;
-    color: #0f172a;
+    color: #0b1f3a;
     margin-bottom: 0.4rem;
 }
 
@@ -874,8 +874,8 @@ body::before {
     place-items: center;
     overflow: hidden;
     padding: 4px;
-    background: radial-gradient(circle at top, rgba(255,255,255,0.96), rgba(249,115,22,0.18));
-    box-shadow: 0 10px 28px rgba(249,115,22,.32);
+    background: radial-gradient(circle at top, rgba(255,255,255,0.96), rgba(37,99,235,0.18));
+    box-shadow: 0 10px 28px rgba(37,99,235,.32);
 }
 
 .auth-brand-mark .o2m-logo-image {
@@ -1016,7 +1016,7 @@ body::before {
 .menu-card-title {
     font-size: 0.88rem;
     font-weight: 700;
-    color: #1e293b;
+    color: #172033;
     margin-bottom: 0.25rem;
     /* Clamp to 2 lines on small screens */
     display: -webkit-box;
@@ -1150,7 +1150,7 @@ body::before {
     align-items: center;
     justify-content: center;
     background: linear-gradient(135deg, var(--brand-dark), var(--brand-hover));
-    box-shadow: 0 6px 20px rgba(194,65,12,.42);
+    box-shadow: 0 6px 20px rgba(29,78,216,.42);
     transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1),
                 box-shadow 0.2s ease;
     animation: fabBounceIn 0.45s cubic-bezier(0.34, 1.56, 0.64, 1) both;
@@ -1158,7 +1158,7 @@ body::before {
 
 #cart-fab:hover {
     transform: scale(1.1);
-    box-shadow: 0 10px 30px rgba(194,65,12,.52);
+    box-shadow: 0 10px 30px rgba(29,78,216,.52);
 }
 
 #cart-fab:active {
@@ -1171,7 +1171,7 @@ body::before {
     position: absolute;
     inset: -6px;
     border-radius: 50%;
-    border: 2px solid rgba(249, 115, 22, 0.5);
+    border: 2px solid rgba(37, 99, 235, 0.5);
     animation: fabPulse 2s ease-out infinite;
     pointer-events: none;
 }
@@ -1363,7 +1363,7 @@ body::before {
 .drawer-item-name {
     font-weight: 600;
     font-size: 0.9rem;
-    color: #1e293b;
+    color: #172033;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -1382,7 +1382,7 @@ body::before {
     background: #f8fafc;
     border-radius: 999px;
     padding: 2px 6px;
-    border: 1px solid #e2e8f0;
+    border: 1px solid #dce6f2;
 }
 
 .drawer-qty-btn {
@@ -1390,7 +1390,7 @@ body::before {
     height: 26px;
     border-radius: 50%;
     border: none;
-    background: #e2e8f0;
+    background: #dce6f2;
     color: #334155;
     font-size: 0.95rem;
     font-weight: 700;
@@ -1414,7 +1414,7 @@ body::before {
     text-align: center;
     font-weight: 600;
     font-size: 0.88rem;
-    color: #1e293b;
+    color: #172033;
 }
 
 .drawer-item-subtotal {
@@ -1485,7 +1485,7 @@ body::before {
 .drawer-total-amount {
     font-size: 1.15rem;
     font-weight: 800;
-    color: #1e293b;
+    color: #172033;
 }
 
 #drawer-checkout-btn {
@@ -1499,12 +1499,12 @@ body::before {
     border: none;
     cursor: pointer;
     transition: transform 0.15s, box-shadow 0.15s;
-    box-shadow: 0 4px 14px rgba(249,115,22,.35);
+    box-shadow: 0 4px 14px rgba(37,99,235,.35);
 }
 
 #drawer-checkout-btn:hover {
     transform: translateY(-1px);
-    box-shadow: 0 6px 20px rgba(249,115,22,.45);
+    box-shadow: 0 6px 20px rgba(37,99,235,.45);
 }
 
 #drawer-checkout-btn:active {
@@ -1534,14 +1534,14 @@ body::before {
 .navbar.bg-primary {
     background: linear-gradient(135deg, var(--navy) 0%, var(--navy-mid) 100%) !important;
     box-shadow: 0 2px 16px rgba(15,23,42,.28);
-    border-bottom: 1px solid rgba(249,115,22,.28);
+    border-bottom: 1px solid rgba(37,99,235,.28);
 }
 
 /* Owner navbar — deep navy */
 .navbar.bg-dark {
-    background: linear-gradient(135deg, var(--navy) 0%, #1e293b 100%) !important;
+    background: linear-gradient(135deg, var(--navy) 0%, #172033 100%) !important;
     box-shadow: 0 2px 16px rgba(0,0,0,.3);
-    border-bottom: 1px solid rgba(249,115,22,.15);
+    border-bottom: 1px solid rgba(37,99,235,.15);
 }
 
 /* Bootstrap btn-primary → brand orange */
@@ -1599,7 +1599,7 @@ body::before {
 
 /* Table hover — subtle orange tint */
 .table-hover tbody tr:hover {
-    background-color: rgba(249,115,22,.04) !important;
+    background-color: rgba(37,99,235,.04) !important;
 }
 
 /* Accessible Bootstrap utility colors. */
@@ -1645,7 +1645,7 @@ body::before {
 .order-card--sent      { border-color: var(--sent) !important; }
 .order-card--received  { border-color: var(--received) !important; }
 .order-card--cancelled { border-color: var(--danger) !important; }
-.order-card-status-surface { background: #fffaf6; }
+.order-card-status-surface { background: #f8fafc; }
 
 /* Payment options share one selection pattern; brand names remain in the copy. */
 .payment-method-btn {
@@ -1662,10 +1662,10 @@ body::before {
     border-color: var(--brand-dark) !important;
     background: var(--brand-soft) !important;
     color: var(--brand-dark) !important;
-    box-shadow: 0 0 0 3px rgba(249,115,22,.14);
+    box-shadow: 0 0 0 3px rgba(37,99,235,.14);
 }
 .payment-detail-card {
-    border-color: #fed7aa !important;
+    border-color: #bfdbfe !important;
     background: linear-gradient(135deg, var(--brand-soft), #fff);
 }
 .payment-brand-name,
@@ -1702,7 +1702,7 @@ body::before {
     text-align: left;
 }
 .sidebar-history-link:hover {
-    background: rgba(249,115,22,.10);
+    background: rgba(37,99,235,.10);
     color: var(--brand-dark);
     text-decoration: none;
 }
@@ -1715,8 +1715,8 @@ body::before {
     gap: 6px;
     padding: 4px 12px;
     border-radius: 999px;
-    background: linear-gradient(135deg, rgba(249,115,22,.12), rgba(251,146,60,.10));
-    border: 1px solid rgba(249,115,22,.25);
+    background: linear-gradient(135deg, rgba(37,99,235,.12), rgba(96,165,250,.10));
+    border: 1px solid rgba(37,99,235,.25);
     color: var(--brand-dark);
     font-size: 0.78rem;
     font-weight: 700;
@@ -1729,35 +1729,35 @@ body::before {
     border: none;
     color: #fff;
     font-weight: 700;
-    box-shadow: 0 6px 18px rgba(194,65,12,.22);
+    box-shadow: 0 6px 18px rgba(29,78,216,.22);
     transition: transform 0.18s, box-shadow 0.18s;
 }
 .btn-history:hover {
     transform: translateY(-2px);
-    box-shadow: 0 10px 24px rgba(194,65,12,.30);
+    box-shadow: 0 10px 24px rgba(29,78,216,.30);
     color: #fff;
 }
 
 /* ── Order Progress Tracker (customer today view) ─────────────── */
 .order-tracker-card {
-    border: 1px solid rgba(249,115,22,.20);
+    border: 1px solid rgba(37,99,235,.20);
     border-radius: 18px;
-    background: linear-gradient(180deg, #fffefb 0%, #fff7ed 100%);
-    box-shadow: 0 10px 30px rgba(249,115,22,.10);
+    background: linear-gradient(180deg, #ffffff 0%, #eff6ff 100%);
+    box-shadow: 0 10px 30px rgba(37,99,235,.10);
     margin-bottom: 1.1rem;
     overflow: hidden;
     transition: box-shadow 0.2s, transform 0.2s;
 }
 .order-tracker-card:hover {
     transform: translateY(-3px);
-    box-shadow: 0 16px 36px rgba(249,115,22,.16);
+    box-shadow: 0 16px 36px rgba(37,99,235,.16);
 }
 .order-tracker-header {
     display: flex;
     align-items: center;
     justify-content: space-between;
     padding: 14px 18px 10px;
-    border-bottom: 1px solid rgba(249,115,22,.12);
+    border-bottom: 1px solid rgba(37,99,235,.12);
 }
 .order-tracker-id {
     font-weight: 800;
@@ -1794,8 +1794,8 @@ body::before {
     width: 28px;
     height: 28px;
     border-radius: 50%;
-    background: #e2e8f0;
-    border: 2px solid #e2e8f0;
+    background: #dce6f2;
+    border: 2px solid #dce6f2;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -1810,7 +1810,7 @@ body::before {
 .order-step-dot.active {
     background: linear-gradient(135deg, var(--brand-dark), var(--brand-hover));
     border-color: var(--brand-dark);
-    box-shadow: 0 0 0 5px rgba(249,115,22,.22);
+    box-shadow: 0 0 0 5px rgba(37,99,235,.22);
     animation: pulse-step 1.4s ease-in-out infinite;
 }
 .order-step-dot.cancelled {
@@ -1818,8 +1818,8 @@ body::before {
     border-color: var(--danger);
 }
 @keyframes pulse-step {
-    0%, 100% { box-shadow: 0 0 0 5px rgba(249,115,22,.22); }
-    50%       { box-shadow: 0 0 0 9px rgba(249,115,22,.08); }
+    0%, 100% { box-shadow: 0 0 0 5px rgba(37,99,235,.22); }
+    50%       { box-shadow: 0 0 0 9px rgba(37,99,235,.08); }
 }
 .order-step-label {
     font-size: 0.67rem;
@@ -1837,7 +1837,7 @@ body::before {
 .order-step-line {
     height: 3px;
     flex: 1;
-    background: #e2e8f0;
+    background: #dce6f2;
     margin-bottom: 20px;
     transition: background 0.35s;
     z-index: 0;
@@ -1858,7 +1858,7 @@ body::before {
 .order-tracker-note {
     font-size: 0.78rem;
     color: var(--text-muted);
-    background: rgba(249,115,22,.07);
+    background: rgba(37,99,235,.07);
     border-left: 3px solid var(--brand);
     padding: 6px 10px;
     border-radius: 0 8px 8px 0;
@@ -1889,14 +1889,14 @@ body::before {
 }
 .hist-stat-card {
     background: linear-gradient(135deg, #ffffff, #f8fafc);
-    border: 1px solid rgba(249,115,22,.18);
+    border: 1px solid rgba(37,99,235,.18);
     border-radius: 16px;
     padding: 16px 14px;
     text-align: center;
-    box-shadow: 0 4px 16px rgba(249,115,22,.08);
+    box-shadow: 0 4px 16px rgba(37,99,235,.08);
     transition: transform .2s, box-shadow .2s;
 }
-.hist-stat-card:hover { transform: translateY(-3px); box-shadow: 0 10px 24px rgba(249,115,22,.14); }
+.hist-stat-card:hover { transform: translateY(-3px); box-shadow: 0 10px 24px rgba(37,99,235,.14); }
 .hist-stat-icon  { font-size: 1.5rem; margin-bottom: 6px; }
 .hist-stat-value { font-size: 1.4rem; font-weight: 900; color: var(--text-main); line-height: 1; }
 .hist-stat-label { font-size: .7rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: .05em; margin-top: 4px; }
@@ -1934,8 +1934,8 @@ body::before {
     padding: 12px 14px;
     border-radius: 14px;
     background: #fff;
-    border: 1px solid rgba(249,115,22,.18);
-    box-shadow: 0 4px 14px rgba(249,115,22,.07);
+    border: 1px solid rgba(37,99,235,.18);
+    box-shadow: 0 4px 14px rgba(37,99,235,.07);
     margin-bottom: 16px;
 }
 .hist-custom-row.show { display: flex; }
@@ -1948,7 +1948,7 @@ body::before {
     color: var(--text-main);
     outline: none;
 }
-.hist-date-input:focus { border-color: var(--brand-dark); box-shadow: 0 0 0 3px rgba(249,115,22,.12); }
+.hist-date-input:focus { border-color: var(--brand-dark); box-shadow: 0 0 0 3px rgba(37,99,235,.12); }
 
 .hist-export-btn {
     background: linear-gradient(135deg, var(--success), var(--success-dark));
@@ -1967,28 +1967,28 @@ body::before {
 .hist-cards-list { display: flex; flex-direction: column; gap: 12px; }
 
 .hist-card {
-    background: linear-gradient(180deg, #fffefb, #fff7ed);
-    border: 1px solid rgba(249,115,22,.18);
+    background: linear-gradient(180deg, #ffffff, #eff6ff);
+    border: 1px solid rgba(37,99,235,.18);
     border-radius: 16px;
     padding: 16px 18px;
-    box-shadow: 0 6px 20px rgba(249,115,22,.08);
+    box-shadow: 0 6px 20px rgba(37,99,235,.08);
     animation: histFadeUp .3s ease both;
     transition: transform .2s, box-shadow .2s;
 }
-.hist-card:hover { transform: translateY(-2px); box-shadow: 0 12px 28px rgba(249,115,22,.14); }
+.hist-card:hover { transform: translateY(-2px); box-shadow: 0 12px 28px rgba(37,99,235,.14); }
 .hist-card-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; }
 .hist-card-id   { font-weight: 800; font-size: .95rem; color: var(--text-main); }
 .hist-card-meta { font-size: .76rem; color: var(--text-muted); margin-top: 2px; }
 .hist-item-row  { display: flex; justify-content: space-between; font-size: .8rem; color: #475569; padding: 3px 0; border-bottom: 1px dashed #f1f5f9; }
 .hist-item-summary { font-size: .8rem; color: var(--text-muted); line-height: 1.5; margin-bottom: 6px; }
 .hist-card-total  { font-weight: 800; color: var(--brand-dark); font-size: .9rem; margin-top: 6px; }
-.hist-note { font-size: .76rem; color: var(--text-muted); background: rgba(249,115,22,.07); border-left: 3px solid var(--brand); padding: 5px 10px; border-radius: 0 8px 8px 0; margin: 6px 0; }
+.hist-note { font-size: .76rem; color: var(--text-muted); background: rgba(37,99,235,.07); border-left: 3px solid var(--brand); padding: 5px 10px; border-radius: 0 8px 8px 0; margin: 6px 0; }
 
 .hist-badge { display: inline-block; padding: 3px 10px; border-radius: 999px; font-size: .72rem; font-weight: 700; color: #fff; white-space: nowrap; }
 .hist-payment-badge { display: inline-flex; width: fit-content; padding: 3px 10px; border-radius: 999px; background: var(--navy-mid); color: #fff; font-size: .7rem; font-weight: 700; white-space: nowrap; }
 
 .hist-date-group  { margin-bottom: 20px; }
-.hist-date-label  { font-size: .78rem; font-weight: 800; color: var(--brand-dark); text-transform: uppercase; letter-spacing: .06em; margin-bottom: 8px; padding-bottom: 5px; border-bottom: 2px solid rgba(249,115,22,.18); }
+.hist-date-label  { font-size: .78rem; font-weight: 800; color: var(--brand-dark); text-transform: uppercase; letter-spacing: .06em; margin-bottom: 8px; padding-bottom: 5px; border-bottom: 2px solid rgba(37,99,235,.18); }
 
 .hist-loading { display: flex; align-items: center; gap: 14px; padding: 48px 24px; color: var(--text-muted); font-weight: 600; }
 .hist-spinner { width: 26px; height: 26px; border: 3px solid var(--border); border-top-color: var(--brand-dark); border-radius: 50%; animation: spin .8s linear infinite; }
@@ -2056,8 +2056,8 @@ textarea {
     body {
         padding-bottom: env(safe-area-inset-bottom, 0px);
         background:
-            radial-gradient(circle at top left, rgba(249,115,22,.12), transparent 32%),
-            linear-gradient(180deg, #fffaf5 0%, #f8fafc 100%);
+            radial-gradient(circle at top left, rgba(37,99,235,.12), transparent 32%),
+            linear-gradient(180deg, #f8fafc 0%, #f8fafc 100%);
     }
 
     /* Compact, safe-area-aware app header */
@@ -2443,10 +2443,10 @@ textarea {
    ============================================================ */
 .shop-picker {
     padding: 1rem;
-    border: 1px solid rgba(249,115,22,.2);
+    border: 1px solid rgba(37,99,235,.2);
     border-radius: 18px;
     background: linear-gradient(135deg, rgba(255,255,255,.96), rgba(255,247,237,.92));
-    box-shadow: 0 10px 28px rgba(249,115,22,.08);
+    box-shadow: 0 10px 28px rgba(37,99,235,.08);
 }
 
 .shop-picker-heading {
@@ -2505,13 +2505,13 @@ textarea {
 }
 
 .shop-choice:hover {
-    border-color: rgba(249,115,22,.55);
+    border-color: rgba(37,99,235,.55);
     transform: translateY(-1px);
 }
 
 .shop-choice.active {
     border-color: var(--brand);
-    background: linear-gradient(135deg, #fff7ed, #fff);
+    background: linear-gradient(135deg, #eff6ff, #fff);
     box-shadow: 0 0 0 3px var(--brand-light);
 }
 
@@ -2574,7 +2574,7 @@ textarea {
 .sidebar-shop-heading strong {
     max-width: 120px;
     overflow: hidden;
-    color: #fdba74;
+    color: #93c5fd;
     font-size: .68rem;
     text-overflow: ellipsis;
     text-transform: none;
@@ -2600,8 +2600,8 @@ textarea {
 
 .sidebar-shop-list .shop-choice:hover,
 .sidebar-shop-list .shop-choice.active {
-    border-color: rgba(249,115,22,.8);
-    background: rgba(249,115,22,.18);
+    border-color: rgba(37,99,235,.8);
+    background: rgba(37,99,235,.18);
     box-shadow: none;
     transform: none;
 }
@@ -2622,7 +2622,7 @@ textarea {
     border-left: 4px solid var(--brand-dark);
     border-radius: 0 12px 12px 0;
     background: var(--brand-soft);
-    color: #9a3412;
+    color: #1e40af;
     font-size: .82rem;
     line-height: 1.5;
 }
@@ -2636,7 +2636,7 @@ textarea {
     place-items: center;
     padding: 1.25rem;
     background:
-        radial-gradient(circle at 15% 15%, rgba(249,115,22,.2), transparent 28%),
+        radial-gradient(circle at 15% 15%, rgba(37,99,235,.2), transparent 28%),
         radial-gradient(circle at 90% 90%, rgba(30,58,95,.14), transparent 30%),
         var(--brand-soft);
 }
@@ -2657,7 +2657,7 @@ textarea {
     margin: 0 auto 1rem;
     overflow: hidden;
     border-radius: 50%;
-    box-shadow: 0 8px 24px rgba(249,115,22,.24);
+    box-shadow: 0 8px 24px rgba(37,99,235,.24);
 }
 .approval-logo img { width: 100%; height: 100%; object-fit: cover; }
 .approval-status-icon { font-size: 2.65rem; }
@@ -2730,9 +2730,9 @@ textarea {
     gap: 1rem;
     margin-bottom: 1rem;
     padding: 1rem;
-    border: 1px solid rgba(249,115,22,.16);
+    border: 1px solid rgba(37,99,235,.16);
     border-radius: 18px;
-    background: linear-gradient(135deg, #fff7ed, #fff);
+    background: linear-gradient(135deg, #eff6ff, #fff);
 }
 
 .profile-hero > div:last-child { min-width: 0; }
@@ -2745,14 +2745,14 @@ textarea {
     gap: 1rem;
     margin-bottom: 1.25rem;
     padding: 1rem;
-    border: 1px dashed rgba(249,115,22,.42);
+    border: 1px dashed rgba(37,99,235,.42);
     border-radius: 18px;
     background: var(--brand-soft);
 }
 
 .profile-photo-copy { display: flex; min-width: 0; flex-direction: column; align-items: flex-start; }
 .profile-photo-copy small { color: var(--text-muted); font-size: .72rem; }
-.profile-modal-header { background: linear-gradient(135deg, #fff7ed, #f8fafc); }
+.profile-modal-header { background: linear-gradient(135deg, #eff6ff, #f8fafc); }
 
 .settings-account-link {
     display: flex;
@@ -2761,7 +2761,7 @@ textarea {
     gap: .75rem;
     margin-bottom: 1rem;
     padding: .8rem;
-    border: 1px solid #e2e8f0;
+    border: 1px solid #dce6f2;
     border-radius: 16px;
     background: #fff;
     color: var(--text-main);
@@ -2769,7 +2769,7 @@ textarea {
     transition: border-color .18s, background .18s;
 }
 
-.settings-account-link:hover { border-color: rgba(249,115,22,.48); background: var(--brand-soft); }
+.settings-account-link:hover { border-color: rgba(37,99,235,.48); background: var(--brand-soft); }
 .settings-account-link > span:nth-child(2) { display: flex; min-width: 0; flex: 1; flex-direction: column; }
 .settings-account-link strong { font-size: .88rem; }
 .settings-account-link small { overflow: hidden; color: var(--text-muted); font-size: .72rem; text-overflow: ellipsis; white-space: nowrap; }
@@ -2779,7 +2779,7 @@ textarea {
     display: grid;
     gap: .8rem;
     padding: 1rem;
-    border: 1px solid #e2e8f0;
+    border: 1px solid #dce6f2;
     border-radius: 16px;
     background: #f8fafc;
 }
@@ -2790,12 +2790,12 @@ textarea {
     padding: .8rem .9rem;
     border: 1px solid #fed7aa;
     border-radius: 12px;
-    background: #fff7ed;
+    background: #fffbeb;
     color: #7c2d12;
     font-size: .76rem;
     line-height: 1.5;
 }
-.notification-help-panel strong { display: block; margin-bottom: .3rem; color: #9a3412; }
+.notification-help-panel strong { display: block; margin-bottom: .3rem; color: #92400e; }
 .notification-help-panel ol { margin: 0; padding-left: 1.1rem; }
 .notification-help-panel li + li { margin-top: .2rem; }
 
@@ -2803,7 +2803,7 @@ textarea {
    Admin shop approval dashboard
    ============================================================ */
 .admin-page { background: linear-gradient(135deg, var(--brand-soft), #f8fafc); }
-.admin-navbar { background: linear-gradient(135deg, var(--navy), var(--navy-mid)) !important; border-bottom: 1px solid rgba(249,115,22,.28); }
+.admin-navbar { background: linear-gradient(135deg, var(--navy), var(--navy-mid)) !important; border-bottom: 1px solid rgba(37,99,235,.28); }
 .admin-layout { min-height: calc(100dvh - 60px); }
 .admin-main { max-width: 1320px; padding: 1.4rem 1rem 3rem; }
 .admin-view { display: none; animation: panelFadeIn .22s ease both; }
@@ -2820,9 +2820,9 @@ textarea {
     color: #fff;
     box-shadow: 0 18px 40px rgba(15,23,42,.22);
 }
-.admin-welcome .admin-eyebrow { color: #fdba74; }
+.admin-welcome .admin-eyebrow { color: #93c5fd; }
 .admin-welcome h1 { margin: .2rem 0; font-size: 1.55rem; font-weight: 900; }
-.admin-welcome p { margin: 0; color: #e2e8f0; font-size: .9rem; }
+.admin-welcome p { margin: 0; color: #dce6f2; font-size: .9rem; }
 
 .admin-stats {
     display: grid;
@@ -2832,7 +2832,7 @@ textarea {
 }
 .admin-stats article {
     padding: 1rem;
-    border: 1px solid #e2e8f0;
+    border: 1px solid #dce6f2;
     border-radius: 16px;
     background: #fff;
     box-shadow: 0 7px 20px rgba(15,23,42,.05);
@@ -2845,7 +2845,7 @@ textarea {
 
 .admin-panel {
     padding: 1rem;
-    border: 1px solid #e2e8f0;
+    border: 1px solid #dce6f2;
     border-radius: 20px;
     background: #fff;
 }
@@ -2868,7 +2868,7 @@ textarea {
 
 .admin-shop-card {
     padding: 1rem;
-    border: 1px solid #e2e8f0;
+    border: 1px solid #dce6f2;
     border-left: 4px solid #f59e0b;
     border-radius: 16px;
     background: #fff;
@@ -2907,7 +2907,7 @@ textarea {
     align-items: flex-start;
     gap: .75rem;
     padding: .9rem;
-    border: 1px solid #e2e8f0;
+    border: 1px solid #dce6f2;
     border-left: 4px solid var(--success);
     border-radius: 14px;
     background: #fff;
@@ -2921,7 +2921,7 @@ textarea {
     place-items: center;
     flex: 0 0 44px;
     border-radius: 50%;
-    background: linear-gradient(135deg, var(--brand-soft), #ffedd5);
+    background: linear-gradient(135deg, var(--brand-soft), #dbeafe);
     color: var(--brand-dark);
     font-weight: 900;
 }
@@ -2931,7 +2931,7 @@ textarea {
 .admin-user-title span { padding: .22rem .48rem; border-radius: 999px; background: #f1f5f9; font-size: .63rem; font-weight: 850; text-transform: capitalize; }
 .admin-user-copy > div:not(.admin-user-title) { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .admin-user-copy small { display: block; margin-top: .22rem; color: var(--text-muted); }
-.admin-user-shop { color: #b45309 !important; font-weight: 700; text-transform: capitalize; }
+.admin-user-shop { color: var(--brand-dark) !important; font-weight: 700; text-transform: capitalize; }
 
 .payment-proof-row {
     display: flex;
@@ -2939,7 +2939,7 @@ textarea {
     flex-wrap: wrap;
     gap: .6rem;
     padding: .65rem;
-    border: 1px solid #e2e8f0;
+    border: 1px solid #dce6f2;
     border-radius: 12px;
     background: #f8fafc;
 }

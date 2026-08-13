@@ -7,7 +7,7 @@
     <meta name="description" content="View your complete order history on Order2Me. Filter by date range, see full item breakdowns, and export records.">
     <!-- PWA -->
     <link rel="manifest" href="manifest.json">
-    <meta name="theme-color" content="#0f172a">
+    <meta name="theme-color" content="#0b1f3a">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
@@ -25,10 +25,10 @@
                 extend: {
                     fontFamily: { sans: ['Inter', 'sans-serif'] },
                     colors: {
-                        brand:    '#f97316',
-                        branddk:  '#c2410c',
-                        hist:     '#c2410c',
-                        histdk:   '#9a3412',
+                        brand:    '#2563eb',
+                        branddk:  '#1d4ed8',
+                        hist:     '#1d4ed8',
+                        histdk:   '#1e40af',
                     }
                 }
             }
@@ -42,27 +42,27 @@
         @keyframes toastIn  { from { opacity:0; transform:translateX(30px) } to { opacity:1; transform:translateX(0) } }
 
         body  { font-family:'Inter',sans-serif; min-height:100vh;
-                background:linear-gradient(135deg,#fff7ed 0%,#fff 50%,#f8fafc 100%); }
+                background:linear-gradient(135deg,#eff6ff 0%,#fff 50%,#f8fafc 100%); }
 
         /* Sticky header */
         .hist-header {
             position: sticky; top: 0; z-index: 50;
             background: rgba(255,255,255,.88);
             backdrop-filter: blur(14px);
-            border-bottom: 1px solid rgba(249,115,22,.16);
+            border-bottom: 1px solid rgba(37,99,235,.16);
             box-shadow: 0 4px 24px rgba(15,23,42,.08);
         }
 
         /* Filter bar */
         .hist-range-btn {
-            padding: 6px 16px; border-radius: 999px; border: 1.5px solid #e2e8f0;
+            padding: 6px 16px; border-radius: 999px; border: 1.5px solid #dce6f2;
             font-size:.82rem; font-weight:700; cursor:pointer;
             background:#fff; color:#64748b;
             transition: all .18s;
         }
         .hist-range-btn.active, .hist-range-btn:hover {
-            background: linear-gradient(135deg,#c2410c,#9a3412);
-            border-color: #c2410c; color: #fff;
+            background: linear-gradient(135deg,#1d4ed8,#1e40af);
+            border-color: #1d4ed8; color: #fff;
         }
 
         /* Stats grid */
@@ -74,16 +74,16 @@
         }
         .hist-stat-card {
             background: linear-gradient(135deg,#fff,#f8fafc);
-            border: 1px solid rgba(249,115,22,.18);
+            border: 1px solid rgba(37,99,235,.18);
             border-radius: 16px;
             padding: 18px 16px;
             text-align: center;
-            box-shadow: 0 6px 20px rgba(249,115,22,.08);
+            box-shadow: 0 6px 20px rgba(37,99,235,.08);
             transition: transform .2s, box-shadow .2s;
         }
-        .hist-stat-card:hover { transform:translateY(-3px); box-shadow:0 12px 28px rgba(249,115,22,.14); }
+        .hist-stat-card:hover { transform:translateY(-3px); box-shadow:0 12px 28px rgba(37,99,235,.14); }
         .hist-stat-icon  { font-size:1.6rem; margin-bottom:6px; }
-        .hist-stat-value { font-size:1.5rem; font-weight:900; color:#1e293b; line-height:1; }
+        .hist-stat-value { font-size:1.5rem; font-weight:900; color:#172033; line-height:1; }
         .hist-stat-label { font-size:.72rem; font-weight:600; color:#64748b; text-transform:uppercase; letter-spacing:.05em; margin-top:4px; }
 
         /* Cards list */
@@ -91,26 +91,26 @@
 
         /* Individual card */
         .hist-card {
-            background: linear-gradient(180deg,#fffefb,#fff7ed);
-            border: 1px solid rgba(249,115,22,.18);
+            background: linear-gradient(180deg,#ffffff,#eff6ff);
+            border: 1px solid rgba(37,99,235,.18);
             border-radius: 18px;
             padding: 18px 20px;
-            box-shadow: 0 8px 24px rgba(249,115,22,.08);
+            box-shadow: 0 8px 24px rgba(37,99,235,.08);
             animation: fadeUp .3s ease both;
             transition: transform .2s, box-shadow .2s;
         }
-        .hist-card:hover { transform:translateY(-3px); box-shadow:0 14px 32px rgba(249,115,22,.14); }
+        .hist-card:hover { transform:translateY(-3px); box-shadow:0 14px 32px rgba(37,99,235,.14); }
         .hist-card-header {
             display:flex; justify-content:space-between; align-items:flex-start;
             margin-bottom:12px;
         }
-        .hist-card-id   { font-weight:800; font-size:1rem; color:#1e293b; }
+        .hist-card-id   { font-weight:800; font-size:1rem; color:#172033; }
         .hist-card-meta { font-size:.78rem; color:#64748b; margin-top:2px; }
         .hist-card-items { margin-bottom:10px; }
         .hist-item-row  { display:flex; justify-content:space-between; font-size:.82rem; color:#475569; padding:3px 0; border-bottom:1px dashed #f1f5f9; }
         .hist-item-summary { font-size:.82rem; color:#64748b; line-height:1.5; margin-bottom:8px; }
-        .hist-card-total  { font-weight:800; color:#c2410c; font-size:.95rem; margin-top:6px; }
-        .hist-note { font-size:.78rem; color:#64748b; background:rgba(249,115,22,.07); border-left:3px solid #f97316; padding:6px 10px; border-radius:0 8px 8px 0; margin:8px 0; }
+        .hist-card-total  { font-weight:800; color:#1d4ed8; font-size:.95rem; margin-top:6px; }
+        .hist-note { font-size:.78rem; color:#64748b; background:rgba(37,99,235,.07); border-left:3px solid #2563eb; padding:6px 10px; border-radius:0 8px 8px 0; margin:8px 0; }
 
         /* Status badge */
         .hist-badge {
@@ -121,16 +121,16 @@
         /* Date group separator (customer view) */
         .hist-date-group { margin-bottom:24px; }
         .hist-date-label {
-            font-size:.8rem; font-weight:800; color:#c2410c;
+            font-size:.8rem; font-weight:800; color:#1d4ed8;
             text-transform:uppercase; letter-spacing:.06em;
             margin-bottom:10px;
             padding-bottom:6px;
-            border-bottom:2px solid rgba(249,115,22,.18);
+            border-bottom:2px solid rgba(37,99,235,.18);
         }
 
         /* Loading state */
         .hist-loading { display:flex; align-items:center; gap:14px; padding:48px 24px; color:#64748b; font-weight:600; }
-        .hist-spinner { width:28px; height:28px; border:3px solid #e2e8f0; border-top-color:#c2410c; border-radius:50%; animation:spin 0.8s linear infinite; }
+        .hist-spinner { width:28px; height:28px; border:3px solid #dce6f2; border-top-color:#1d4ed8; border-radius:50%; animation:spin 0.8s linear infinite; }
 
         /* Error state */
         .hist-error { padding:24px; background:#fee2e2; border:1px solid #fecaca; border-radius:14px; color:#b91c1c; font-weight:600; }
@@ -138,18 +138,18 @@
         /* Empty state */
         .hist-empty { text-align:center; padding:56px 24px; color:#64748b; }
         .hist-empty-icon { font-size:3rem; margin-bottom:14px; }
-        .hist-empty h3 { font-weight:800; color:#1e293b; margin-bottom:8px; }
+        .hist-empty h3 { font-weight:800; color:#172033; margin-bottom:8px; }
         .hist-empty p  { font-size:.9rem; }
 
         /* Back/action button */
         .hist-back-btn {
             display:inline-block; margin-top:16px; padding:10px 22px;
-            background:linear-gradient(135deg,#c2410c,#9a3412); color:#fff;
+            background:linear-gradient(135deg,#1d4ed8,#1e40af); color:#fff;
             border-radius:12px; font-weight:700; font-size:.9rem;
             text-decoration:none; transition:transform .18s, box-shadow .18s;
-            box-shadow:0 6px 18px rgba(194,65,12,.22);
+            box-shadow:0 6px 18px rgba(29,78,216,.22);
         }
-        .hist-back-btn:hover { transform:translateY(-2px); box-shadow:0 10px 24px rgba(194,65,12,.30); color:#fff; }
+        .hist-back-btn:hover { transform:translateY(-2px); box-shadow:0 10px 24px rgba(29,78,216,.30); color:#fff; }
 
         .hist-hidden { display:none !important; }
 
@@ -163,8 +163,8 @@
         .hist-export-btn:hover { transform:translateY(-2px); box-shadow:0 10px 24px rgba(4,120,87,.30); }
 
         /* Custom date inputs */
-        .hist-date-input { border:1.5px solid #e2e8f0; border-radius:10px; padding:6px 12px; font-size:.85rem; font-weight:600; color:#1e293b; outline:none; }
-        .hist-date-input:focus { border-color:#c2410c; box-shadow:0 0 0 3px rgba(249,115,22,.12); }
+        .hist-date-input { border:1.5px solid #dce6f2; border-radius:10px; padding:6px 12px; font-size:.85rem; font-weight:600; color:#172033; outline:none; }
+        .hist-date-input:focus { border-color:#1d4ed8; box-shadow:0 0 0 3px rgba(37,99,235,.12); }
 
         /* Toast container */
         #hist-toast-container { position:fixed; bottom:24px; right:24px; z-index:9999; }
