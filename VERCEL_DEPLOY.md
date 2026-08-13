@@ -5,9 +5,10 @@ Order2Me loads its browser-safe Supabase configuration from the Vercel Function 
 ## 1. Prepare Supabase
 
 1. Open **Supabase Dashboard → SQL Editor**.
-2. Run `supabase/profile_images.sql` once.
-3. Open **Project Settings → API Keys**.
-4. Copy the **Project URL** and a **Publishable key** (`sb_publishable_...`).
+2. Run `supabase/shop_availability.sql` once.
+3. Run `supabase/profile_images.sql` once.
+4. Open **Project Settings → API Keys**.
+5. Copy the **Project URL** and a **Publishable key** (`sb_publishable_...`).
 
 Never use a Secret key or the legacy `service_role` key in this frontend project. Those keys bypass Row Level Security.
 
@@ -31,7 +32,7 @@ After deployment:
 1. Open `https://YOUR-DOMAIN/api/config` and confirm it returns `window.__ORDER2ME_CONFIG__`.
 2. Open the app and sign in as customer, owner, and admin.
 3. Upload a JPG, PNG, or WebP profile image smaller than 3 MB.
-4. Hard-refresh once so service-worker cache `order2me-v17` replaces the old app shell.
+4. Hard-refresh once so service-worker cache `order2me-v18` replaces the old app shell.
 
 The publishable key returned by `/api/config` is intentionally visible to browsers. Security is enforced by the database and Storage RLS policies. The endpoint keeps configuration out of Git and lets each Vercel environment use a different Supabase project.
 

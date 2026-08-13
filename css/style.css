@@ -204,6 +204,80 @@ body::before {
     display: none !important;
 }
 
+.owner-shop-operations-card {
+    margin-bottom: 1rem;
+    padding: 1rem;
+    border: 1px solid rgba(37,99,235,.18);
+    border-radius: 18px;
+    background: linear-gradient(135deg, #ffffff, #eff6ff);
+    box-shadow: 0 10px 28px rgba(15,23,42,.06);
+}
+
+.owner-shop-operations-heading {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: .85rem;
+}
+
+.owner-shop-operations-heading > div { display: grid; min-width: 0; gap: .15rem; }
+.owner-shop-operations-heading strong { color: var(--text-main); font-size: .98rem; }
+.owner-shop-operations-heading > div > span:last-child { color: var(--text-muted); font-size: .75rem; }
+
+.owner-shop-status-badge {
+    width: fit-content;
+    padding: .2rem .5rem;
+    border-radius: 999px;
+    background: #e2e8f0;
+    color: #475569;
+    font-size: .64rem;
+    font-weight: 850;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+}
+
+.owner-shop-operations-card[data-state="open"] .owner-shop-status-badge { background: #d1fae5; color: #065f46; }
+.owner-shop-operations-card[data-state="closed"] .owner-shop-status-badge,
+.owner-shop-operations-card[data-state="scheduled-closed"] .owner-shop-status-badge { background: #fee2e2; color: #991b1b; }
+.owner-shop-operations-card[data-state="paused"] .owner-shop-status-badge { background: #fef3c7; color: #92400e; }
+
+.owner-shop-quick-controls,
+.owner-settings-switches {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: .65rem;
+}
+
+.owner-shop-switch-card {
+    display: flex;
+    min-width: 0;
+    align-items: center;
+    justify-content: space-between;
+    gap: .75rem;
+    padding: .75rem;
+    border: 1px solid #dce6f2;
+    border-radius: 14px;
+    background: #fff;
+    cursor: pointer;
+}
+
+.owner-shop-switch-card > span:first-child { display: flex; min-width: 0; flex-direction: column; }
+.owner-shop-switch-card strong { color: var(--text-main); font-size: .78rem; }
+.owner-shop-switch-card small { color: var(--text-muted); font-size: .65rem; line-height: 1.35; }
+.owner-shop-switch-card .form-check-input { width: 2.35rem; height: 1.25rem; cursor: pointer; }
+
+.owner-shop-operation-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .5rem 1rem;
+    margin-top: .75rem;
+    color: var(--text-muted);
+    font-size: .7rem;
+}
+
+.owner-shop-operation-meta strong { color: var(--text-main); }
+
 .owner-menu-filter-heading {
     display: flex;
     align-items: center;
@@ -1079,6 +1153,88 @@ body::before {
     object-fit: contain;
 }
 
+.password-field { position: relative; }
+.password-field .form-control { padding-right: 3.1rem; }
+
+.password-visibility-toggle {
+    position: absolute;
+    z-index: 3;
+    top: 50%;
+    right: .45rem;
+    display: grid;
+    width: 2.35rem;
+    height: 2.35rem;
+    padding: 0;
+    place-items: center;
+    transform: translateY(-50%);
+    border: 0;
+    border-radius: 10px;
+    background: transparent;
+    color: #64748b;
+    cursor: pointer;
+}
+
+.password-visibility-toggle:hover { background: #eff6ff; color: var(--brand-dark); }
+.password-visibility-toggle:focus-visible { outline: 3px solid rgba(37,99,235,.24); }
+.password-visibility-toggle svg {
+    width: 19px;
+    height: 19px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.9;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.shop-availability-card {
+    display: flex;
+    align-items: center;
+    gap: .8rem;
+    margin-bottom: 1rem;
+    padding: .85rem 1rem;
+    border: 1px solid #dce6f2;
+    border-radius: 17px;
+    background: #f8fafc;
+}
+
+.shop-availability-icon {
+    display: grid;
+    width: 42px;
+    height: 42px;
+    flex: 0 0 42px;
+    place-items: center;
+    border-radius: 50%;
+    background: #e2e8f0;
+    color: #475569;
+    font-size: 1rem;
+    font-weight: 900;
+}
+
+.shop-availability-copy { display: flex; min-width: 0; flex-direction: column; }
+.shop-availability-copy strong { color: var(--text-main); font-size: .87rem; }
+.shop-availability-copy > span:not(.shop-availability-badge) { color: var(--text-muted); font-size: .72rem; }
+.shop-availability-copy small { margin-top: .15rem; color: #64748b; font-size: .66rem; }
+.shop-availability-badge {
+    width: fit-content;
+    margin-bottom: .12rem;
+    color: #475569;
+    font-size: .61rem;
+    font-weight: 850;
+    letter-spacing: .05em;
+    text-transform: uppercase;
+}
+
+.shop-availability-card--open { border-color: rgba(16,185,129,.28); background: #f0fdf4; }
+.shop-availability-card--open .shop-availability-icon { background: #d1fae5; color: #047857; }
+.shop-availability-card--open .shop-availability-badge { color: #047857; }
+.shop-availability-card--closed { border-color: rgba(239,68,68,.24); background: #fff7f7; }
+.shop-availability-card--closed .shop-availability-icon { background: #fee2e2; color: #b91c1c; }
+.shop-availability-card--closed .shop-availability-badge { color: #b91c1c; }
+.shop-availability-card--paused { border-color: rgba(245,158,11,.3); background: #fffbeb; }
+.shop-availability-card--paused .shop-availability-icon { background: #fef3c7; color: #b45309; }
+.shop-availability-card--paused .shop-availability-badge { color: #b45309; }
+.menu-add-btn:disabled { cursor: not-allowed; opacity: .68; }
+
 /* ── Mobile tweaks ────────────────────────────────────────── */
 @media (max-width: 575.98px) {
     .customer-main {
@@ -1097,6 +1253,14 @@ body::before {
         width: 80vw;
         max-width: 300px;
     }
+
+    .owner-shop-quick-controls,
+    .owner-settings-switches {
+        grid-template-columns: 1fr;
+    }
+
+    .owner-shop-operations-heading { align-items: center; }
+    .owner-shop-operations-heading .btn { flex: 0 0 auto; }
 }
 
 

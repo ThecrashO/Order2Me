@@ -210,6 +210,16 @@
                     </div>
                 </div>
 
+                <div class="shop-availability-card shop-availability-card--loading" id="selected-shop-availability" role="status">
+                    <span class="shop-availability-icon" id="selected-shop-availability-icon" aria-hidden="true">◌</span>
+                    <span class="shop-availability-copy">
+                        <span class="shop-availability-badge" id="selected-shop-availability-badge">Checking…</span>
+                        <strong id="selected-shop-availability-title">Shop availability</strong>
+                        <span id="selected-shop-availability-message">Choose a shop to view ordering information.</span>
+                        <small id="selected-shop-availability-meta">—</small>
+                    </span>
+                </div>
+
                 <!-- Category Filter Bar -->
                 <div class="cat-filter-strip mb-3" id="category-filter-bar" hidden>
                     <button class="btn btn-primary category-filter-btn active" data-category="all">🍽️ All</button>
@@ -443,6 +453,14 @@
                             <span>Contact number</span>
                             <strong id="selected-owner-contact">Not provided</strong>
                         </div>
+                        <div class="selected-owner-detail-card">
+                            <span>Opening hours</span>
+                            <strong id="selected-owner-opening-hours">Not provided</strong>
+                        </div>
+                        <div class="selected-owner-detail-card">
+                            <span>Estimated preparation</span>
+                            <strong id="selected-owner-preparation-time">—</strong>
+                        </div>
                         <div class="selected-owner-detail-card selected-owner-detail-wide">
                             <span>Address</span>
                             <strong id="selected-owner-address">Not provided</strong>
@@ -632,7 +650,7 @@
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Continue Shopping</button>
-                    <button type="button" class="btn btn-primary" onclick="openCheckout()">Checkout</button>
+                    <button type="button" class="btn btn-primary" id="cart-checkout-btn" onclick="openCheckout()">Checkout</button>
                 </div>
             </div>
         </div>

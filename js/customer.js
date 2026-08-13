@@ -235,6 +235,78 @@ let activeShop            = null;
 let activeShopId          = null;
 const ACTIVE_SHOP_KEY     = 'order2me-active-shop-id';
 
+function syncSelectedShopAvailabilityUI() {
+    const availability = getShopOrderAvailability(activeShop);
+    const card = document.getElementById('selected-shop-availability');
+    const icon = document.getElementById('selected-shop-availability-icon');
+    const badge = document.getElementById('selected-shop-availability-badge');
+    const title = document.getElementById('selected-shop-availability-title');
+    const message = document.getElementById('selected-shop-availability-message');
+    const meta = document.getElementById('selected-shop-availability-meta');
+
+    if (card) {
+        card.classList.remove(
+            'shop-availability-card--loading',
+            'shop-availability-card--open',
+            'shop-availability-card--closed',
+            'shop-availability-card--paused'
+        );
+        card.classList.add(availability.canOrder
+            ? 'shop-availability-card--open'
+            : availability.state === 'paused'
+                ? 'shop-availability-card--paused'
+                : 'shop-availability-card--closed');
+    }
+    if (icon) icon.textContent = availability.canOrder ? '✓' : availability.state === 'paused' ? 'Ⅱ' : '×';
+    if (badge) badge.textContent = availability.label;
+    if (title) title.textContent = activeShop?.name || 'Shop availability';
+    if (message) message.textContent = availability.message;
+    if (meta) meta.textContent = `${availability.hoursText} · Est. ${availability.preparationMinutes} min`;
+
+    document.querySelectorAll('.menu-add-btn').forEach(button => {
+        button.disabled = !availability.canOrder;
+        button.textContent = availability.canOrder ? '+ Add' : 'Shop closed';
+    });
+    updateCartCount();
+}
+
+async function refreshSelectedShopAvailability() {
+    if (!activeShopId) {
+        syncSelectedShopAvailabilityUI();
+        return { verified: true, availability: getShopOrderAvailability(null) };
+    }
+
+    const { data, error } = await supabaseClient.rpc('get_approved_shops_with_owner');
+    if (error) {
+        console.error('Unable to verify shop availability:', error);
+        return { verified: false, availability: getShopOrderAvailability(activeShop) };
+    }
+
+    const freshShop = (data || []).find(shop => Number(shop.id) === Number(activeShopId));
+    if (!freshShop) {
+        activeShop = { ...activeShop, status: 'unavailable', is_accepting_orders_now: false };
+        syncSelectedShopAvailabilityUI();
+        return { verified: true, availability: getShopOrderAvailability(activeShop) };
+    }
+
+    const existingOwner = activeShop?.users || {};
+    activeShop = {
+        ...activeShop,
+        ...freshShop,
+        users: {
+            ...existingOwner,
+            id: freshShop.owner_id,
+            name: freshShop.owner_name,
+            avatar_path: freshShop.owner_avatar_path
+        }
+    };
+    approvedShops = approvedShops.map(shop => Number(shop.id) === Number(activeShopId) ? activeShop : shop);
+    syncSelectedOwnerProfileUI();
+    syncSelectedShopAvailabilityUI();
+    renderShopPicker();
+    return { verified: true, availability: getShopOrderAvailability(activeShop) };
+}
+
 // ── Date helpers ─────────────────────────────────────────────
 function getTodayBounds() {
     const now   = new Date();
@@ -253,6 +325,7 @@ function syncSelectedOwnerProfileUI() {
     const ownerName = owner?.name || (hasShop ? 'Shop owner' : 'Choose a shop');
     const shopName = activeShop?.name || 'No shop selected';
     const phone = String(activeShop?.phone_number || '').trim();
+    const availability = getShopOrderAvailability(activeShop);
 
     const sidebarButton = document.getElementById('selected-owner-profile-button');
     if (sidebarButton) sidebarButton.disabled = !hasShop;
@@ -272,6 +345,8 @@ function syncSelectedOwnerProfileUI() {
         'selected-owner-profile-shop': hasShop ? `${shopName} · Shop owner` : 'Choose a shop to view its owner',
         'selected-owner-shop-name': shopName,
         'selected-owner-contact': phone || 'Not provided',
+        'selected-owner-opening-hours': availability.hoursText,
+        'selected-owner-preparation-time': `${availability.preparationMinutes} minutes`,
         'selected-owner-address': activeShop?.address || 'Not provided',
         'selected-owner-description': activeShop?.description || 'No description provided.'
     };
@@ -328,6 +403,7 @@ async function loadApprovedShops() {
         activeShop = null;
         activeShopId = null;
         syncSelectedOwnerProfileUI();
+        syncSelectedShopAvailabilityUI();
         document.getElementById('menu-container').innerHTML = '<div class="shop-picker-empty">No approved shops are available yet.</div>';
         return;
     }
@@ -370,6 +446,7 @@ function selectShop(shopId, initial = false) {
         renderShopPicker();
         fetchOwnerPhone();
         syncSelectedOwnerProfileUI();
+        syncSelectedShopAvailabilityUI();
         if (!initial && typeof closeSidebar === 'function') closeSidebar();
         return;
     }
@@ -390,6 +467,7 @@ function selectShop(shopId, initial = false) {
     renderShopPicker();
     fetchOwnerPhone();
     syncSelectedOwnerProfileUI();
+    syncSelectedShopAvailabilityUI();
     loadMenu();
     if (!initial && typeof closeSidebar === 'function') closeSidebar();
 }
@@ -481,6 +559,8 @@ function displayMenuItems(items) {
         other:   { icon: '📦',       label: 'Other',   css: 'cat-other'   }
     };
 
+    const availability = getShopOrderAvailability(activeShop);
+
     items.forEach(food => {
         const card = document.createElement('div');
         card.className = 'col-6 col-md-4 mb-3 mb-md-4';
@@ -506,8 +586,9 @@ function displayMenuItems(items) {
                     <button
                         class="btn btn-primary btn-sm w-100 menu-add-btn"
                         onclick="addToCart(${food.id}, '${escapeHtml(food.name)}', ${food.price})"
+                        ${availability.canOrder ? '' : 'disabled'}
                     >
-                        + Add
+                        ${availability.canOrder ? '+ Add' : 'Shop closed'}
                     </button>
                 </div>
             </div>
@@ -782,6 +863,12 @@ function addToCart(itemId, itemName, price) {
         showToast('Please choose a shop first.', 'warning');
         return;
     }
+    const availability = getShopOrderAvailability(activeShop);
+    if (!availability.canOrder) {
+        showToast(availability.message, 'warning');
+        syncSelectedShopAvailabilityUI();
+        return;
+    }
     const existing = cart.find(i => i.id === itemId);
     if (existing) {
         existing.quantity += 1;
@@ -818,7 +905,13 @@ function updateCartCount() {
 
     // Drawer checkout button
     const chkBtn = document.getElementById('drawer-checkout-btn');
-    if (chkBtn) chkBtn.disabled = count === 0;
+    const cartCheckoutBtn = document.getElementById('cart-checkout-btn');
+    const availability = getShopOrderAvailability(activeShop);
+    [chkBtn, cartCheckoutBtn].forEach(button => {
+        if (!button) return;
+        button.disabled = count === 0 || !availability.canOrder;
+        button.title = availability.canOrder ? '' : availability.message;
+    });
 
     // If drawer is open, refresh its contents live
     if (document.getElementById('cart-drawer')?.classList.contains('open')) {
@@ -974,7 +1067,7 @@ document.addEventListener('keydown', e => {
 
 // -- 3. CHECKOUT ----------------------------------------------
 
-function openCheckout() {
+async function openCheckout() {
     if (cart.length === 0) {
         showToast('Your cart is empty.', 'warning');
         return;
@@ -1217,6 +1310,16 @@ async function confirmOrderReceived(orderId) {
         return;
     }
 
+    const shopCheck = await refreshSelectedShopAvailability();
+    if (!shopCheck.verified) {
+        showToast('Unable to verify the shop right now. Check your connection and try again.', 'warning');
+        return;
+    }
+    if (!shopCheck.availability.canOrder) {
+        showToast(shopCheck.availability.message, 'warning');
+        return;
+    }
+
     showToast(`Order #${orderId} marked as received. The shop has been notified.`, 'success');
     playNotificationSound('success');
     await loadCustomerOrders();
@@ -1227,6 +1330,18 @@ async function createOrder(deliveryNote, paymentMethod, screenshotFile) {
 
     if (!activeShopId || !activeShop || cart.some(item => item.shopId !== activeShopId)) {
         errorBanner.textContent = 'Your cart does not match the selected shop. Please clear it and try again.';
+        errorBanner.classList.remove('d-none');
+        return;
+    }
+
+    const shopCheck = await refreshSelectedShopAvailability();
+    if (!shopCheck.verified) {
+        errorBanner.textContent = 'Unable to verify the shop. Check your connection and try again.';
+        errorBanner.classList.remove('d-none');
+        return;
+    }
+    if (!shopCheck.availability.canOrder) {
+        errorBanner.textContent = shopCheck.availability.message;
         errorBanner.classList.remove('d-none');
         return;
     }
@@ -1262,7 +1377,10 @@ async function createOrder(deliveryNote, paymentMethod, screenshotFile) {
 
     if (orderError) {
         console.error('Error creating order:', orderError);
-        errorBanner.textContent = 'Failed to place order: ' + orderError.message;
+        const latestShopCheck = await refreshSelectedShopAvailability();
+        errorBanner.textContent = latestShopCheck.verified && !latestShopCheck.availability.canOrder
+            ? latestShopCheck.availability.message
+            : 'Failed to place order: ' + orderError.message;
         errorBanner.classList.remove('d-none');
         return;
     }

@@ -51,15 +51,17 @@ Day 3:
 For an existing Supabase project:
 
 1. Run `supabase/multi_shop_migration.sql` in the Supabase SQL Editor.
-2. Create an authentication user for the administrator in Supabase Dashboard.
-3. Edit the email in `supabase/create_admin.sql`, then run that file.
-4. Hard-refresh the web app so service-worker cache `order2me-v17` is active.
+2. Run `supabase/shop_availability.sql`, then `supabase/profile_images.sql`.
+3. Create an authentication user for the administrator in Supabase Dashboard.
+4. Edit the email in `supabase/create_admin.sql`, then run that file.
+5. Hard-refresh the web app so service-worker cache `order2me-v18` is active.
 
 ## Profile Photos and Vercel
 
-1. Run `supabase/profile_images.sql` in Supabase SQL Editor.
-2. Follow `VERCEL_DEPLOY.md` to configure `SUPABASE_URL` and `SUPABASE_PUBLISHABLE_KEY`.
-3. Never add a Supabase Secret key or `service_role` key to this frontend project.
+1. Run `supabase/shop_availability.sql` to enable shop hours and server-side order blocking.
+2. Run `supabase/profile_images.sql` in Supabase SQL Editor.
+3. Follow `VERCEL_DEPLOY.md` to configure `SUPABASE_URL` and `SUPABASE_PUBLISHABLE_KEY`.
+4. Never add a Supabase Secret key or `service_role` key to this frontend project.
 
 Different accounts may share the same display name. For an older database that
 still has a unique constraint on `users.name`, run

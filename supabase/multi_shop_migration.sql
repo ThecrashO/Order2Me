@@ -23,6 +23,13 @@ CREATE TABLE IF NOT EXISTS public.shops (
   address          text,
   phone_number     text,
   logo_url         text,
+  is_open          boolean NOT NULL DEFAULT true,
+  accepting_orders boolean NOT NULL DEFAULT true,
+  accepting_orders_date date NOT NULL DEFAULT ((timezone('Asia/Yangon', now()))::date),
+  opening_time     time without time zone NOT NULL DEFAULT '00:00',
+  closing_time     time without time zone NOT NULL DEFAULT '00:00',
+  preparation_minutes integer NOT NULL DEFAULT 15
+                   CHECK (preparation_minutes BETWEEN 1 AND 180),
   status           text NOT NULL DEFAULT 'pending'
                    CHECK (status IN ('pending', 'approved', 'rejected', 'suspended')),
   rejection_reason text,
@@ -31,6 +38,28 @@ CREATE TABLE IF NOT EXISTS public.shops (
   created_at       timestamptz NOT NULL DEFAULT now(),
   updated_at       timestamptz NOT NULL DEFAULT now()
 );
+
+ALTER TABLE public.shops
+  ADD COLUMN IF NOT EXISTS is_open boolean NOT NULL DEFAULT true,
+  ADD COLUMN IF NOT EXISTS accepting_orders boolean NOT NULL DEFAULT true,
+  ADD COLUMN IF NOT EXISTS accepting_orders_date date NOT NULL DEFAULT ((timezone('Asia/Yangon', now()))::date),
+  ADD COLUMN IF NOT EXISTS opening_time time without time zone NOT NULL DEFAULT '00:00',
+  ADD COLUMN IF NOT EXISTS closing_time time without time zone NOT NULL DEFAULT '00:00',
+  ADD COLUMN IF NOT EXISTS preparation_minutes integer NOT NULL DEFAULT 15;
+
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_constraint
+    WHERE conname = 'shops_preparation_minutes_check'
+      AND conrelid = 'public.shops'::regclass
+  ) THEN
+    ALTER TABLE public.shops
+      ADD CONSTRAINT shops_preparation_minutes_check
+      CHECK (preparation_minutes BETWEEN 1 AND 180);
+  END IF;
+END;
+$$;
 
 CREATE INDEX IF NOT EXISTS idx_shops_status ON public.shops(status);
 CREATE INDEX IF NOT EXISTS idx_shops_owner_id ON public.shops(owner_id);
@@ -226,6 +255,43 @@ GRANT EXECUTE ON FUNCTION public.is_admin() TO authenticated;
 GRANT EXECUTE ON FUNCTION public.owns_approved_shop(bigint) TO authenticated;
 GRANT EXECUTE ON FUNCTION public.owner_can_view_customer(bigint) TO authenticated;
 
+CREATE OR REPLACE FUNCTION public.shop_accepts_orders(target_shop_id bigint)
+RETURNS boolean
+LANGUAGE sql
+STABLE
+SECURITY DEFINER
+SET search_path = ''
+AS $$
+  SELECT EXISTS (
+    SELECT 1
+    FROM public.shops s
+    CROSS JOIN LATERAL (
+      SELECT
+        (timezone('Asia/Yangon', now()))::date AS local_date,
+        (timezone('Asia/Yangon', now()))::time AS local_time
+    ) clock
+    WHERE s.id = target_shop_id
+      AND s.status = 'approved'
+      AND s.is_open
+      AND (s.accepting_orders OR s.accepting_orders_date <> clock.local_date)
+      AND (
+        s.opening_time = s.closing_time
+        OR (
+          s.opening_time < s.closing_time
+          AND clock.local_time >= s.opening_time
+          AND clock.local_time < s.closing_time
+        )
+        OR (
+          s.opening_time > s.closing_time
+          AND (clock.local_time >= s.opening_time OR clock.local_time < s.closing_time)
+        )
+      )
+  );
+$$;
+
+REVOKE ALL ON FUNCTION public.shop_accepts_orders(bigint) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION public.shop_accepts_orders(bigint) TO authenticated;
+
 -- Protect order ownership and totals, and enforce the owner workflow even
 -- when somebody bypasses the UI and calls the REST endpoint directly.
 CREATE OR REPLACE FUNCTION public.enforce_order_update_rules()
@@ -417,7 +483,7 @@ ON public.orders FOR INSERT TO authenticated
 WITH CHECK (
   customer_id = public.current_profile_id()
   AND public.current_profile_role() = 'customer'
-  AND EXISTS (SELECT 1 FROM public.shops s WHERE s.id = shop_id AND s.status = 'approved')
+  AND public.shop_accepts_orders(shop_id)
 );
 
 CREATE POLICY "Customers read own orders"

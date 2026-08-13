@@ -1,9 +1,10 @@
 -- ============================================================
 -- Allow customers to display owner avatars for approved shops.
--- Run this after supabase/profile_images.sql on an existing project.
+-- Run this after shop_availability.sql and profile_images.sql.
 -- ============================================================
 
-CREATE OR REPLACE FUNCTION public.get_approved_shops_with_owner()
+DROP FUNCTION IF EXISTS public.get_approved_shops_with_owner();
+CREATE FUNCTION public.get_approved_shops_with_owner()
 RETURNS TABLE (
   id bigint,
   owner_id bigint,
@@ -13,6 +14,13 @@ RETURNS TABLE (
   phone_number text,
   logo_url text,
   status text,
+  is_open boolean,
+  accepting_orders boolean,
+  accepting_orders_date date,
+  opening_time time without time zone,
+  closing_time time without time zone,
+  preparation_minutes integer,
+  is_accepting_orders_now boolean,
   owner_name text,
   owner_avatar_path text
 )
@@ -30,6 +38,13 @@ AS $$
     s.phone_number,
     s.logo_url,
     s.status,
+    s.is_open,
+    s.accepting_orders,
+    s.accepting_orders_date,
+    s.opening_time,
+    s.closing_time,
+    s.preparation_minutes,
+    public.shop_accepts_orders(s.id) AS is_accepting_orders_now,
     u.name AS owner_name,
     u.avatar_path AS owner_avatar_path
   FROM public.shops s

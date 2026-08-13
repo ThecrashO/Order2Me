@@ -240,6 +240,85 @@ let allCustomersArr    = [];  // flat array cache for customer search
 let ownerRealtimeChannel = null; // Supabase Realtime channel reference
 let ownerShop          = null;
 
+function syncOwnerShopAvailabilityUI() {
+    const availability = getShopOrderAvailability(ownerShop);
+    const card = document.getElementById('owner-shop-operations-card');
+    if (card) card.dataset.state = availability.state;
+
+    const badge = document.getElementById('owner-shop-status-badge');
+    const title = document.getElementById('owner-shop-status-title');
+    const message = document.getElementById('owner-shop-status-message');
+    const hours = document.getElementById('owner-shop-hours-summary');
+    const preparation = document.getElementById('owner-shop-preparation-summary');
+    if (badge) badge.textContent = availability.label;
+    if (title) title.textContent = ownerShop?.name || 'Shop availability';
+    if (message) message.textContent = availability.message;
+    if (hours) hours.textContent = availability.hoursText;
+    if (preparation) preparation.textContent = `${availability.preparationMinutes} min`;
+
+    ['owner-quick-shop-open', 'owner-settings-shop-open'].forEach(id => {
+        const input = document.getElementById(id);
+        if (input) input.checked = ownerShop?.is_open !== false;
+    });
+    ['owner-quick-accepting-orders', 'owner-settings-accepting-orders'].forEach(id => {
+        const input = document.getElementById(id);
+        if (input) input.checked = isShopAcceptingOrdersToday(ownerShop);
+    });
+
+    const openingInput = document.getElementById('owner-settings-opening-time');
+    const closingInput = document.getElementById('owner-settings-closing-time');
+    const preparationInput = document.getElementById('owner-settings-preparation-minutes');
+    if (openingInput) openingInput.value = String(ownerShop?.opening_time || '00:00').slice(0, 5);
+    if (closingInput) closingInput.value = String(ownerShop?.closing_time || '00:00').slice(0, 5);
+    if (preparationInput) preparationInput.value = availability.preparationMinutes;
+}
+
+async function toggleOwnerShopAvailability(field, value, input) {
+    if (!ownerShop || !['is_open', 'accepting_orders'].includes(field)) return;
+    const statusEl = document.getElementById('owner-shop-quick-status');
+    if (input) input.disabled = true;
+    if (statusEl) {
+        statusEl.className = 'small text-muted mt-2';
+        statusEl.textContent = 'Updating shop availability…';
+    }
+
+    const updatePayload = { [field]: Boolean(value) };
+    if (field === 'accepting_orders') updatePayload.accepting_orders_date = getYangonDateKey();
+
+    const { data, error } = await supabaseClient
+        .from('shops')
+        .update(updatePayload)
+        .eq('id', ownerShop.id)
+        .select('*')
+        .single();
+
+    if (error) {
+        console.error('Unable to update shop availability:', error);
+        if (statusEl) {
+            statusEl.className = 'small text-danger mt-2';
+            statusEl.textContent = error.code === '42703'
+                ? 'Run supabase/shop_availability.sql before using these controls.'
+                : error.message;
+        }
+        if (input) input.checked = ownerShop?.[field] !== false;
+    } else {
+        ownerShop = data;
+        ownerProfile.shop = data;
+        syncOwnerShopAvailabilityUI();
+        if (statusEl) {
+            statusEl.className = 'small text-success mt-2';
+            statusEl.textContent = field === 'is_open'
+                ? `Shop marked ${value ? 'open' : 'closed'}.`
+                : `New orders ${value ? 'resumed' : 'paused'} for today.`;
+        }
+        showToast(field === 'is_open'
+            ? `Shop is now ${value ? 'open' : 'closed'}.`
+            : `Orders ${value ? 'resumed' : 'paused'}.`, 'success');
+    }
+
+    if (input) input.disabled = false;
+}
+
 // ── Date helpers ──────────────────────────────────────────────
 function getTodayBounds() {
     const now   = new Date();
@@ -274,6 +353,7 @@ async function initializeApp() {
     ownerProfile = await requireOwner();
     if (!ownerProfile) return; // requireOwner redirects to login
     ownerShop = ownerProfile.shop;
+    syncOwnerShopAvailabilityUI();
 
     // Populate owner name in sidebar profile dropdown
     const nameEl = document.getElementById('owner-profile-name');
@@ -520,6 +600,7 @@ function openOwnerSettings() {
     document.getElementById('owner-shop-settings-phone').value = ownerShop?.phone_number || '';
     document.getElementById('owner-shop-settings-address').value = ownerShop?.address || '';
     document.getElementById('owner-shop-settings-description').value = ownerShop?.description || '';
+    syncOwnerShopAvailabilityUI();
     const statusEl = document.getElementById('owner-shop-settings-status');
     statusEl.className = 'alert small d-none';
     statusEl.textContent = '';
@@ -609,11 +690,21 @@ async function saveOwnerShopSettings() {
         name: document.getElementById('owner-shop-settings-name').value.trim(),
         phone_number: document.getElementById('owner-shop-settings-phone').value.trim() || null,
         address: document.getElementById('owner-shop-settings-address').value.trim(),
-        description: document.getElementById('owner-shop-settings-description').value.trim() || null
+        description: document.getElementById('owner-shop-settings-description').value.trim() || null,
+        is_open: document.getElementById('owner-settings-shop-open').checked,
+        accepting_orders: document.getElementById('owner-settings-accepting-orders').checked,
+        accepting_orders_date: getYangonDateKey(),
+        opening_time: document.getElementById('owner-settings-opening-time').value,
+        closing_time: document.getElementById('owner-settings-closing-time').value,
+        preparation_minutes: Number(document.getElementById('owner-settings-preparation-minutes').value)
     };
-    if (!payload.name || !payload.address) {
+    if (!payload.name || !payload.address || !payload.opening_time || !payload.closing_time
+        || !Number.isInteger(payload.preparation_minutes)
+        || payload.preparation_minutes < 1 || payload.preparation_minutes > 180) {
         statusEl.className = 'alert alert-danger small';
-        statusEl.textContent = 'Shop name and location are required.';
+        statusEl.textContent = !payload.name || !payload.address
+            ? 'Shop name and location are required.'
+            : 'Set valid opening hours and a preparation time from 1 to 180 minutes.';
         return;
     }
 
@@ -621,17 +712,20 @@ async function saveOwnerShopSettings() {
         .from('shops')
         .update(payload)
         .eq('id', ownerShop.id)
-        .select('id, owner_id, name, slug, description, address, phone_number, logo_url, status, rejection_reason, approved_at, created_at')
+        .select('*')
         .single();
 
     if (error) {
         statusEl.className = 'alert alert-danger small';
-        statusEl.textContent = error.message;
+        statusEl.textContent = error.code === '42703'
+            ? 'Run supabase/shop_availability.sql before saving availability settings.'
+            : error.message;
         return;
     }
     ownerShop = data;
     ownerProfile.shop = data;
     document.getElementById('owner-shop-name').textContent = data.name;
+    syncOwnerShopAvailabilityUI();
     statusEl.className = 'alert alert-success small';
     statusEl.textContent = 'Shop details updated.';
     showToast('Shop details updated.', 'success');
@@ -1079,7 +1173,7 @@ function displayMenuItems(items) {
                                        id="toggle-${item.id}" ${item.is_available ? 'checked' : ''}
                                        data-id="${item.id}" role="switch">
                                 <label class="form-check-label small text-muted" for="toggle-${item.id}">
-                                    ${item.is_available ? 'Available' : 'Hidden'}
+                                    ${item.is_available ? 'Available' : 'Sold out'}
                                 </label>
                             </div>
                         </div>
@@ -1457,7 +1551,12 @@ async function toggleAvailability(event) {
     if (error) {
         console.error('Error toggling availability:', error);
         event.target.checked = !isAvailable; // revert
+        showToast('Could not update this menu item.', 'danger');
+        return;
     }
+
+    await loadMenuItems();
+    showToast(isAvailable ? 'Menu item is available again.' : 'Menu item marked sold out.', 'success');
 }
 
 async function deleteItem(id) {

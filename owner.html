@@ -218,6 +218,40 @@
                 </div>
             </div>
 
+            <div class="owner-shop-operations-card" id="owner-shop-operations-card">
+                <div class="owner-shop-operations-heading">
+                    <div>
+                        <span class="owner-shop-status-badge" id="owner-shop-status-badge">Checking…</span>
+                        <strong id="owner-shop-status-title">Shop availability</strong>
+                        <span id="owner-shop-status-message">Loading your ordering settings…</span>
+                    </div>
+                    <button type="button" class="btn btn-sm btn-outline-primary" onclick="openOwnerSettings()">
+                        Edit hours
+                    </button>
+                </div>
+                <div class="owner-shop-quick-controls">
+                    <label class="owner-shop-switch-card" for="owner-quick-shop-open">
+                        <span><strong>Open / Closed</strong><small>Temporarily open or close the shop</small></span>
+                        <span class="form-check form-switch m-0">
+                            <input class="form-check-input" type="checkbox" role="switch" id="owner-quick-shop-open"
+                                onchange="toggleOwnerShopAvailability('is_open', this.checked, this)">
+                        </span>
+                    </label>
+                    <label class="owner-shop-switch-card" for="owner-quick-accepting-orders">
+                        <span><strong>Accept orders today</strong><small>Pause new orders without closing the shop</small></span>
+                        <span class="form-check form-switch m-0">
+                            <input class="form-check-input" type="checkbox" role="switch" id="owner-quick-accepting-orders"
+                                onchange="toggleOwnerShopAvailability('accepting_orders', this.checked, this)">
+                        </span>
+                    </label>
+                </div>
+                <div class="owner-shop-operation-meta">
+                    <span>Hours <strong id="owner-shop-hours-summary">—</strong></span>
+                    <span>Preparation <strong id="owner-shop-preparation-summary">—</strong></span>
+                </div>
+                <div class="small d-none mt-2" id="owner-shop-quick-status" role="status"></div>
+            </div>
+
             <!-- Search bar -->
             <div class="mb-3" style="max-width:320px;">
                 <div class="input-group">
@@ -375,12 +409,12 @@
 
 <!-- ── Settings Modal ── -->
 <div class="modal fade" id="ownerSettingsModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
         <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
             <div class="modal-header border-0 px-4 pt-4 pb-3" style="background:linear-gradient(135deg,#f8fafc,#eff6ff);">
                 <div>
                     <h5 class="modal-title mb-0">Settings</h5>
-                    <div class="small text-muted">Manage your app notification preferences</div>
+                    <div class="small text-muted">Manage notifications, shop availability and details</div>
                 </div>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
@@ -411,6 +445,44 @@
                         <div class="notification-help-panel d-none mt-3" id="owner-notification-help"></div>
                         <div class="small text-muted mt-2" id="owner-realtime-status" role="status">
                             Live order connection: checking…
+                        </div>
+                    </div>
+                </div>
+                <div class="card border-0 shadow-sm rounded-4 mb-3">
+                    <div class="card-body p-3">
+                        <h6 class="fw-bold mb-1">Ordering availability</h6>
+                        <p class="small text-muted mb-3">The shop must be open, accepting orders and inside opening hours.</p>
+                        <div class="owner-settings-switches mb-3">
+                            <label class="owner-shop-switch-card" for="owner-settings-shop-open">
+                                <span><strong>Shop is open</strong><small>Manual open/closed control</small></span>
+                                <span class="form-check form-switch m-0">
+                                    <input class="form-check-input" type="checkbox" role="switch" id="owner-settings-shop-open">
+                                </span>
+                            </label>
+                            <label class="owner-shop-switch-card" for="owner-settings-accepting-orders">
+                                <span><strong>Accept orders today</strong><small>Pause or resume today's orders</small></span>
+                                <span class="form-check form-switch m-0">
+                                    <input class="form-check-input" type="checkbox" role="switch" id="owner-settings-accepting-orders">
+                                </span>
+                            </label>
+                        </div>
+                        <div class="row g-2">
+                            <div class="col-6">
+                                <label class="form-label small" for="owner-settings-opening-time">Opening time</label>
+                                <input class="form-control" id="owner-settings-opening-time" type="time" required>
+                            </div>
+                            <div class="col-6">
+                                <label class="form-label small" for="owner-settings-closing-time">Closing time</label>
+                                <input class="form-control" id="owner-settings-closing-time" type="time" required>
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label small" for="owner-settings-preparation-minutes">Estimated preparation time</label>
+                                <div class="input-group">
+                                    <input class="form-control" id="owner-settings-preparation-minutes" type="number"
+                                        min="1" max="180" step="1" inputmode="numeric" required>
+                                    <span class="input-group-text">minutes</span>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -609,7 +681,7 @@
                     </div>
                     <div class="mb-3 form-check">
                         <input type="checkbox" class="form-check-input" id="item-available" checked>
-                        <label class="form-check-label" for="item-available">Available</label>
+                        <label class="form-check-label" for="item-available">Available for customers</label>
                     </div>
                 </form>
             </div>
@@ -670,7 +742,7 @@
                     </div>
                     <div class="mb-3 form-check">
                         <input type="checkbox" class="form-check-input" id="edit-item-available" checked>
-                        <label class="form-check-label" for="edit-item-available">Available</label>
+                        <label class="form-check-label" for="edit-item-available">Available for customers</label>
                     </div>
                 </form>
             </div>
