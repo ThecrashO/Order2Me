@@ -160,6 +160,23 @@
                     </svg>
                     <span>Order History</span>
                 </button>
+                <button type="button" class="sidebar-owner-profile-button" id="selected-owner-profile-button"
+                    onclick="openSelectedOwnerProfile()" disabled aria-haspopup="dialog"
+                    aria-controls="shopOwnerProfileModal">
+                    <span class="sidebar-owner-profile-avatar" id="selected-owner-sidebar-avatar" aria-hidden="true">
+                        <span>?</span>
+                    </span>
+                    <span class="sidebar-owner-profile-copy">
+                        <small>Owner Profile</small>
+                        <strong id="selected-owner-sidebar-name">Choose a shop</strong>
+                        <span id="selected-owner-sidebar-shop">No shop selected</span>
+                    </span>
+                    <svg class="sidebar-owner-profile-arrow" width="17" height="17" viewBox="0 0 24 24"
+                        fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round"
+                        stroke-linejoin="round" aria-hidden="true">
+                        <polyline points="9 18 15 12 9 6" />
+                    </svg>
+                </button>
             </nav>
 
             <!-- Approved shops live in the sidebar so menu switching is always nearby. -->
@@ -394,6 +411,58 @@
             modal.show();
         }
     </script>
+
+    <!-- Selected Shop Owner Profile Modal -->
+    <div class="modal fade" id="shopOwnerProfileModal" tabindex="-1" aria-hidden="true"
+        aria-labelledby="shop-owner-profile-title">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
+                <div class="modal-header border-0 px-4 pt-4 pb-3 profile-modal-header">
+                    <div>
+                        <h5 class="modal-title mb-0" id="shop-owner-profile-title">Shop Owner Profile</h5>
+                        <div class="small text-muted">Selected shop information</div>
+                    </div>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body px-4 py-4 selected-owner-profile-body">
+                    <div class="profile-hero selected-owner-profile-hero">
+                        <div class="profile-avatar-xl" id="selected-owner-profile-avatar"><span>?</span></div>
+                        <div>
+                            <strong id="selected-owner-profile-name">Shop owner</strong>
+                            <span id="selected-owner-profile-shop">Choose a shop to view its owner</span>
+                            <span class="selected-owner-approved-badge">✓ Approved shop</span>
+                        </div>
+                    </div>
+
+                    <div class="selected-owner-profile-grid">
+                        <div class="selected-owner-detail-card">
+                            <span>Shop name</span>
+                            <strong id="selected-owner-shop-name">—</strong>
+                        </div>
+                        <div class="selected-owner-detail-card">
+                            <span>Contact number</span>
+                            <strong id="selected-owner-contact">Not provided</strong>
+                        </div>
+                        <div class="selected-owner-detail-card selected-owner-detail-wide">
+                            <span>Address</span>
+                            <strong id="selected-owner-address">Not provided</strong>
+                        </div>
+                        <div class="selected-owner-detail-card selected-owner-detail-wide">
+                            <span>About this shop</span>
+                            <strong id="selected-owner-description">No description provided.</strong>
+                        </div>
+                    </div>
+
+                    <a class="btn btn-primary w-100 mt-3 d-none" id="selected-owner-call-button" href="#">
+                        Call shop owner
+                    </a>
+                </div>
+                <div class="modal-footer border-0 px-4 pb-4 pt-0 selected-owner-profile-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <!-- Settings Modal -->
     <div class="modal fade" id="settingsModal" tabindex="-1" aria-hidden="true">

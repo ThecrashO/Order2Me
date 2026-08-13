@@ -247,6 +247,60 @@ function goToHistory() {
     window.location.href = 'history.html';
 }
 
+function syncSelectedOwnerProfileUI() {
+    const owner = activeShop?.users || null;
+    const hasShop = Boolean(activeShop);
+    const ownerName = owner?.name || (hasShop ? 'Shop owner' : 'Choose a shop');
+    const shopName = activeShop?.name || 'No shop selected';
+    const phone = String(activeShop?.phone_number || '').trim();
+
+    const sidebarButton = document.getElementById('selected-owner-profile-button');
+    if (sidebarButton) sidebarButton.disabled = !hasShop;
+
+    const sidebarName = document.getElementById('selected-owner-sidebar-name');
+    const sidebarShop = document.getElementById('selected-owner-sidebar-shop');
+    if (sidebarName) sidebarName.textContent = ownerName;
+    if (sidebarShop) sidebarShop.textContent = shopName;
+
+    const sidebarAvatar = document.getElementById('selected-owner-sidebar-avatar');
+    const modalAvatar = document.getElementById('selected-owner-profile-avatar');
+    if (sidebarAvatar) renderProfileAvatarElement(sidebarAvatar, owner || { name: ownerName }, owner?.avatar_url);
+    if (modalAvatar) renderProfileAvatarElement(modalAvatar, owner || { name: ownerName }, owner?.avatar_url);
+
+    const fields = {
+        'selected-owner-profile-name': ownerName,
+        'selected-owner-profile-shop': hasShop ? `${shopName} · Shop owner` : 'Choose a shop to view its owner',
+        'selected-owner-shop-name': shopName,
+        'selected-owner-contact': phone || 'Not provided',
+        'selected-owner-address': activeShop?.address || 'Not provided',
+        'selected-owner-description': activeShop?.description || 'No description provided.'
+    };
+    Object.entries(fields).forEach(([id, value]) => {
+        const element = document.getElementById(id);
+        if (element) element.textContent = value;
+    });
+
+    const callButton = document.getElementById('selected-owner-call-button');
+    if (callButton) {
+        const callablePhone = phone.replace(/[^\d+]/g, '');
+        callButton.classList.toggle('d-none', !callablePhone);
+        callButton.href = callablePhone ? `tel:${callablePhone}` : '#';
+        callButton.textContent = callablePhone ? `Call ${phone}` : 'Call shop owner';
+    }
+}
+
+function openSelectedOwnerProfile() {
+    if (!activeShop) {
+        showToast('Choose a shop first to view its owner profile.', 'info');
+        return;
+    }
+
+    syncSelectedOwnerProfileUI();
+    if (typeof closeSidebar === 'function') closeSidebar();
+    const modalElement = document.getElementById('shopOwnerProfileModal');
+    if (modalElement) bootstrap.Modal.getOrCreateInstance(modalElement).show();
+}
+
 // -- 1. MENU --------------------------------------------------
 
 async function loadApprovedShops() {
@@ -273,6 +327,7 @@ async function loadApprovedShops() {
     if (!approvedShops.length) {
         activeShop = null;
         activeShopId = null;
+        syncSelectedOwnerProfileUI();
         document.getElementById('menu-container').innerHTML = '<div class="shop-picker-empty">No approved shops are available yet.</div>';
         return;
     }
@@ -310,6 +365,11 @@ function selectShop(shopId, initial = false) {
     const nextShop = approvedShops.find(shop => shop.id === Number(shopId));
     if (!nextShop) return;
     if (nextShop.id === activeShopId) {
+        activeShop = nextShop;
+        document.getElementById('active-shop-label').textContent = nextShop.name;
+        renderShopPicker();
+        fetchOwnerPhone();
+        syncSelectedOwnerProfileUI();
         if (!initial && typeof closeSidebar === 'function') closeSidebar();
         return;
     }
@@ -329,6 +389,7 @@ function selectShop(shopId, initial = false) {
     document.getElementById('menu-search').value = '';
     renderShopPicker();
     fetchOwnerPhone();
+    syncSelectedOwnerProfileUI();
     loadMenu();
     if (!initial && typeof closeSidebar === 'function') closeSidebar();
 }
