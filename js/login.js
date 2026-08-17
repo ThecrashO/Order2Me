@@ -1,11 +1,16 @@
-﻿async function initLoginPage() {
+async function initLoginPage() {
     const form = document.getElementById('login-form');
     const status = document.getElementById('login-status');
 
-    const profile = await getCurrentProfile();
-    if (profile) {
-        window.location.href = dashboardForProfile(profile);
-        return;
+    try {
+        const profile = await getCurrentProfile();
+        if (profile) {
+            window.location.href = dashboardForProfile(profile);
+            return;
+        }
+    } catch (error) {
+        console.error('Unable to check the current session:', error);
+        status.textContent = 'Unable to connect to Order2Me. Please refresh and try again.';
     }
 
     form.addEventListener('submit', async (event) => {
@@ -23,22 +28,27 @@
             return;
         }
 
-        const { data, error } = await signIn(email, password);
-        if (error) {
-            status.textContent = error.message;
-            if (submitButton) submitButton.disabled = false;
-            return;
-        }
+        try {
+            const { error } = await signIn(email, password);
+            if (error) {
+                status.textContent = error.message;
+                return;
+            }
 
-        const userProfile = await getCurrentProfile();
-        if (!userProfile) {
-            status.textContent = 'No profile found for this account.';
-            await signOut();
-            if (submitButton) submitButton.disabled = false;
-            return;
-        }
+            const userProfile = await getCurrentProfile();
+            if (!userProfile) {
+                status.textContent = 'Your account signed in, but its profile could not be loaded. Ask the administrator to apply the latest Supabase migrations.';
+                await supabaseClient.auth.signOut();
+                return;
+            }
 
-        window.location.href = dashboardForProfile(userProfile);
+            window.location.href = dashboardForProfile(userProfile);
+        } catch (error) {
+            console.error('Login failed:', error);
+            status.textContent = 'Unable to connect to Order2Me. Please check your connection and try again.';
+        } finally {
+            if (submitButton) submitButton.disabled = false;
+        }
     });
 }
 
