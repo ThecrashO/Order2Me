@@ -415,6 +415,76 @@ body::before {
     min-height: 2.4em;
 }
 
+.owner-menu-actions {
+    display: flex;
+    align-items: center;
+    gap: .45rem;
+    flex-shrink: 0;
+}
+
+.owner-menu-action {
+    min-height: 36px;
+    padding: .42rem .68rem;
+    border: 1px solid transparent;
+    border-radius: 10px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: .35rem;
+    font: inherit;
+    font-size: .72rem;
+    font-weight: 750;
+    line-height: 1;
+    cursor: pointer;
+    transition: background-color .16s ease, border-color .16s ease,
+                color .16s ease, transform .16s ease, box-shadow .16s ease;
+}
+
+.owner-menu-action svg {
+    width: 15px;
+    height: 15px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.owner-menu-action-edit {
+    color: var(--brand-dark);
+    background: #eff6ff;
+    border-color: #bfdbfe;
+}
+
+.owner-menu-action-edit:hover {
+    color: #fff;
+    background: var(--brand-dark);
+    border-color: var(--brand-dark);
+    box-shadow: 0 6px 14px rgba(29,78,216,.22);
+    transform: translateY(-1px);
+}
+
+.owner-menu-action-delete {
+    color: var(--danger);
+    background: #fff1f2;
+    border-color: #fecdd3;
+}
+
+.owner-menu-action-delete:hover {
+    color: #fff;
+    background: var(--danger);
+    border-color: var(--danger);
+    box-shadow: 0 6px 14px rgba(185,28,28,.2);
+    transform: translateY(-1px);
+}
+
+.owner-menu-action:focus-visible {
+    outline: 3px solid rgba(37,99,235,.25);
+    outline-offset: 2px;
+}
+
+.owner-menu-action:active { transform: translateY(0); }
+
 .opacity-60 { opacity: 0.6; }
 
 /* ── Customer Card Grid ───────────────────────────────────── */

@@ -1177,9 +1177,21 @@ function displayMenuItems(items) {
                                 </label>
                             </div>
                         </div>
-                        <div class="d-flex gap-1">
-                            <button class="btn btn-sm btn-warning btn-edit-item" data-item-id="${item.id}">✏️</button>
-                            <button class="btn btn-sm btn-danger btn-delete-item" data-item-id="${item.id}">🗑️</button>
+                        <div class="owner-menu-actions" role="group" aria-label="Actions for ${escapeHtml(item.name)}">
+                            <button type="button" class="owner-menu-action owner-menu-action-edit btn-edit-item"
+                                    data-item-id="${item.id}" aria-label="Edit ${escapeHtml(item.name)}" title="Edit item">
+                                <svg viewBox="0 0 24 24" aria-hidden="true">
+                                    <path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L8 18l-4 1 1-4Z"/>
+                                </svg>
+                                <span>Edit</span>
+                            </button>
+                            <button type="button" class="owner-menu-action owner-menu-action-delete btn-delete-item"
+                                    data-item-id="${item.id}" aria-label="Delete ${escapeHtml(item.name)}" title="Delete item">
+                                <svg viewBox="0 0 24 24" aria-hidden="true">
+                                    <path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="m19 6-1 14H6L5 6"/><path d="M10 11v5M14 11v5"/>
+                                </svg>
+                                <span>Delete</span>
+                            </button>
                         </div>
                     </div>
                 </div>
