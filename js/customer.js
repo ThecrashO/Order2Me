@@ -679,6 +679,7 @@ async function loadCustomerOrders() {
         .from('orders')
         .select(`
             id,
+            shop_id,
             status,
             total_amount,
             delivery_note,
@@ -834,7 +835,8 @@ function displayTodayOrders(orders) {
             <div class="order-tracker-header">
                 <div>
                     <div class="order-tracker-id">📋 Order #${order.id}</div>
-                    <div class="order-tracker-time">🏪 ${escapeHtml(order.shops?.name || 'Shop')} · ⏰ ${time}</div>
+                    <div class="order-tracker-time">🏪 <button type="button" class="order-contact-link"
+                        onclick="openOrderShopOwnerProfile(${Number(order.shop_id)})">${escapeHtml(order.shops?.name || 'Shop')}</button> · ⏰ ${time}</div>
                 </div>
                 <div class="d-flex align-items-center gap-2">
                     ${statusLabel}
@@ -1841,6 +1843,19 @@ async function subscribeCustomerRealtime() {
                 console.error('Customer realtime notification channel:', status);
             }
         });
+}
+
+function openOrderShopOwnerProfile(shopId) {
+    const shop = approvedShops.find(item => Number(item.id) === Number(shopId));
+    if (!shop) {
+        showToast('Shop owner profile is not available.', 'info');
+        return;
+    }
+    const previousShop = activeShop;
+    activeShop = shop;
+    syncSelectedOwnerProfileUI();
+    activeShop = previousShop;
+    bootstrap.Modal.getOrCreateInstance(document.getElementById('shopOwnerProfileModal')).show();
 }
 
 function notifyCustomerOrderStatus(order) {

@@ -2138,6 +2138,22 @@ body::before {
 .order-card--received  { border-color: var(--received) !important; }
 .order-card--cancelled { border-color: var(--danger) !important; }
 .order-card-status-surface { background: #f8fafc; }
+.order-contact-link {
+    display: inline;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: #2563eb;
+    font: inherit;
+    font-weight: 650;
+    text-align: left;
+    text-decoration: underline;
+    text-decoration-color: rgba(37, 99, 235, .35);
+    text-underline-offset: 3px;
+    cursor: pointer;
+}
+.order-contact-link:hover { color: #1d4ed8; text-decoration-color: currentColor; }
+.order-contact-link:focus-visible { outline: 3px solid rgba(37, 99, 235, .25); outline-offset: 3px; border-radius: 3px; }
 
 /* Payment options share one selection pattern; brand names remain in the copy. */
 .payment-method-btn {

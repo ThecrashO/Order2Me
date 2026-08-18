@@ -4,7 +4,7 @@
 // 192.168.x.x), where the Vercel /api/config function is unavailable.
 const fallbackConfig = {
     supabaseUrl: 'https://rcgxjkrflcucllqqxiaf.supabase.co',
-    supabasePublishableKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJjZ3hqa3JmbGN1Y2xscXF4aWFmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ3NzM4MzIsImV4cCI6MjEwMDM0OTgzMn0.menNwNRIWhdwdvI-RAKEH_r16KG954tjhk27J99anqA'
+    supabasePublishableKey: 'sb_publishable_k_f0XnOKeoQEA_6RFr7G6Q_srAF07En'
 };
 const order2MeConfig = window.__ORDER2ME_CONFIG__ ||
     fallbackConfig;

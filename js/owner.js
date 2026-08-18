@@ -560,6 +560,7 @@ window.addEventListener('beforeunload', () => {
 async function loadOrders() {
     const buildOrderSelect = includeScreenshotPath => `
             id,
+            customer_id,
             customer_name,
             status,
             total_amount,
@@ -603,8 +604,55 @@ async function loadOrders() {
 
     allOrders = data || [];
     await hydratePaymentScreenshotUrls(allOrders);
+    await hydrateOrderCustomerProfiles(allOrders);
     updatePendingBadge();
     renderOrders();
+}
+
+async function hydrateOrderCustomerProfiles(orders) {
+    const customerIds = [...new Set((orders || [])
+        .map(order => Number(order.customer_id))
+        .filter(Number.isFinite))];
+    if (!customerIds.length) return;
+
+    const { data, error } = await supabaseClient
+        .from('users')
+        .select('id, name, email, phone_number, avatar_path, created_at')
+        .in('id', customerIds);
+    if (error) {
+        console.warn('Unable to load order customer profiles:', error.message);
+        return;
+    }
+
+    const profiles = data || [];
+    await hydrateProfileAvatars(profiles);
+    const profilesById = new Map(profiles.map(profile => [Number(profile.id), profile]));
+    (orders || []).forEach(order => {
+        order.customer_profile = profilesById.get(Number(order.customer_id)) || null;
+    });
+}
+
+function openOrderCustomerProfile(customerId) {
+    const profile = allCustomersArr.find(customer => Number(customer.id) === Number(customerId))
+        || allOrders.find(order => Number(order.customer_id) === Number(customerId))?.customer_profile;
+    if (!profile) {
+        showToast('Customer profile is not available.', 'info');
+        return;
+    }
+
+    const avatar = document.getElementById('order-customer-profile-avatar');
+    renderProfileAvatarElement(avatar, profile, profile.avatar_url);
+    document.getElementById('order-customer-profile-name').textContent = profile.name || 'Customer';
+    document.getElementById('order-customer-profile-email').textContent = profile.email || 'Not provided';
+    document.getElementById('order-customer-profile-phone').textContent = profile.phone_number || 'Not provided';
+
+    const callButton = document.getElementById('order-customer-call-button');
+    const callablePhone = String(profile.phone_number || '').replace(/[^\d+]/g, '');
+    callButton.classList.toggle('d-none', !callablePhone);
+    callButton.href = callablePhone ? `tel:${callablePhone}` : '#';
+    callButton.textContent = callablePhone ? `📞 Call ${profile.phone_number}` : 'Call customer';
+
+    bootstrap.Modal.getOrCreateInstance(document.getElementById('orderCustomerProfileModal')).show();
 }
 
 async function loadOwnerProfileView() {
@@ -998,7 +1046,11 @@ function buildOrderCard(order) {
             <div class="card-header d-flex justify-content-between align-items-center order-card-status-surface">
                 <div>
                     <span class="fw-semibold">Order #${order.id}</span>
-                    <span class="text-muted small ms-2">— ${escapeHtml(order.customer_name || 'Unknown')}</span>
+                    <button type="button" class="order-contact-link ms-2"
+                        onclick="openOrderCustomerProfile(${Number(order.customer_id)})"
+                        aria-label="View ${escapeHtml(order.customer_name || 'customer')} profile">
+                        — ${escapeHtml(order.customer_name || 'Unknown')}
+                    </button>
                 </div>
                 <span class="order-status order-status--${cfg.key}">${cfg.label}</span>
             </div>
@@ -1401,7 +1453,10 @@ function renderCustomers(customers, query = '') {
                                 : escapeHtml(initials)}
                         </div>
                         <div class="min-w-0">
-                            <div class="fw-bold customer-card-name">${escapeHtml(s.name || '—')}</div>
+                            <button type="button" class="order-contact-link customer-card-name"
+                                onclick="openOrderCustomerProfile(${Number(s.id)})">
+                                ${escapeHtml(s.name || '—')}
+                            </button>
                             <div class="customer-card-joined text-muted">Joined ${joinDate}</div>
                         </div>
                     </div>
@@ -1424,6 +1479,12 @@ function renderCustomers(customers, query = '') {
                         <span class="badge ${hasOrders ? 'bg-primary' : 'bg-secondary bg-opacity-50 text-secondary'} rounded-pill px-3">
                             ${s.order_count || 0} order${s.order_count !== 1 ? 's' : ''}
                         </span>
+                    </div>
+                    <div class="d-flex gap-2 mt-3">
+                        <button type="button" class="btn btn-outline-primary btn-sm flex-grow-1"
+                            onclick="openOrderCustomerProfile(${Number(s.id)})">View profile</button>
+                        ${s.phone_number ? `<a class="btn btn-success btn-sm flex-grow-1"
+                            href="tel:${escapeHtml(String(s.phone_number).replace(/[^\d+]/g, ''))}">📞 Call</a>` : ''}
                     </div>
 
                 </div>

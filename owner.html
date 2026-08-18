@@ -518,6 +518,42 @@
 </div>
 
 <!-- ── Owner Profile View Modal ── -->
+<div class="modal fade" id="orderCustomerProfileModal" tabindex="-1" aria-hidden="true"
+    aria-labelledby="order-customer-profile-title">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
+            <div class="modal-header border-0 px-4 pt-4 pb-3 profile-modal-header">
+                <div>
+                    <h5 class="modal-title mb-0" id="order-customer-profile-title">Customer Profile</h5>
+                    <div class="small text-muted">Order contact information</div>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body px-4 py-4 selected-owner-profile-body">
+                <div class="profile-hero selected-owner-profile-hero">
+                    <div class="profile-avatar-xl" id="order-customer-profile-avatar"><span>?</span></div>
+                    <div><strong id="order-customer-profile-name">Customer</strong><span>Customer account</span></div>
+                </div>
+                <div class="selected-owner-profile-grid">
+                    <div class="selected-owner-detail-card">
+                        <span>Phone number</span>
+                        <strong id="order-customer-profile-phone">Not provided</strong>
+                    </div>
+                    <div class="selected-owner-detail-card">
+                        <span>Email address</span>
+                        <strong id="order-customer-profile-email">Not provided</strong>
+                    </div>
+                </div>
+                <a class="btn btn-success w-100 mt-3 d-none" id="order-customer-call-button" href="#">Call customer</a>
+            </div>
+            <div class="modal-footer border-0 px-4 pb-4 pt-0 selected-owner-profile-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ── Owner Profile View Modal ── -->
 <div class="modal fade" id="ownerProfileViewModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
