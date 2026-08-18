@@ -415,6 +415,70 @@ body::before {
     min-height: 2.4em;
 }
 
+/* Owner upload preview mirrors the fixed-height crop used on customer cards. */
+.menu-customer-preview {
+    max-width: 280px;
+    margin-inline: auto;
+    padding: .75rem;
+    border: 1px solid #bfdbfe;
+    border-radius: 14px;
+    background: #f8fbff;
+    text-align: left;
+}
+
+.menu-customer-preview-heading {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: .5rem;
+    margin-bottom: .55rem;
+}
+
+.menu-customer-preview-heading span {
+    color: var(--text-main);
+    font-size: .78rem;
+    font-weight: 800;
+}
+
+.menu-customer-preview-heading small {
+    color: var(--text-muted);
+    font-size: .62rem;
+}
+
+.menu-customer-preview-frame {
+    position: relative;
+    height: 160px;
+    overflow: hidden;
+    border-radius: 12px;
+    background: #e2e8f0;
+    box-shadow: 0 5px 14px rgba(15,23,42,.12);
+}
+
+.menu-customer-preview-frame img {
+    width: 100%;
+    height: 160px;
+    display: block;
+    object-fit: cover;
+    object-position: center;
+}
+
+.menu-customer-preview-frame::after {
+    content: '';
+    position: absolute;
+    inset: 8px;
+    border: 1px dashed rgba(255,255,255,.8);
+    border-radius: 8px;
+    pointer-events: none;
+    box-shadow: 0 0 0 999px rgba(15,23,42,.04);
+}
+
+.menu-customer-preview-tip {
+    margin: .55rem 0 0;
+    color: var(--text-muted);
+    font-size: .66rem;
+    line-height: 1.4;
+}
+
 .owner-menu-actions {
     display: flex;
     align-items: center;

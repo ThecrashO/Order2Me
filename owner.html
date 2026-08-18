@@ -675,8 +675,15 @@
                     <div class="mb-3">
                         <label for="item-image" class="form-label">🖼 Food Image <span class="text-muted small">(optional)</span></label>
                         <input type="file" class="form-control" id="item-image" accept="image/*" onchange="previewAddImage(this)">
-                        <div id="add-image-preview-wrap" class="mt-2 d-none text-center">
-                            <img id="add-image-preview" src="" alt="Preview" class="img-thumbnail rounded" style="max-height:140px;object-fit:cover;">
+                        <div id="add-image-preview-wrap" class="menu-customer-preview mt-3 d-none">
+                            <div class="menu-customer-preview-heading">
+                                <span>Customer view preview</span>
+                                <small>Image will be center-cropped</small>
+                            </div>
+                            <div class="menu-customer-preview-frame">
+                                <img id="add-image-preview" src="" alt="How this menu image will appear to customers">
+                            </div>
+                            <p class="menu-customer-preview-tip">Best result: landscape photo, at least 800 × 600 px, with the food near the center.</p>
                         </div>
                     </div>
                     <div class="mb-3 form-check">
@@ -735,9 +742,15 @@
                             <img id="edit-current-image" src="" alt="Current" class="img-thumbnail rounded mt-1" style="max-height:100px;object-fit:cover;">
                         </div>
                         <input type="file" class="form-control" id="edit-item-image" accept="image/*" onchange="previewEditImage(this)">
-                        <div id="edit-image-preview-wrap" class="mt-2 d-none text-center">
-                            <span class="small text-muted">New image preview:</span><br>
-                            <img id="edit-image-preview" src="" alt="Preview" class="img-thumbnail rounded mt-1" style="max-height:140px;object-fit:cover;">
+                        <div id="edit-image-preview-wrap" class="menu-customer-preview mt-3 d-none">
+                            <div class="menu-customer-preview-heading">
+                                <span>Customer view preview</span>
+                                <small>Image will be center-cropped</small>
+                            </div>
+                            <div class="menu-customer-preview-frame">
+                                <img id="edit-image-preview" src="" alt="How this menu image will appear to customers">
+                            </div>
+                            <p class="menu-customer-preview-tip">Best result: landscape photo, at least 800 × 600 px, with the food near the center.</p>
                         </div>
                     </div>
                     <div class="mb-3 form-check">

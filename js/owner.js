@@ -1479,8 +1479,9 @@ function previewEditImage(input) {
         reader.onload = e => { img.src = e.target.result; wrap.classList.remove('d-none'); };
         reader.readAsDataURL(input.files[0]);
     } else {
-        wrap.classList.add('d-none');
-        img.src = '';
+        const existingImage = document.getElementById('edit-item-existing-image').value;
+        img.src = existingImage || '';
+        wrap.classList.toggle('d-none', !existingImage);
     }
 }
 
@@ -1572,8 +1573,8 @@ function openEditModal(id, name, description, price, isAvailable, imageUrl, cate
 
     // Reset new-image preview
     document.getElementById('edit-item-image').value = '';
-    document.getElementById('edit-image-preview-wrap').classList.add('d-none');
-    document.getElementById('edit-image-preview').src = '';
+    document.getElementById('edit-image-preview-wrap').classList.toggle('d-none', !imageUrl);
+    document.getElementById('edit-image-preview').src = imageUrl || '';
 
     editFoodModal.show();
 }
