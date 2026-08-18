@@ -239,6 +239,10 @@ let activeOwnerMenuSearch   = '';
 let allCustomersArr    = [];  // flat array cache for customer search
 let ownerRealtimeChannel = null; // Supabase Realtime channel reference
 let ownerShop          = null;
+let ownerOrderPollTimer = null;
+let ownerOrderPollBusy = false;
+let ownerOrderSnapshot = new Map();
+const ORDER_POLL_INTERVAL_MS = 8000;
 
 function syncOwnerShopAvailabilityUI() {
     const availability = getShopOrderAvailability(ownerShop);
@@ -393,20 +397,24 @@ async function initializeApp() {
     setupOwnerMenuCategoryFilters();
 
     // Load both sections
-    loadOrders();
+    await loadOrders();
     loadMenuItems();
+
+    ownerOrderSnapshot = new Map(allOrders.map(order => [Number(order.id), order.status]));
 
     // Subscribe to Realtime order events
     subscribeOwnerRealtime();
+    startOwnerOrderPolling();
 }
 
 // ── Realtime: listen for new orders & status changes ─────────
-function subscribeOwnerRealtime() {
+async function subscribeOwnerRealtime() {
+    const realtimeClient = await getOrder2MeRealtimeClient();
     if (ownerRealtimeChannel) {
-        supabaseClient.removeChannel(ownerRealtimeChannel);
+        realtimeClient.removeChannel(ownerRealtimeChannel);
     }
 
-    ownerRealtimeChannel = supabaseClient
+    ownerRealtimeChannel = realtimeClient
         .channel('owner-orders-realtime')
         .on(
             'postgres_changes',
@@ -414,6 +422,8 @@ function subscribeOwnerRealtime() {
             (payload) => {
                 const newOrder = payload.new;
                 if (!newOrder) return;
+                const alreadySeen = ownerOrderSnapshot.has(Number(newOrder.id));
+                ownerOrderSnapshot.set(Number(newOrder.id), newOrder.status);
 
                 // Only notify for today's orders
                 if (!isTodayOrder(newOrder)) return;
@@ -421,15 +431,7 @@ function subscribeOwnerRealtime() {
                 // Reload full orders (with joins) to get complete data
                 loadOrders();
 
-                const name = newOrder.customer_name || 'Someone';
-                const total = Number(newOrder.total_amount || 0).toLocaleString();
-                showToast(`🔔 New order from ${name} — ${total} MMK`, 'success');
-                if (isNotificationPreferenceEnabled()) playNotificationSound('success');
-                maybeBrowserNotification(
-                    '🔔 New Order!',
-                    `${name} placed an order for ${total} MMK`,
-                    { tag: `order2me-new-order-${newOrder.id}`, url: 'owner.html#orders' }
-                );
+                if (!alreadySeen) notifyOwnerNewOrder(newOrder);
             }
         )
         .on(
@@ -439,19 +441,14 @@ function subscribeOwnerRealtime() {
                 const updated = payload.new;
                 const previous = payload.old;
                 if (!updated) return;
+                const snapshotStatus = ownerOrderSnapshot.get(Number(updated.id));
+                ownerOrderSnapshot.set(Number(updated.id), updated.status);
 
                 // Refresh orders list to reflect status change
                 loadOrders();
 
-                if (updated.status === 'delivered' && previous?.status === 'out_for_delivery') {
-                    const customerName = updated.customer_name || 'The customer';
-                    showToast(`✅ ${customerName} confirmed Order #${updated.id} was received.`, 'success');
-                    if (isNotificationPreferenceEnabled()) playNotificationSound('success');
-                    maybeBrowserNotification(
-                        'Order received',
-                        `${customerName} confirmed receipt of Order #${updated.id}.`,
-                        { tag: `order2me-received-${updated.id}`, url: 'owner.html#orders' }
-                    );
+                if (snapshotStatus !== updated.status) {
+                    notifyOwnerStatusChange(updated, snapshotStatus ?? previous?.status);
                 }
             }
         )
@@ -461,6 +458,72 @@ function subscribeOwnerRealtime() {
                 console.error('Owner realtime notification channel:', status);
             }
         });
+}
+
+function notifyOwnerNewOrder(order) {
+    const name = order.customer_name || 'Someone';
+    const total = Number(order.total_amount || 0).toLocaleString();
+    showToast(`🔔 New order from ${name} — ${total} MMK`, 'success');
+    if (isNotificationPreferenceEnabled()) playNotificationSound('success');
+    maybeBrowserNotification(
+        '🔔 New Order!',
+        `${name} placed an order for ${total} MMK`,
+        { tag: `order2me-new-order-${order.id}`, url: 'owner.html#orders' }
+    );
+}
+
+function notifyOwnerStatusChange(order, previousStatus) {
+    if (order.status !== 'delivered' || previousStatus !== 'out_for_delivery') return;
+    const customerName = order.customer_name || 'The customer';
+    showToast(`✅ ${customerName} confirmed Order #${order.id} was received.`, 'success');
+    if (isNotificationPreferenceEnabled()) playNotificationSound('success');
+    maybeBrowserNotification(
+        'Order received',
+        `${customerName} confirmed receipt of Order #${order.id}.`,
+        { tag: `order2me-received-${order.id}`, url: 'owner.html#orders' }
+    );
+}
+
+function startOwnerOrderPolling() {
+    if (ownerOrderPollTimer) window.clearInterval(ownerOrderPollTimer);
+    ownerOrderPollTimer = window.setInterval(pollOwnerOrders, ORDER_POLL_INTERVAL_MS);
+    window.addEventListener('focus', pollOwnerOrders);
+    document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'visible') pollOwnerOrders();
+    });
+}
+
+async function pollOwnerOrders() {
+    if (!ownerShop || ownerOrderPollBusy) return;
+    ownerOrderPollBusy = true;
+    try {
+        const { data, error } = await supabaseClient
+            .from('orders')
+            .select('id, customer_name, status, total_amount, created_at')
+            .eq('shop_id', ownerShop.id)
+            .order('created_at', { ascending: false });
+        if (error) throw error;
+
+        let changed = false;
+        for (const order of data || []) {
+            const id = Number(order.id);
+            const previousStatus = ownerOrderSnapshot.get(id);
+            if (previousStatus === undefined) {
+                ownerOrderSnapshot.set(id, order.status);
+                if (isTodayOrder(order)) notifyOwnerNewOrder(order);
+                changed = true;
+            } else if (previousStatus !== order.status) {
+                ownerOrderSnapshot.set(id, order.status);
+                notifyOwnerStatusChange(order, previousStatus);
+                changed = true;
+            }
+        }
+        if (changed) loadOrders();
+    } catch (error) {
+        console.error('Owner order polling failed:', error);
+    } finally {
+        ownerOrderPollBusy = false;
+    }
 }
 
 function setOwnerRealtimeStatus(status) {
@@ -475,8 +538,8 @@ function setOwnerRealtimeStatus(status) {
     }
 
     if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'CLOSED') {
-        statusEl.classList.add('text-danger');
-        statusEl.textContent = 'Live order connection: disconnected. Refresh this page.';
+        statusEl.classList.add('text-muted');
+        statusEl.textContent = 'Order updates: fallback mode (checks every 8 seconds)';
         return;
     }
 
@@ -487,8 +550,9 @@ function setOwnerRealtimeStatus(status) {
 // Cleanup Realtime on page unload
 window.addEventListener('beforeunload', () => {
     if (ownerRealtimeChannel) {
-        supabaseClient.removeChannel(ownerRealtimeChannel);
+        realtimeSupabaseClient.removeChannel(ownerRealtimeChannel);
     }
+    if (ownerOrderPollTimer) window.clearInterval(ownerOrderPollTimer);
 });
 
 // ── 2. ORDERS ─────────────────────────────────────────────────

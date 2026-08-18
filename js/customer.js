@@ -15,6 +15,10 @@ let ownerPhoneNumber = null; // loaded in initCustomerPage()
 const NOTIFICATION_PREF_KEY = 'order2me-notifications-enabled';
 let customerRealtimeChannel = null;
 let customerShopRefreshTimer = null;
+let customerOrderPollTimer = null;
+let customerOrderPollBusy = false;
+let customerOrderSnapshot = new Map();
+const CUSTOMER_ORDER_POLL_INTERVAL_MS = 8000;
 
 function isNotificationPreferenceEnabled() {
     return localStorage.getItem(NOTIFICATION_PREF_KEY) === 'true';
@@ -701,7 +705,11 @@ async function loadCustomerOrders() {
         return;
     }
 
-    displayTodayOrders(data || []);
+    const orders = data || [];
+    if (customerOrderSnapshot.size === 0) {
+        customerOrderSnapshot = new Map(orders.map(order => [Number(order.id), order.status]));
+    }
+    displayTodayOrders(orders);
 }
 
 // Render today's orders as animated progress trackers
@@ -1742,11 +1750,12 @@ async function initCustomerPage() {
     await refreshCurrentProfileAvatars(currentCustomerProfile);
 
     await loadApprovedShops();
-    loadCustomerOrders();
+    await loadCustomerOrders();
 
     // Subscribe to Realtime order status changes
     subscribeCustomerRealtime();
     subscribeCustomerShopProfiles();
+    startCustomerOrderPolling();
 }
 
 function subscribeCustomerShopProfiles() {
@@ -1791,14 +1800,16 @@ const STATUS_MESSAGES = {
     },
 };
 
-function subscribeCustomerRealtime() {
+async function subscribeCustomerRealtime() {
     if (!currentCustomerProfile) return;
 
+    const realtimeClient = await getOrder2MeRealtimeClient();
+
     if (customerRealtimeChannel) {
-        supabaseClient.removeChannel(customerRealtimeChannel);
+        realtimeClient.removeChannel(customerRealtimeChannel);
     }
 
-    customerRealtimeChannel = supabaseClient
+    customerRealtimeChannel = realtimeClient
         .channel('customer-orders-realtime')
         .on(
             'postgres_changes',
@@ -1812,6 +1823,8 @@ function subscribeCustomerRealtime() {
                 const updated = payload.new;
                 const old     = payload.old;
                 if (!updated) return;
+                const snapshotStatus = customerOrderSnapshot.get(Number(updated.id));
+                customerOrderSnapshot.set(Number(updated.id), updated.status);
 
                 // Only react to status changes
                 if (old && old.status === updated.status) return;
@@ -1820,18 +1833,7 @@ function subscribeCustomerRealtime() {
                 loadCustomerOrders();
 
                 // Show notification for the new status
-                const info = STATUS_MESSAGES[updated.status];
-                if (info) {
-                    showToast(info.msg, info.type);
-                    if (isNotificationPreferenceEnabled()) {
-                        playNotificationSound(info.type);
-                        maybeBrowserNotification(info.title, info.msg, {
-                            tag: `order2me-order-${updated.id}`,
-                            orderId: updated.id,
-                            url: 'customer.html#orders'
-                        });
-                    }
-                }
+                if (snapshotStatus !== updated.status) notifyCustomerOrderStatus(updated);
             }
         )
         .subscribe((status) => {
@@ -1841,12 +1843,69 @@ function subscribeCustomerRealtime() {
         });
 }
 
+function notifyCustomerOrderStatus(order) {
+    const info = STATUS_MESSAGES[order.status];
+    if (!info) return;
+    showToast(info.msg, info.type);
+    if (isNotificationPreferenceEnabled()) {
+        playNotificationSound(info.type);
+        maybeBrowserNotification(info.title, info.msg, {
+            tag: `order2me-order-${order.id}`,
+            orderId: order.id,
+            url: 'customer.html#orders'
+        });
+    }
+}
+
+function startCustomerOrderPolling() {
+    if (customerOrderPollTimer) window.clearInterval(customerOrderPollTimer);
+    customerOrderPollTimer = window.setInterval(pollCustomerOrders, CUSTOMER_ORDER_POLL_INTERVAL_MS);
+    window.addEventListener('focus', pollCustomerOrders);
+    document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'visible') pollCustomerOrders();
+    });
+}
+
+async function pollCustomerOrders() {
+    if (!currentCustomerProfile || customerOrderPollBusy) return;
+    customerOrderPollBusy = true;
+    try {
+        const { start, end } = getTodayBounds();
+        const { data, error } = await supabaseClient
+            .from('orders')
+            .select('id, status, created_at')
+            .eq('customer_id', currentCustomerProfile.id)
+            .gte('created_at', start.toISOString())
+            .lte('created_at', end.toISOString());
+        if (error) throw error;
+
+        let changed = false;
+        for (const order of data || []) {
+            const id = Number(order.id);
+            const previousStatus = customerOrderSnapshot.get(id);
+            customerOrderSnapshot.set(id, order.status);
+            if (previousStatus !== undefined && previousStatus !== order.status) {
+                notifyCustomerOrderStatus(order);
+                changed = true;
+            } else if (previousStatus === undefined) {
+                changed = true;
+            }
+        }
+        if (changed) loadCustomerOrders();
+    } catch (error) {
+        console.error('Customer order polling failed:', error);
+    } finally {
+        customerOrderPollBusy = false;
+    }
+}
+
 // Cleanup Realtime on page unload
 window.addEventListener('beforeunload', () => {
     if (customerRealtimeChannel) {
-        supabaseClient.removeChannel(customerRealtimeChannel);
+        realtimeSupabaseClient.removeChannel(customerRealtimeChannel);
     }
     if (customerShopRefreshTimer) window.clearInterval(customerShopRefreshTimer);
+    if (customerOrderPollTimer) window.clearInterval(customerOrderPollTimer);
 });
 
 document.addEventListener('DOMContentLoaded', initCustomerPage);

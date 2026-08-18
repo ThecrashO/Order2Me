@@ -21,4 +21,26 @@ const supabaseClient = supabase.createClient(
     order2MeConfig.supabasePublishableKey
 );
 
+// REST/Auth can use the Vercel proxy, but Realtime needs a direct WebSocket
+// connection. Polling remains available when that direct route is blocked.
+const realtimeSupabaseClient = supabase.createClient(
+    fallbackConfig.supabaseUrl,
+    order2MeConfig.supabasePublishableKey,
+    {
+        auth: {
+            persistSession: false,
+            autoRefreshToken: false,
+            detectSessionInUrl: false
+        }
+    }
+);
+
+async function getOrder2MeRealtimeClient() {
+    const { data } = await supabaseClient.auth.getSession();
+    if (data?.session?.access_token) {
+        await realtimeSupabaseClient.realtime.setAuth(data.session.access_token);
+    }
+    return realtimeSupabaseClient;
+}
+
 console.log('Supabase Connected');
