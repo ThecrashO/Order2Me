@@ -1,6 +1,14 @@
 async function initLoginPage() {
     const form = document.getElementById('login-form');
     const status = document.getElementById('login-status');
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('verified') === '1') {
+        status.className = 'text-success mb-3';
+        status.textContent = '✅ Email verified. You can sign in now.';
+    } else if (params.get('password') === 'changed') {
+        status.className = 'text-success mb-3';
+        status.textContent = '✅ Password changed successfully. Sign in with your new password.';
+    }
 
     try {
         const profile = await getCurrentProfile();
@@ -15,6 +23,7 @@ async function initLoginPage() {
 
     form.addEventListener('submit', async (event) => {
         event.preventDefault();
+        status.className = 'text-danger mb-3';
         status.textContent = '';
         const submitButton = form.querySelector('button[type="submit"]');
         if (submitButton) submitButton.disabled = true;

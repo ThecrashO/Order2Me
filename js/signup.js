@@ -25,8 +25,14 @@
         const password = document.getElementById('signup-password').value.trim();
         const confirmPassword = document.getElementById('signup-confirm-password').value.trim();
 
-        if (!name || !email || !password || !confirmPassword) {
+        if (!name || !phone || !email || !password || !confirmPassword) {
             status.textContent = 'Please fill in all required fields.';
+            if (submitButton) submitButton.disabled = false;
+            return;
+        }
+
+        if (!/^\+?[0-9()\-\s]{7,20}$/.test(phone)) {
+            status.textContent = 'Please enter a valid phone number.';
             if (submitButton) submitButton.disabled = false;
             return;
         }
@@ -66,7 +72,7 @@
             status.className = 'text-success mb-3';
             status.textContent = role === 'owner'
                 ? '✅ Owner application created! Confirm your email, then wait for admin approval.'
-                : '✅ Account created! Please check your email and confirm it, then sign in.';
+                : '✅ Account created! We sent a verification link to your email. Confirm it before signing in.';
             form.reset();
             if (submitButton) submitButton.disabled = false;
             return;

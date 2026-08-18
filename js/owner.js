@@ -956,6 +956,14 @@ function buildOrderCard(order) {
         cancelled: { key: 'cancelled', label: 'Cancelled' }
     };
     const cfg = statusConfig[order.status] || { key: 'unknown', label: order.status };
+    const customerProfile = order.customer_profile || {};
+    const customerName = customerProfile.name || order.customer_name || 'Unknown';
+    const customerInitials = typeof getProfileInitials === 'function'
+        ? getProfileInitials(customerName, customerProfile.email)
+        : String(customerName).slice(0, 2).toUpperCase();
+    const customerAvatarHtml = customerProfile.avatar_url
+        ? `<img src="${escapeHtml(customerProfile.avatar_url)}" alt="" loading="lazy">`
+        : `<span>${escapeHtml(customerInitials)}</span>`;
 
     // Build items list
     const itemsHtml = (order.order_items || []).map(oi => {
@@ -1043,13 +1051,18 @@ function buildOrderCard(order) {
 
     return `
         <div class="card mb-3 order-card--${cfg.key}" id="order-card-${order.id}">
-            <div class="card-header d-flex justify-content-between align-items-center order-card-status-surface">
-                <div>
-                    <span class="fw-semibold">Order #${order.id}</span>
-                    <button type="button" class="order-contact-link ms-2"
+            <div class="card-header order-card-header order-card-status-surface">
+                <div class="order-card-heading">
+                    <span class="order-card-number">Order #${order.id}</span>
+                    <button type="button" class="order-customer-chip"
                         onclick="openOrderCustomerProfile(${Number(order.customer_id)})"
-                        aria-label="View ${escapeHtml(order.customer_name || 'customer')} profile">
-                        — ${escapeHtml(order.customer_name || 'Unknown')}
+                        aria-label="View ${escapeHtml(customerName)} profile">
+                        <span class="order-customer-chip-avatar">${customerAvatarHtml}</span>
+                        <span class="order-customer-chip-copy">
+                            <small>Customer</small>
+                            <strong>${escapeHtml(customerName)}</strong>
+                        </span>
+                        <span class="order-customer-chip-arrow" aria-hidden="true">›</span>
                     </button>
                 </div>
                 <span class="order-status order-status--${cfg.key}">${cfg.label}</span>

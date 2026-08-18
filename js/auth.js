@@ -303,7 +303,10 @@ async function signUpAccount(account) {
     const { data, error } = await supabaseClient.auth.signUp({
         email: account.email,
         password: account.password,
-        options: { data: metadata }
+        options: {
+            data: metadata,
+            emailRedirectTo: new URL('login.html?verified=1', window.location.href).href
+        }
     });
     if (error) return { error };
 
@@ -323,6 +326,16 @@ async function signUpAccount(account) {
         JSON.stringify(metadata)
     );
     return { emailConfirmationRequired: true, role };
+}
+
+async function sendPasswordResetEmail(email) {
+    return await supabaseClient.auth.resetPasswordForEmail(email, {
+        redirectTo: new URL('reset-password.html', window.location.href).href
+    });
+}
+
+async function updateRecoveredPassword(password) {
+    return await supabaseClient.auth.updateUser({ password });
 }
 
 // Backwards-compatible wrapper used by older code.

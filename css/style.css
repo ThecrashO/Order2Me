@@ -2154,6 +2154,66 @@ body::before {
 }
 .order-contact-link:hover { color: #1d4ed8; text-decoration-color: currentColor; }
 .order-contact-link:focus-visible { outline: 3px solid rgba(37, 99, 235, .25); outline-offset: 3px; border-radius: 3px; }
+.order-card-header {
+    display: flex;
+    gap: .75rem;
+    align-items: center;
+    justify-content: space-between;
+}
+.order-card-heading {
+    display: flex;
+    min-width: 0;
+    gap: .7rem;
+    align-items: center;
+    flex-wrap: wrap;
+}
+.order-card-number { color: var(--text-main); font-weight: 750; white-space: nowrap; }
+.order-customer-chip {
+    display: inline-flex;
+    min-width: 0;
+    max-width: 250px;
+    padding: .28rem .45rem .28rem .3rem;
+    border: 1px solid #dbeafe;
+    border-radius: 999px;
+    align-items: center;
+    gap: .48rem;
+    background: #fff;
+    color: var(--text-main);
+    box-shadow: 0 2px 8px rgba(15, 23, 42, .06);
+    text-align: left;
+    transition: border-color .18s ease, box-shadow .18s ease, transform .18s ease;
+}
+.order-customer-chip:hover {
+    border-color: #93c5fd;
+    box-shadow: 0 5px 14px rgba(37, 99, 235, .13);
+    transform: translateY(-1px);
+}
+.order-customer-chip:focus-visible { outline: 3px solid rgba(37, 99, 235, .22); outline-offset: 2px; }
+.order-customer-chip-avatar {
+    display: grid;
+    width: 34px;
+    height: 34px;
+    flex: 0 0 34px;
+    overflow: hidden;
+    border-radius: 50%;
+    place-items: center;
+    background: linear-gradient(135deg, #2563eb, #0e7490);
+    color: #fff;
+    font-size: .66rem;
+    font-weight: 800;
+    letter-spacing: .03em;
+}
+.order-customer-chip-avatar img { width: 100%; height: 100%; object-fit: cover; }
+.order-customer-chip-copy { display: flex; min-width: 0; flex: 1; flex-direction: column; line-height: 1.08; }
+.order-customer-chip-copy small { color: #64748b; font-size: .56rem; font-weight: 750; letter-spacing: .06em; text-transform: uppercase; }
+.order-customer-chip-copy strong { overflow: hidden; margin-top: .15rem; font-size: .78rem; text-overflow: ellipsis; white-space: nowrap; }
+.order-customer-chip-arrow { color: #60a5fa; font-size: 1.15rem; line-height: 1; }
+@media (max-width: 575.98px) {
+    .order-card-header { align-items: flex-start; }
+    .order-card-heading { gap: .45rem; }
+    .order-card-number { width: 100%; }
+    .order-customer-chip { max-width: min(230px, 72vw); }
+}
 
 /* Payment options share one selection pattern; brand names remain in the copy. */
 .payment-method-btn {
