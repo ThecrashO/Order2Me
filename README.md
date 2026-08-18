@@ -1,78 +1,19 @@
 # Order2Me
 
-University Canteen Ordering System
+University canteen အတွက် multi-shop ordering system ဖြစ်သည်။ Customer၊ Shop Owner နှင့် Administrator role သုံးမျိုးရှိသည်။
 
-## Tech Stack
+## Documentation
 
-- HTML
-- CSS
-- JavaScript
-- Bootstrap
-- Supabase
+- [Order2Me Project Documentation (မြန်မာ)](PROJECT_DOCUMENTATION_MM.md)
+- [Vercel Deployment Guide](VERCEL_DEPLOY.md)
 
+## Technologies
 
-## Current Progress
+- HTML, CSS, JavaScript, Bootstrap 5
+- Supabase Auth, Postgres, Storage, Realtime
+- Vercel Hosting and Rewrite Proxy
+- Progressive Web App / Service Worker
 
-Day 2:
-- Project Setup Completed
-- Database Connected
-- Menu Fetch Completed
+Live website: https://order2me.vercel.app/
 
-Day 3:
-- Menu UI Created (Student & Owner)
-- Owner Add/Edit/Delete Menu Implemented
-- Student Cart System Started
-- Enhanced Styling & Animations
-
-## Features
-
-### Student Dashboard
-- Browse available menu items
-- View food name, description, and price
-- Add items to cart
-- Real-time menu updates
-
-### Owner Dashboard
-- Add new menu items
-- Edit existing menu items
-- Delete menu items
-- Toggle item availability
-- View all menu items in a table
-
-### Multi-Shop & Administration
-- Customers can choose from multiple approved shops
-- Each owner's menu, orders, customers, payments, and reports are isolated by shop
-- Shop owners apply during signup and wait for administrator approval
-- Administrators can approve, reject, suspend, and restore shops
-- Existing data is migrated into an approved `Main Canteen` shop
-
-## Multi-Shop Database Setup
-
-For an existing Supabase project:
-
-1. Run `supabase/multi_shop_migration.sql` in the Supabase SQL Editor.
-2. Run `supabase/shop_availability.sql`, then `supabase/profile_images.sql`.
-3. Create an authentication user for the administrator in Supabase Dashboard.
-4. Edit the email in `supabase/create_admin.sql`, then run that file.
-5. Hard-refresh the web app so service-worker cache `order2me-v18` is active.
-
-## Profile Photos and Vercel
-
-1. Run `supabase/shop_availability.sql` to enable shop hours and server-side order blocking.
-2. Run `supabase/profile_images.sql` in Supabase SQL Editor.
-3. Follow `VERCEL_DEPLOY.md` to configure `SUPABASE_URL` and `SUPABASE_PUBLISHABLE_KEY`.
-4. Never add a Supabase Secret key or `service_role` key to this frontend project.
-
-Different accounts may share the same display name. For an older database that
-still has a unique constraint on `users.name`, run
-`supabase/allow_duplicate_profile_names.sql` once.
-
-## Database Schema
-
-### menu_items table
-- `id` (Primary Key)
-- `name` (Text)
-- `description` (Text)
-- `price` (Numeric)
-- `is_available` (Boolean)
-- `created_at` (Timestamp)
+> Frontend တွင် Supabase publishable key သာသုံးပါ။ `service_role` သို့မဟုတ် secret key ကို browser code/Git ထဲ မထည့်ရပါ။
