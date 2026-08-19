@@ -1,5 +1,7 @@
 # Order2Me
 
+**Release:** `v1.0.0` · University Edition
+
 University canteen များအတွက် ပြုလုပ်ထားသော multi-shop food ordering web application ဖြစ်သည်။ Customer များက ဆိုင်နှင့် menu များကိုရွေးပြီး order တင်နိုင်သလို Shop Owner များက menu၊ order နှင့် ဆိုင်ဖွင့်/ပိတ်အခြေအနေကို စီမံနိုင်သည်။ Administrator က owner account နှင့် shop များကို approve/reject လုပ်နိုင်သည်။
 
 🌐 **Live application:** [https://order2me.vercel.app/](https://order2me.vercel.app/)
@@ -174,6 +176,7 @@ SQL ဖိုင်များကို **Supabase Dashboard → SQL Editor** �
 7. `supabase/admin_users_notifications_screenshot_patch.sql`
 8. `supabase/required_account_contact.sql`
 9. `supabase/create_admin.sql` — placeholder email ကိုပြင်ပြီး run ရန်
+10. `supabase/v1_security_lockdown.sql` — နောက်ဆုံး run ရမည့် anonymous-access lockdown
 
 လိုအပ်သည့် existing database များတွင်သာ `supabase/allow_duplicate_profile_names.sql` ကို run ပါ။ Abandoned Web Push objects ရှိသေးလျှင် `supabase/remove_web_push.sql` ဖြင့်ဖယ်ရှားနိုင်သည်။
 

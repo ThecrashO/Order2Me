@@ -247,6 +247,7 @@ Fresh/old database အခြေအနေပေါ်မူတည်သော်�
 8. `supabase/allow_duplicate_profile_names.sql` — old unique-name constraint ရှိမှသာ
 9. `supabase/required_account_contact.sql` — profile အသစ် phone မဖြစ်မနေ
 10. `supabase/create_admin.sql` — admin Auth user ဖန်တီးပြီး email ပြင်ကာ run
+11. `supabase/v1_security_lockdown.sql` — migration အားလုံးပြီးနောက် anonymous table access ကိုပိတ်ရန် နောက်ဆုံး run
 
 Production တွင် migration မ run မီ backup ယူပါ။ Run ပြီးသား file ကိုမသေချာဘဲ ထပ်မ run သင့်ပါ။
 

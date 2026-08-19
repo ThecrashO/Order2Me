@@ -1,4 +1,7 @@
 {
+  "name": "order2me",
+  "version": "1.0.0",
+  "private": true,
   "dependencies": {
     "@supabase/ssr": "^0.12.3",
     "@supabase/supabase-js": "^2.110.8"
