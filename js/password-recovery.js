@@ -39,8 +39,8 @@ async function handleResetPassword(event) {
     const confirmation = document.getElementById('reset-password-confirm').value;
     const status = document.getElementById('reset-status');
     const button = event.currentTarget.querySelector('button[type="submit"]');
-    if (!/^\d{6}$/.test(token)) {
-        status.className = 'text-danger mb-3'; status.textContent = 'Enter the 6-digit code from your email.'; return;
+    if (!/^\d{8}$/.test(token)) {
+        status.className = 'text-danger mb-3'; status.textContent = 'Enter the 8-digit code from your email.'; return;
     }
     if (password.length < 8) {
         status.className = 'text-danger mb-3'; status.textContent = 'Password must be at least 8 characters.'; return;

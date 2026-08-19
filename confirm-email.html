@@ -11,14 +11,14 @@
     <div class="card auth-card shadow-lg"><div class="card-body">
         <div class="auth-badge">Email verification</div>
         <h3 class="auth-title mt-2">Enter confirmation code</h3>
-        <p class="auth-subtitle">We sent a 6-digit code to your email. Enter it below to activate your account.</p>
+        <p class="auth-subtitle">We sent an 8-digit code to your email. Enter it below to activate your account.</p>
         <form id="confirm-email-form">
             <div class="mb-3"><label class="form-label" for="confirm-email">Email</label>
                 <input class="form-control" id="confirm-email" type="email" required autocomplete="email"></div>
             <div class="mb-3"><label class="form-label" for="confirm-otp">Confirmation code</label>
                 <input class="form-control auth-otp-input" id="confirm-otp" type="text" required
-                    inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]{6}" maxlength="6"
-                    placeholder="000000"></div>
+                    inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]{8}" maxlength="8"
+                    placeholder="00000000"></div>
             <div class="mb-3" id="confirm-email-status" role="status"></div>
             <button class="btn btn-primary w-100" type="submit">Confirm email</button>
         </form>

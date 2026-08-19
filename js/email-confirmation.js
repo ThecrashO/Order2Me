@@ -13,9 +13,9 @@ async function confirmEmailOtp(event) {
     const status = document.getElementById('confirm-email-status');
     const button = event.currentTarget.querySelector('button[type="submit"]');
 
-    if (!/^\d{6}$/.test(token)) {
+    if (!/^\d{8}$/.test(token)) {
         status.className = 'text-danger mb-3';
-        status.textContent = 'Enter the 6-digit code from your email.';
+        status.textContent = 'Enter the 8-digit code from your email.';
         return;
     }
 
