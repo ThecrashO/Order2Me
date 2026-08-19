@@ -69,12 +69,8 @@
 
         // Email confirmation required — Supabase will send a verification email
         if (result.emailConfirmationRequired) {
-            status.className = 'text-success mb-3';
-            status.textContent = role === 'owner'
-                ? '✅ Owner application created! Confirm your email, then wait for admin approval.'
-                : '✅ Account created! We sent a verification link to your email. Confirm it before signing in.';
-            form.reset();
-            if (submitButton) submitButton.disabled = false;
+            sessionStorage.setItem('order2meOtpEmail', email);
+            window.location.href = `confirm-email.html?email=${encodeURIComponent(email)}`;
             return;
         }
 

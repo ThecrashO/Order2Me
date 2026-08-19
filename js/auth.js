@@ -338,6 +338,14 @@ async function updateRecoveredPassword(password) {
     return await supabaseClient.auth.updateUser({ password });
 }
 
+async function verifyEmailOtp(email, token) {
+    return await supabaseClient.auth.verifyOtp({ email, token, type: 'email' });
+}
+
+async function verifyRecoveryOtp(email, token) {
+    return await supabaseClient.auth.verifyOtp({ email, token, type: 'recovery' });
+}
+
 // Backwards-compatible wrapper used by older code.
 async function signUpCustomer(name, email, phone, password) {
     return await signUpAccount({ name, email, phone, password, role: 'customer' });

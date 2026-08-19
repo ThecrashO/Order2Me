@@ -206,7 +206,7 @@ REST/Auth ကို Vercel proxy မှတစ်ဆင့်သုံးပြ�
 Vercel Environment Variables:
 
 ```text
-SUPABASE_URL=https://rcgxjkrflcucllqqxiaf.supabase.co
+SUPABASE_URL=https://example.supabase.co
 SUPABASE_PUBLISHABLE_KEY=sb_publishable_...
 ```
 
