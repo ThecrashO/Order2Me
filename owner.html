@@ -302,6 +302,21 @@
                             <span class="fw-semibold">Filter by category</span>
                             <span class="text-muted small" id="owner-menu-result-summary">0 items</span>
                         </div>
+                        <div class="owner-menu-availability-controls">
+                            <div class="owner-menu-availability-tabs" role="toolbar" aria-label="Filter menu by availability">
+                                <button type="button" class="owner-menu-availability-btn active" data-availability="all" aria-pressed="true">All <span data-availability-count="all">0</span></button>
+                                <button type="button" class="owner-menu-availability-btn" data-availability="available" aria-pressed="false">Available <span data-availability-count="available">0</span></button>
+                                <button type="button" class="owner-menu-availability-btn" data-availability="unavailable" aria-pressed="false">Unavailable <span data-availability-count="unavailable">0</span></button>
+                            </div>
+                            <label class="owner-menu-availability-select-wrap" for="owner-menu-availability-select">
+                                <span>View</span>
+                                <select id="owner-menu-availability-select" class="form-select" aria-label="Filter menu by availability">
+                                    <option value="all">All (0)</option>
+                                    <option value="available">Available (0)</option>
+                                    <option value="unavailable">Unavailable (0)</option>
+                                </select>
+                            </label>
+                        </div>
                         <div class="owner-menu-filter-bar" role="toolbar" aria-label="Filter menu by category">
                             <button type="button" class="owner-menu-filter-btn active" data-category="all" aria-pressed="true">
                                 <span aria-hidden="true">🧾</span> All

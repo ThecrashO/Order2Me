@@ -6,7 +6,7 @@
 //   2. Offline fallback for cached assets
 // ============================================================
 
-const CACHE_NAME = 'order2me-v32';
+const CACHE_NAME = 'order2me-v33';
 
 // Assets to cache on install (app shell)
 const APP_SHELL = [

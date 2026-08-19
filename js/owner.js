@@ -235,6 +235,7 @@ let ownerProfile      = null; // current logged-in owner
 let menuItemsData     = new Map(); // id -> full item object (used for edit/image lookups)
 let allMenuItemsArr   = [];  // flat array cache for menu search
 let activeOwnerMenuCategory = 'all';
+let activeOwnerMenuAvailability = 'all';
 let activeOwnerMenuSearch   = '';
 let allCustomersArr    = [];  // flat array cache for customer search
 let ownerRealtimeChannel = null; // Supabase Realtime channel reference
@@ -395,6 +396,7 @@ async function initializeApp() {
     });
 
     setupOwnerMenuCategoryFilters();
+    setupOwnerMenuAvailabilityFilters();
 
     // Load both sections
     await loadOrders();
@@ -1204,6 +1206,27 @@ function setupOwnerMenuCategoryFilters() {
     });
 }
 
+function setOwnerMenuAvailability(value) {
+    activeOwnerMenuAvailability = ['available', 'unavailable'].includes(value) ? value : 'all';
+    document.querySelectorAll('.owner-menu-availability-btn').forEach(btn => {
+        const isActive = btn.dataset.availability === activeOwnerMenuAvailability;
+        btn.classList.toggle('active', isActive);
+        btn.setAttribute('aria-pressed', String(isActive));
+    });
+    const select = document.getElementById('owner-menu-availability-select');
+    if (select) select.value = activeOwnerMenuAvailability;
+    applyOwnerMenuFilters();
+}
+
+function setupOwnerMenuAvailabilityFilters() {
+    document.querySelectorAll('.owner-menu-availability-btn').forEach(btn => {
+        btn.addEventListener('click', () => setOwnerMenuAvailability(btn.dataset.availability));
+    });
+    document.getElementById('owner-menu-availability-select')?.addEventListener('change', event => {
+        setOwnerMenuAvailability(event.target.value);
+    });
+}
+
 function updateOwnerMenuCategoryCounts() {
     const counts = { all: allMenuItemsArr.length, food: 0, drink: 0, salad: 0, snack: 0, dessert: 0, other: 0 };
     allMenuItemsArr.forEach(item => {
@@ -1229,16 +1252,34 @@ function updateOwnerMenuCategoryCounts() {
             button.setAttribute('aria-pressed', String(isActive));
         }
     });
+
+    const availabilityCounts = {
+        all: allMenuItemsArr.length,
+        available: allMenuItemsArr.filter(item => item.is_available).length,
+        unavailable: allMenuItemsArr.filter(item => !item.is_available).length
+    };
+    Object.entries(availabilityCounts).forEach(([status, count]) => {
+        document.querySelectorAll(`[data-availability-count="${status}"]`).forEach(el => { el.textContent = count; });
+    });
+    const availabilitySelect = document.getElementById('owner-menu-availability-select');
+    if (availabilitySelect) {
+        Array.from(availabilitySelect.options).forEach(option => {
+            const label = option.value === 'all' ? 'All' : option.value === 'available' ? 'Available' : 'Unavailable';
+            option.textContent = `${label} (${availabilityCounts[option.value] ?? 0})`;
+        });
+    }
 }
 
 function applyOwnerMenuFilters() {
     const filtered = allMenuItemsArr.filter(item => {
         const matchesCategory = activeOwnerMenuCategory === 'all'
             || normalizeOwnerMenuCategory(item.category) === activeOwnerMenuCategory;
+        const matchesAvailability = activeOwnerMenuAvailability === 'all'
+            || (activeOwnerMenuAvailability === 'available' ? Boolean(item.is_available) : !item.is_available);
         const matchesSearch = !activeOwnerMenuSearch
             || String(item.name || '').toLowerCase().includes(activeOwnerMenuSearch)
             || String(item.description || '').toLowerCase().includes(activeOwnerMenuSearch);
-        return matchesCategory && matchesSearch;
+        return matchesCategory && matchesAvailability && matchesSearch;
     });
 
     const summary = document.getElementById('owner-menu-result-summary');
@@ -1253,6 +1294,7 @@ function applyOwnerMenuFilters() {
 
 function clearOwnerMenuFilters() {
     activeOwnerMenuCategory = 'all';
+    activeOwnerMenuAvailability = 'all';
     activeOwnerMenuSearch = '';
 
     const searchInput = document.getElementById('menu-search-owner');
@@ -1264,6 +1306,13 @@ function clearOwnerMenuFilters() {
         btn.setAttribute('aria-pressed', String(isActive));
     });
     document.querySelector('.owner-menu-filter-bar')?.scrollTo({ left: 0, behavior: 'smooth' });
+    document.querySelectorAll('.owner-menu-availability-btn').forEach(btn => {
+        const isActive = btn.dataset.availability === 'all';
+        btn.classList.toggle('active', isActive);
+        btn.setAttribute('aria-pressed', String(isActive));
+    });
+    const availabilitySelect = document.getElementById('owner-menu-availability-select');
+    if (availabilitySelect) availabilitySelect.value = 'all';
     applyOwnerMenuFilters();
 }
 
@@ -1271,7 +1320,7 @@ function displayMenuItems(items) {
     const menuList = document.getElementById('menu-list');
 
     if (!items || items.length === 0) {
-        const hasFilters = activeOwnerMenuCategory !== 'all' || Boolean(activeOwnerMenuSearch);
+        const hasFilters = activeOwnerMenuCategory !== 'all' || activeOwnerMenuAvailability !== 'all' || Boolean(activeOwnerMenuSearch);
         menuList.innerHTML = allMenuItemsArr.length === 0
             ? `<div class="owner-menu-empty"><span class="owner-menu-empty-icon">🍽️</span><strong>No menu items yet</strong><span>Add your first item to start building the menu.</span></div>`
             : `<div class="owner-menu-empty"><span class="owner-menu-empty-icon">🔎</span><strong>No matching menu items</strong><span>Try another category or search term.</span>${hasFilters ? '<button type="button" class="btn btn-sm btn-outline-primary mt-2" onclick="clearOwnerMenuFilters()">Clear filters</button>' : ''}</div>`;
