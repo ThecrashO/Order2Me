@@ -5,7 +5,7 @@
 //   1. Loading menu from Supabase
 //   2. Cart management (add / remove / quantity)
 //   3. Checkout: delivery note (required) + payment
-//   4. Payment: KBZPay / WavePay / Already Paid + screenshot upload
+//   4. Payment: KBZPay / WavePay + screenshot upload
 //   5. Creating order + order_items + payment record in Supabase
 //   6. Success feedback
 // ============================================================
@@ -231,7 +231,7 @@ function showToast(message, type = 'info') {
 // ── State ────────────────────────────────────────────────────
 let currentCustomerProfile = null;
 let cart                  = [];
-let selectedPaymentMethod = null; // 'KBZPay' | 'WavePay' | 'Cash'
+let selectedPaymentMethod = null; // 'KBZPay' | 'WavePay'
 let allMenuItems          = [];   // full list for client-side category filter
 let activeCategory        = 'all';
 let approvedShops         = [];
@@ -1138,6 +1138,7 @@ async function openCheckout() {
 }
 
 function selectPaymentMethod(method) {
+    if (!['KBZPay', 'WavePay'].includes(method)) return;
     selectedPaymentMethod = method;
 
     // Update button styles
@@ -1153,11 +1154,9 @@ function selectPaymentMethod(method) {
     // Show/hide payment panels
     document.getElementById('kbzpay-panel').classList.add('d-none');
     document.getElementById('wavepay-panel').classList.add('d-none');
-    document.getElementById('cash-panel').classList.add('d-none');
 
     if (method === 'KBZPay')  document.getElementById('kbzpay-panel').classList.remove('d-none');
     if (method === 'WavePay') document.getElementById('wavepay-panel').classList.remove('d-none');
-    if (method === 'Cash')    document.getElementById('cash-panel').classList.remove('d-none');
 
     document.getElementById('payment-info-panel').classList.remove('d-none');
     document.getElementById('checkout-payment-error').classList.add('d-none');
@@ -1220,7 +1219,7 @@ async function submitCheckout() {
     }
 
     // Validate payment method
-    if (!selectedPaymentMethod) {
+    if (!['KBZPay', 'WavePay'].includes(selectedPaymentMethod)) {
         paymentError.classList.remove('d-none');
         valid = false;
     } else {
@@ -1230,12 +1229,12 @@ async function submitCheckout() {
     // Validate screenshot
     const screenshotFile = screenshotInput.files[0];
     if (!screenshotFile) {
-        if (selectedPaymentMethod === 'KBZPay' || selectedPaymentMethod === 'WavePay') {
-            // Open the payment app first so the customer can complete payment and return with a screenshot.
+        // Open the selected payment app so the customer can complete payment
+        // and return with the required screenshot.
+        if (['KBZPay', 'WavePay'].includes(selectedPaymentMethod)) {
             openPaymentApp(selectedPaymentMethod);
             return;
         }
-
         screenshotError.classList.remove('d-none');
         valid = false;
     } else {

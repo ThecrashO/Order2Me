@@ -19,7 +19,7 @@ University canteen များအတွက် ပြုလုပ်ထားသ
 - Approved shop များ၊ shop owner profile နှင့် menu ပုံများကြည့်ခြင်း
 - Category/search filter ဖြင့် menu ရှာခြင်း
 - Cart ထဲထည့်ပြီး delivery note နှင့် order တင်ခြင်း
-- Cash၊ KBZPay၊ WavePay payment method နှင့် payment screenshot
+- KBZPay၊ WavePay payment method နှင့် payment screenshot
 - Order status ကို Realtime သို့မဟုတ် polling fallback ဖြင့်ကြည့်ခြင်း
 - Owner ကို ဖုန်းခေါ်ရန် profile/call action
 - Order ရရှိကြောင်း customer confirmation နှင့် order history
@@ -175,8 +175,9 @@ SQL ဖိုင်များကို **Supabase Dashboard → SQL Editor** �
 6. `supabase/customer_received_confirmation.sql`
 7. `supabase/admin_users_notifications_screenshot_patch.sql`
 8. `supabase/required_account_contact.sql`
-9. `supabase/create_admin.sql` — placeholder email ကိုပြင်ပြီး run ရန်
-10. `supabase/v1_security_lockdown.sql` — နောက်ဆုံး run ရမည့် anonymous-access lockdown
+9. `supabase/remove_cash_payment.sql` — payment အသစ်များအတွက် KBZPay/WavePay သာလက်ခံရန်
+10. `supabase/create_admin.sql` — placeholder email ကိုပြင်ပြီး run ရန်
+11. `supabase/v1_security_lockdown.sql` — နောက်ဆုံး run ရမည့် anonymous-access lockdown
 
 လိုအပ်သည့် existing database များတွင်သာ `supabase/allow_duplicate_profile_names.sql` ကို run ပါ။ Abandoned Web Push objects ရှိသေးလျှင် `supabase/remove_web_push.sql` ဖြင့်ဖယ်ရှားနိုင်သည်။
 
@@ -263,7 +264,7 @@ Release မလုပ်မီ Customer၊ Owner နှင့် Admin account �
 - [ ] Owner shop availability open/closed
 - [ ] Menu add/edit/delete၊ image upload နှင့် Available/Unavailable filter
 - [ ] Customer shop/menu view၊ cart နှင့် order placement
-- [ ] Cash နှင့် payment screenshot order
+- [ ] KBZPay/WavePay နှင့် payment screenshot order
 - [ ] Owner receives new order and changes every status
 - [ ] Customer receives status updates and confirms receipt
 - [ ] Customer/Owner profile view နှင့် phone-call action

@@ -89,15 +89,14 @@ CREATE TABLE public.order_items (
 -- ============================================================
 -- 5. PAYMENTS TABLE
 -- Stores payment info for each order (1-to-1 relationship).
--- screenshot_url is null for Cash payments.
+-- Digital payment proof is required by the application for every new order.
 -- ============================================================
 CREATE TABLE public.payments (
   id              bigint GENERATED ALWAYS AS IDENTITY NOT NULL,
   order_id        bigint NOT NULL UNIQUE,
   payment_method  text   NOT NULL CHECK (payment_method = ANY (ARRAY[
                       'KBZPay'::text,
-                      'WavePay'::text,
-                      'Cash'::text
+                      'WavePay'::text
                   ])),
   screenshot_url  text,
   screenshot_path text,
@@ -146,7 +145,6 @@ CREATE TABLE public.payments (
 --
 --   KBZPay   -> screenshot_url required
 --   WavePay  -> screenshot_url required
---   Cash     -> screenshot_url optional / null
 --
 -- ============================================================-- ============================================================
 -- ROW LEVEL SECURITY POLICIES
