@@ -323,8 +323,6 @@ Release မလုပ်မီ Customer၊ Owner နှင့် Admin account �
 
 - [မြန်မာဘာသာ Project Documentation](PROJECT_DOCUMENTATION_MM.md)
 - [Vercel Deployment Guide](VERCEL_DEPLOY.md)
-- `Order2Me_Documentation` — project report source
-- `outputs/` — generated presentation/report documents
 
 ## Project status
 

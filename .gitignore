@@ -2,4 +2,9 @@
 .env.*
 !.env.example
 .vercel
+node_modules/
 supabase/*.local.sql
+outputs/
+work_docx_fix/
+fix_cards.py
+Order2Me_Documentation
