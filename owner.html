@@ -190,7 +190,7 @@
                     <path d="M3.05 13A9 9 0 1 0 6 5.3L3 8"/>
                     <path d="M12 7v5l4 2"/>
                 </svg>
-                <span>Order History</span>
+                <span>Business Insights</span>
             </button>
         </nav>
     </aside>
@@ -444,18 +444,20 @@
 
         </section>
 
-        <!-- Panel: Order History -->
+        <!-- Panel: Business Insights -->
         <section id="owner-panel-history" class="customer-panel">
 
-            <div class="panel-header" style="flex-wrap:wrap;gap:10px;">
-                <h2 class="panel-title">📜 Order History</h2>
-                <div class="ms-auto d-flex flex-wrap gap-2 align-items-center" id="owner-hist-filter-bar">
-                    <button class="hist-range-btn active" data-range="yesterday">Yesterday</button>
+            <div class="panel-header analytics-header">
+                <div>
+                    <h2 class="panel-title">Business Insights</h2>
+                    <p class="text-muted small mb-0">Sales, operations and customer insights for smarter decisions.</p>
+                </div>
+                <div class="analytics-range-bar" id="owner-hist-filter-bar">
+                    <button class="hist-range-btn" data-range="today">Today</button>
                     <button class="hist-range-btn" data-range="7days">Last 7 Days</button>
-                    <button class="hist-range-btn" data-range="30days">Last 30 Days</button>
+                    <button class="hist-range-btn active" data-range="30days">Last 30 Days</button>
                     <button class="hist-range-btn" data-range="all">All Time</button>
-                    <button class="hist-range-btn" data-range="custom">📅 Custom</button>
-                    <button class="hist-export-btn" id="owner-hist-export-btn">⬇ Export CSV</button>
+                    <button class="hist-range-btn" data-range="custom">Custom</button>
                 </div>
             </div>
 
@@ -469,12 +471,12 @@
                     <label class="small fw-bold text-muted">To</label>
                     <input type="date" id="owner-hist-to" class="hist-date-input">
                 </div>
-                <button class="hist-export-btn" id="owner-hist-custom-apply">Apply</button>
+                <button class="analytics-apply-btn" id="owner-hist-custom-apply">Apply dates</button>
             </div>
 
             <!-- Content rendered by JS -->
             <div id="owner-hist-content">
-                <div class="hist-loading"><div class="hist-spinner"></div><span>Loading history...</span></div>
+                <div class="hist-loading"><div class="hist-spinner"></div><span>Building business insights...</span></div>
             </div>
 
         </section>
@@ -997,6 +999,7 @@
 <script src="js/profile.js"></script>
 <script src="js/notification-permissions.js"></script>
 <script src="js/owner.js"></script>
+<script src="js/owner-analytics.js"></script>
 <script>
     if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
@@ -1004,180 +1007,6 @@
         });
     }
 
-    /* ── Owner History Panel ───────────────────────────────── */
-    let _ownerHistOrders   = [];
-    let _ownerHistSetup    = false;
-    let _ownerHistRangeMode = 'yesterday';
-
-    function initOwnerHistoryPanel() {
-        if (!_ownerHistSetup) {
-            _ownerHistSetup = true;
-            // Attach filter button listeners once
-            document.querySelectorAll('#owner-hist-filter-bar .hist-range-btn').forEach(btn => {
-                btn.addEventListener('click', () => {
-                    document.querySelectorAll('#owner-hist-filter-bar .hist-range-btn').forEach(b => b.classList.remove('active'));
-                    btn.classList.add('active');
-                    _ownerApplyRange(btn.dataset.range);
-                });
-            });
-            document.getElementById('owner-hist-custom-apply')?.addEventListener('click', _ownerApplyCustomRange);
-            document.getElementById('owner-hist-export-btn')?.addEventListener('click', _ownerExportCSV);
-        }
-        _ownerApplyRange('yesterday');
-        // Reset active button to "yesterday"
-        document.querySelectorAll('#owner-hist-filter-bar .hist-range-btn').forEach(b => b.classList.remove('active'));
-        const yBtn = document.querySelector('#owner-hist-filter-bar [data-range="yesterday"]');
-        if (yBtn) yBtn.classList.add('active');
-    }
-
-    function _ownerTodayStart() {
-        const d = new Date(); d.setHours(0,0,0,0); return d;
-    }
-    function _ownerDaysAgoStart(days) {
-        const d = new Date(); d.setDate(d.getDate() - days); d.setHours(0,0,0,0); return d;
-    }
-    function _oHEsc(text) {
-        const map = { '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#039;' };
-        return String(text).replace(/[&<>"']/g, m => map[m]);
-    }
-    function _oFmtDate(str) {
-        return new Date(str).toLocaleString('en-GB', { day:'2-digit', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit' });
-    }
-    function _oEscCSV(val) {
-        const s = String(val === null || val === undefined ? '' : val);
-        if (s.includes(',') || s.includes('"') || s.includes('\n')) return '"' + s.replace(/"/g,'""') + '"';
-        return s;
-    }
-
-    function _ownerApplyRange(mode) {
-        _ownerHistRangeMode = mode;
-        const customRow = document.getElementById('owner-hist-custom-row');
-        if (mode === 'custom') { customRow?.classList.add('show'); return; }
-        customRow?.classList.remove('show');
-
-        const todayStart = _ownerTodayStart();
-        if (mode === 'yesterday') {
-            _ownerLoadHistory(_ownerDaysAgoStart(1).toISOString(), new Date(todayStart.getTime() - 1).toISOString());
-        } else if (mode === '7days') {
-            _ownerLoadHistory(_ownerDaysAgoStart(7).toISOString(), todayStart.toISOString());
-        } else if (mode === '30days') {
-            _ownerLoadHistory(_ownerDaysAgoStart(30).toISOString(), todayStart.toISOString());
-        } else if (mode === 'all') {
-            _ownerLoadHistory(null, todayStart.toISOString());
-        }
-    }
-
-    function _ownerApplyCustomRange() {
-        const fromVal = document.getElementById('owner-hist-from')?.value;
-        const toVal   = document.getElementById('owner-hist-to')?.value;
-        if (!fromVal || !toVal) return;
-        let fromDate = new Date(fromVal + 'T00:00:00');
-        let toDate   = new Date(toVal   + 'T23:59:59');
-        if (fromDate > toDate) return;
-        const todayStart = _ownerTodayStart();
-        if (toDate >= todayStart) toDate = new Date(todayStart.getTime() - 1);
-        _ownerLoadHistory(fromDate.toISOString(), toDate.toISOString());
-    }
-
-    async function _ownerLoadHistory(startISO, endISO) {
-        const container = document.getElementById('owner-hist-content');
-        if (!container) return;
-        container.innerHTML = '<div class="hist-loading"><div class="hist-spinner"></div><span>Loading history...</span></div>';
-
-        let query = supabaseClient
-            .from('orders')
-            .select(`id, customer_name, status, total_amount, delivery_note, created_at,
-                order_items ( quantity, price, menu_items ( name ) ),
-                payments ( payment_method, screenshot_url )`)
-            .eq('shop_id', ownerShop.id)
-            .order('created_at', { ascending: false });
-
-        if (startISO) query = query.gte('created_at', startISO);
-        if (endISO)   query = query.lt('created_at', endISO);
-
-        const { data, error } = await query;
-        if (error) { container.innerHTML = `<div class="hist-error">&#9888; ${_oHEsc(error.message)}</div>`; return; }
-
-        _ownerHistOrders = data || [];
-        _ownerRenderHistory(_ownerHistOrders, container);
-    }
-
-    function _ownerRenderHistory(orders, container) {
-        const total     = orders.length;
-        const revenue   = orders.reduce((s, o) => s + Number(o.total_amount || 0), 0);
-        const avg       = total > 0 ? revenue / total : 0;
-        const delivered = orders.filter(o => o.status === 'delivered').length;
-        const cancelled = orders.filter(o => o.status === 'cancelled').length;
-
-        const statsHtml = `
-        <div class="hist-stats-grid mb-3">
-            <div class="hist-stat-card"><div class="hist-stat-icon">📦</div><div class="hist-stat-value">${total}</div><div class="hist-stat-label">Total Orders</div></div>
-            <div class="hist-stat-card"><div class="hist-stat-icon">💰</div><div class="hist-stat-value">${revenue.toLocaleString()}</div><div class="hist-stat-label">Revenue (MMK)</div></div>
-            <div class="hist-stat-card"><div class="hist-stat-icon">📊</div><div class="hist-stat-value">${Math.round(avg).toLocaleString()}</div><div class="hist-stat-label">Avg Order</div></div>
-            <div class="hist-stat-card"><div class="hist-stat-icon">✅</div><div class="hist-stat-value">${delivered}</div><div class="hist-stat-label">Received</div></div>
-            <div class="hist-stat-card"><div class="hist-stat-icon">❌</div><div class="hist-stat-value">${cancelled}</div><div class="hist-stat-label">Cancelled</div></div>
-        </div>`;
-
-        if (!orders.length) {
-            container.innerHTML = statsHtml + '<div class="hist-empty"><div class="hist-empty-icon">📭</div><h3>No orders in this period</h3><p>Try a different date range.</p></div>';
-            return;
-        }
-
-        const STATUS_BADGE = {
-            pending:   { key: 'pending', label: 'Pending' },
-            preparing: { key: 'preparing', label: 'Preparing' },
-            ready:     { key: 'ready', label: 'Ready' },
-            out_for_delivery: { key: 'sent', label: 'Sent' },
-            delivered: { key: 'received', label: 'Received' },
-            cancelled: { key: 'cancelled', label: 'Cancelled' }
-        };
-
-        const cardsHtml = orders.map(order => {
-            const s = STATUS_BADGE[order.status] || { key: 'unknown', label: order.status };
-            const payment = order.payments ? (Array.isArray(order.payments) ? order.payments[0] : order.payments) : null;
-            const itemsHtml = (order.order_items || []).map(oi => {
-                const name = oi.menu_items ? oi.menu_items.name : 'Item';
-                return `<div class="hist-item-row"><span>${_oHEsc(name)} &times; ${oi.quantity}</span><span>${(oi.price*oi.quantity).toLocaleString()} MMK</span></div>`;
-            }).join('');
-            const payHtml  = payment ? `<span class="hist-payment-badge">${_oHEsc(payment.payment_method)}</span>` : '';
-            const noteHtml = order.delivery_note ? `<div class="hist-note">📍 ${_oHEsc(order.delivery_note)}</div>` : '';
-            return `
-            <div class="hist-card">
-                <div class="hist-card-header">
-                    <div>
-                        <div class="hist-card-id">Order #${order.id}</div>
-                        <div class="hist-card-meta">👤 ${_oHEsc(order.customer_name || 'Unknown')}</div>
-                        <div class="hist-card-meta">🕐 ${_oFmtDate(order.created_at)}</div>
-                    </div>
-                    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px">
-                        <span class="order-status order-status--${s.key}">${s.label}</span>
-                        ${payHtml}
-                    </div>
-                </div>
-                <div>${itemsHtml}</div>
-                ${noteHtml}
-                <div class="hist-card-total">Total: ${Number(order.total_amount).toLocaleString()} MMK</div>
-            </div>`;
-        }).join('');
-
-        container.innerHTML = statsHtml + `<div class="hist-cards-list">${cardsHtml}</div>`;
-    }
-
-    function _ownerExportCSV() {
-        if (!_ownerHistOrders.length) return;
-        const rows = [['Order ID','Customer','Status','Total (MMK)','Payment','Items','Date']];
-        _ownerHistOrders.forEach(o => {
-            const payment = o.payments ? (Array.isArray(o.payments) ? o.payments[0] : o.payments) : null;
-            const items = (o.order_items || []).map(oi => `${oi.menu_items?.name || 'Item'} x${oi.quantity}`).join('; ');
-            rows.push([o.id, o.customer_name || '', o.status, o.total_amount, payment ? payment.payment_method : '', items, _oFmtDate(o.created_at)]);
-        });
-        const csv  = rows.map(r => r.map(_oEscCSV).join(',')).join('\n');
-        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-        const url  = URL.createObjectURL(blob);
-        const a    = document.createElement('a');
-        a.href = url; a.download = `order2me_history_${new Date().toISOString().slice(0,10)}.csv`;
-        a.click(); URL.revokeObjectURL(url);
-    }
 </script>
 
 </body>

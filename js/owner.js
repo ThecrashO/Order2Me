@@ -16,6 +16,7 @@ let ownerFeedbackLoading = false;
 let ownerFeedbackOffset = 0;
 let ownerFeedbackTotal = 0;
 let ownerFeedbackSearchTimer = null;
+let ownerFeedbackPollTimer = null;
 const OWNER_FEEDBACK_PAGE_SIZE = 10;
 const NOTIFICATION_PREF_KEY = 'order2me-notifications-enabled';
 
@@ -412,6 +413,7 @@ async function initializeApp() {
     // Subscribe to Realtime order events
     subscribeOwnerRealtime();
     startOwnerOrderPolling();
+    startOwnerFeedbackPolling();
 }
 
 // ── Realtime: listen for new orders & status changes ─────────
@@ -437,6 +439,7 @@ async function subscribeOwnerRealtime() {
 
                 // Reload full orders (with joins) to get complete data
                 loadOrders();
+                refreshOwnerInsightsIfOpen();
 
                 if (!alreadySeen) notifyOwnerNewOrder(newOrder);
             }
@@ -453,10 +456,24 @@ async function subscribeOwnerRealtime() {
 
                 // Refresh orders list to reflect status change
                 loadOrders();
+                refreshOwnerInsightsIfOpen();
 
                 if (snapshotStatus !== updated.status) {
                     notifyOwnerStatusChange(updated, snapshotStatus ?? previous?.status);
                 }
+            }
+        )
+        .on(
+            'postgres_changes',
+            { event: 'INSERT', schema: 'public', table: 'order_feedback', filter: `shop_id=eq.${ownerShop.id}` },
+            (payload) => {
+                const feedback = payload.new;
+                if (!feedback) return;
+                showToast(`★ New ${Number(feedback.rating) || ''}-star feedback for Order #${feedback.order_id}`, 'success');
+                if (document.getElementById('owner-panel-feedback')?.classList.contains('active-panel')) {
+                    loadOwnerFeedback(true);
+                }
+                refreshOwnerInsightsIfOpen();
             }
         )
         .subscribe((status) => {
@@ -498,6 +515,23 @@ function startOwnerOrderPolling() {
     document.addEventListener('visibilitychange', () => {
         if (document.visibilityState === 'visible') pollOwnerOrders();
     });
+}
+
+function refreshOwnerInsightsIfOpen() {
+    if (document.getElementById('owner-panel-history')?.classList.contains('active-panel')
+        && typeof initOwnerHistoryPanel === 'function') {
+        initOwnerHistoryPanel();
+    }
+}
+
+function startOwnerFeedbackPolling() {
+    if (ownerFeedbackPollTimer) window.clearInterval(ownerFeedbackPollTimer);
+    ownerFeedbackPollTimer = window.setInterval(() => {
+        const panel = document.getElementById('owner-panel-feedback');
+        if (panel?.classList.contains('active-panel') && !ownerFeedbackLoading) {
+            loadOwnerFeedback(true);
+        }
+    }, 12000);
 }
 
 async function pollOwnerOrders() {
@@ -560,6 +594,7 @@ window.addEventListener('beforeunload', () => {
         realtimeSupabaseClient.removeChannel(ownerRealtimeChannel);
     }
     if (ownerOrderPollTimer) window.clearInterval(ownerOrderPollTimer);
+    if (ownerFeedbackPollTimer) window.clearInterval(ownerFeedbackPollTimer);
 });
 
 // ── 2. ORDERS ─────────────────────────────────────────────────
