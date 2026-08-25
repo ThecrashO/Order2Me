@@ -176,8 +176,9 @@ SQL ဖိုင်များကို **Supabase Dashboard → SQL Editor** �
 7. `supabase/admin_users_notifications_screenshot_patch.sql`
 8. `supabase/required_account_contact.sql`
 9. `supabase/remove_cash_payment.sql` — payment အသစ်များအတွက် KBZPay/WavePay သာလက်ခံရန်
-10. `supabase/create_admin.sql` — placeholder email ကိုပြင်ပြီး run ရန်
-11. `supabase/v1_security_lockdown.sql` — နောက်ဆုံး run ရမည့် anonymous-access lockdown
+10. `supabase/order_feedback.sql` — delivered order rating/comment နှင့် Owner feedback view
+11. `supabase/create_admin.sql` — placeholder email ကိုပြင်ပြီး run ရန်
+12. `supabase/v1_security_lockdown.sql` — နောက်ဆုံး run ရမည့် anonymous-access lockdown
 
 လိုအပ်သည့် existing database များတွင်သာ `supabase/allow_duplicate_profile_names.sql` ကို run ပါ။ Abandoned Web Push objects ရှိသေးလျှင် `supabase/remove_web_push.sql` ဖြင့်ဖယ်ရှားနိုင်သည်။
 
@@ -267,6 +268,7 @@ Release မလုပ်မီ Customer၊ Owner နှင့် Admin account �
 - [ ] KBZPay/WavePay နှင့် payment screenshot order
 - [ ] Owner receives new order and changes every status
 - [ ] Customer receives status updates and confirms receipt
+- [ ] Customer rates a delivered order and Owner can view the feedback
 - [ ] Customer/Owner profile view နှင့် phone-call action
 - [ ] Order history
 - [ ] Android mobile layout၊ notification permission နှင့် VPN မပါသော network

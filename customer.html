@@ -823,6 +823,41 @@
         </div>
     </div>
 
+    <div class="modal fade" id="feedbackModal" tabindex="-1" aria-hidden="true" aria-labelledby="feedback-modal-title">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
+                <div class="modal-header border-0 feedback-modal-header">
+                    <div>
+                        <h5 class="modal-title" id="feedback-modal-title">Rate your order</h5>
+                        <div class="small text-muted" id="feedback-order-label">Tell the shop about your experience.</div>
+                    </div>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body pt-2">
+                    <div class="feedback-stars" id="feedback-stars" role="radiogroup" aria-label="Rating out of five">
+                        <button type="button" data-rating="1" aria-label="1 star">★</button>
+                        <button type="button" data-rating="2" aria-label="2 stars">★</button>
+                        <button type="button" data-rating="3" aria-label="3 stars">★</button>
+                        <button type="button" data-rating="4" aria-label="4 stars">★</button>
+                        <button type="button" data-rating="5" aria-label="5 stars">★</button>
+                    </div>
+                    <div class="text-center small fw-semibold mt-1 mb-3" id="feedback-rating-label">Choose a rating</div>
+                    <label class="form-label fw-semibold" for="feedback-comment">Comment <span class="text-muted fw-normal">(optional)</span></label>
+                    <textarea class="form-control" id="feedback-comment" rows="4" maxlength="500"
+                        placeholder="What went well? What could be improved?"></textarea>
+                    <div class="d-flex justify-content-between mt-1 small text-muted">
+                        <span id="feedback-error" class="text-danger"></span>
+                        <span><span id="feedback-comment-count">0</span>/500</span>
+                    </div>
+                </div>
+                <div class="modal-footer border-0 pt-0">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Not now</button>
+                    <button type="button" class="btn btn-primary" id="feedback-submit-btn" onclick="submitOrderFeedback()">Submit feedback</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- ④ FAB Cart Button -->
     <button id="cart-fab" aria-label="Open cart" onclick="toggleCartDrawer()" title="View Cart">
         <!-- Lucide-style ShoppingBag SVG -->
@@ -910,7 +945,8 @@
                 .from('orders')
                 .select(`id, status, total_amount, delivery_note, created_at, shops (name),
                     order_items ( quantity, price, menu_items (name) ),
-                    payments ( payment_method )`)
+                    payments ( payment_method ),
+                    order_feedback ( id, rating, comment, created_at )`)
                 .eq('customer_id', profile.id)
                 .lt('created_at', todayStart.toISOString())
                 .order('created_at', { ascending: false });
@@ -956,6 +992,14 @@
                     const items = (order.order_items || []).map(oi => `${oi.menu_items?.name || 'Item'} ×${oi.quantity}`).join(' • ');
                     const time = new Date(order.created_at).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
                     const payBadge = payment ? `<span class="hist-payment-badge">${_hEsc(payment.payment_method)}</span>` : '';
+                    const feedback = order.order_feedback
+                        ? (Array.isArray(order.order_feedback) ? order.order_feedback[0] : order.order_feedback)
+                        : null;
+                    const feedbackAction = order.status === 'delivered'
+                        ? feedback
+                            ? `<div class="customer-feedback-complete"><span class="feedback-stars-static">${'★'.repeat(feedback.rating)}${'☆'.repeat(5 - feedback.rating)}</span><strong>Feedback submitted</strong>${feedback.comment ? `<span>${_hEsc(feedback.comment)}</span>` : ''}</div>`
+                            : `<button type="button" class="btn btn-outline-primary btn-sm feedback-order-button" onclick="openOrderFeedback(${order.id})">★ Rate this order</button>`
+                        : '';
                     html += `
                     <div class="hist-card">
                         <div class="hist-card-header">
@@ -970,6 +1014,7 @@
                         </div>
                         <div class="hist-item-summary">${_hEsc(items) || '—'}</div>
                         <div class="hist-card-total">💰 ${Number(order.total_amount).toLocaleString()} MMK</div>
+                        ${feedbackAction}
                     </div>`;
                 });
                 html += '</div>';

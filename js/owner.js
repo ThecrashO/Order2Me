@@ -12,6 +12,7 @@
 let addFoodModal;
 let editFoodModal;
 let rejectModal;
+let ownerFeedbackLoading = false;
 const NOTIFICATION_PREF_KEY = 'order2me-notifications-enabled';
 
 function syncOwnerNotificationSettingUI() {
@@ -912,6 +913,58 @@ function renderOrders() {
 function filterOrdersBySearch(query) {
     activeSearch = query;
     renderOrders();
+}
+
+async function loadOwnerFeedback() {
+    const list = document.getElementById('owner-feedback-list');
+    const summary = document.getElementById('owner-feedback-summary');
+    if (!list || !summary || !ownerShop || ownerFeedbackLoading) return;
+    ownerFeedbackLoading = true;
+    list.innerHTML = '<p class="text-muted">Loading feedback…</p>';
+
+    const { data, error } = await supabaseClient
+        .from('order_feedback')
+        .select('id, order_id, rating, comment, created_at, orders!inner(customer_name)')
+        .eq('shop_id', ownerShop.id)
+        .order('created_at', { ascending: false });
+
+    ownerFeedbackLoading = false;
+    if (error) {
+        const missing = /order_feedback/i.test(error.message || '') || error.code === 'PGRST205';
+        summary.innerHTML = '';
+        list.innerHTML = `<div class="alert alert-${missing ? 'warning' : 'danger'}">${missing
+            ? 'Feedback database is not ready yet. Run supabase/order_feedback.sql in Supabase.'
+            : `Unable to load feedback: ${escapeHtml(error.message)}`}</div>`;
+        return;
+    }
+
+    const feedback = data || [];
+    const average = feedback.length
+        ? feedback.reduce((total, item) => total + Number(item.rating), 0) / feedback.length
+        : 0;
+    summary.innerHTML = `
+        <article><span>Average rating</span><strong>${feedback.length ? average.toFixed(1) : '—'} <small>/ 5</small></strong></article>
+        <article><span>Total responses</span><strong>${feedback.length}</strong></article>
+        <article><span>5-star ratings</span><strong>${feedback.filter(item => Number(item.rating) === 5).length}</strong></article>`;
+
+    if (!feedback.length) {
+        list.innerHTML = '<div class="feedback-empty"><strong>No feedback yet</strong><span>Delivered orders can be rated by customers.</span></div>';
+        return;
+    }
+
+    list.innerHTML = feedback.map(item => {
+        const customerName = item.orders?.customer_name || 'Customer';
+        const date = new Date(item.created_at).toLocaleString('en-GB', {
+            day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit'
+        });
+        return `<article class="owner-feedback-card">
+            <div class="owner-feedback-heading">
+                <div><strong>${escapeHtml(customerName)}</strong><span>Order #${item.order_id} · ${date}</span></div>
+                <span class="feedback-stars-static" aria-label="${item.rating} out of 5 stars">${'★'.repeat(item.rating)}${'☆'.repeat(5 - item.rating)}</span>
+            </div>
+            <p>${item.comment ? escapeHtml(item.comment) : '<span class="text-muted">No written comment.</span>'}</p>
+        </article>`;
+    }).join('');
 }
 
 function getStoredScreenshotPath(payment) {

@@ -19,6 +19,9 @@ let customerOrderPollTimer = null;
 let customerOrderPollBusy = false;
 let customerOrderSnapshot = new Map();
 const CUSTOMER_ORDER_POLL_INTERVAL_MS = 8000;
+let feedbackOrderId = null;
+let feedbackRating = 0;
+let feedbackFeatureAvailable = true;
 
 function isNotificationPreferenceEnabled() {
     return localStorage.getItem(NOTIFICATION_PREF_KEY) === 'true';
@@ -675,30 +678,28 @@ async function loadCustomerOrders() {
     const startISO = start.toISOString();
     const endISO   = end.toISOString();
 
-    const { data, error } = await supabaseClient
+    const buildCustomerOrderSelect = includeFeedback => `
+        id, shop_id, status, total_amount, delivery_note, created_at,
+        shops (name),
+        order_items (quantity, price, menu_items (name)),
+        payments (payment_method, screenshot_url)
+        ${includeFeedback ? ', order_feedback (id, rating, comment, created_at)' : ''}`;
+    const fetchCustomerOrders = includeFeedback => supabaseClient
         .from('orders')
-        .select(`
-            id,
-            shop_id,
-            status,
-            total_amount,
-            delivery_note,
-            created_at,
-            shops (name),
-            order_items (
-                quantity,
-                price,
-                menu_items (name)
-            ),
-            payments (
-                payment_method,
-                screenshot_url
-            )
-        `)
+        .select(buildCustomerOrderSelect(includeFeedback))
         .eq('customer_id', currentCustomerProfile.id)
         .gte('created_at', startISO)
         .lte('created_at', endISO)
         .order('created_at', { ascending: false });
+
+    let { data, error } = await fetchCustomerOrders(true);
+    if (error && (/order_feedback/i.test(error.message || '') || ['PGRST200', 'PGRST205'].includes(error.code))) {
+        feedbackFeatureAvailable = false;
+        console.warn('Feedback table is not available yet. Run supabase/order_feedback.sql.');
+        ({ data, error } = await fetchCustomerOrders(false));
+    } else if (!error) {
+        feedbackFeatureAvailable = true;
+    }
 
     if (error) {
         console.error('Error loading customer orders:', error);
@@ -815,6 +816,20 @@ function displayTodayOrders(orders) {
 
         const statusLabel = `<span class="order-status ${STATUS_CLASSES[order.status] || 'order-status--unknown'}">${STATUS_LABELS[order.status] || escapeHtml(order.status)}</span>`;
 
+        const feedback = order.order_feedback
+            ? (Array.isArray(order.order_feedback) ? order.order_feedback[0] : order.order_feedback)
+            : null;
+        const feedbackHtml = order.status === 'delivered' && feedbackFeatureAvailable
+            ? feedback
+                ? `<div class="customer-feedback-complete">
+                       <span class="feedback-stars-static" aria-label="${feedback.rating} out of 5 stars">${'★'.repeat(feedback.rating)}${'☆'.repeat(5 - feedback.rating)}</span>
+                       <strong>Thanks for your feedback</strong>
+                       ${feedback.comment ? `<span>${escapeHtml(feedback.comment)}</span>` : ''}
+                   </div>`
+                : `<button type="button" class="btn btn-outline-primary btn-sm feedback-order-button"
+                       onclick="openOrderFeedback(${order.id})">★ Rate this order</button>`
+            : '';
+
         const receiptActionHtml = order.status === 'out_for_delivery'
             ? `<div class="receipt-confirm-panel" role="status">
                    <div>
@@ -851,6 +866,7 @@ function displayTodayOrders(orders) {
                 <div class="order-tracker-total">💰 ${Number(order.total_amount).toLocaleString()} MMK</div>
                 ${noteHtml}
                 ${receiptActionHtml}
+                ${feedbackHtml}
             </div>
         </div>`;
     }).join('');
@@ -864,6 +880,78 @@ function displayCustomerOrders(orders) {
 function escapeHtml(text) {
     const map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' };
     return String(text).replace(/[&<>"']/g, m => map[m]);
+}
+
+function setFeedbackRating(rating) {
+    feedbackRating = Number(rating) || 0;
+    const labels = ['', 'Poor', 'Fair', 'Good', 'Very good', 'Excellent'];
+    document.querySelectorAll('#feedback-stars button').forEach(button => {
+        const value = Number(button.dataset.rating);
+        button.classList.toggle('selected', value <= feedbackRating);
+        button.setAttribute('aria-checked', value === feedbackRating ? 'true' : 'false');
+    });
+    const label = document.getElementById('feedback-rating-label');
+    if (label) label.textContent = feedbackRating ? `${labels[feedbackRating]} · ${feedbackRating}/5` : 'Choose a rating';
+    const error = document.getElementById('feedback-error');
+    if (error) error.textContent = '';
+}
+
+function openOrderFeedback(orderId) {
+    feedbackOrderId = Number(orderId);
+    document.getElementById('feedback-order-label').textContent = `Order #${feedbackOrderId} · Your feedback helps the shop improve.`;
+    document.getElementById('feedback-comment').value = '';
+    document.getElementById('feedback-comment-count').textContent = '0';
+    document.getElementById('feedback-error').textContent = '';
+    setFeedbackRating(0);
+    bootstrap.Modal.getOrCreateInstance(document.getElementById('feedbackModal')).show();
+}
+
+async function submitOrderFeedback() {
+    if (!currentCustomerProfile || !feedbackOrderId) return;
+    const errorEl = document.getElementById('feedback-error');
+    if (!feedbackRating) {
+        errorEl.textContent = 'Please choose a star rating.';
+        return;
+    }
+
+    const comment = document.getElementById('feedback-comment').value.trim();
+    const button = document.getElementById('feedback-submit-btn');
+    button.disabled = true;
+    button.textContent = 'Submitting…';
+
+    const order = await supabaseClient
+        .from('orders')
+        .select('id, shop_id, status')
+        .eq('id', feedbackOrderId)
+        .eq('customer_id', currentCustomerProfile.id)
+        .eq('status', 'delivered')
+        .maybeSingle();
+
+    if (order.error || !order.data) {
+        errorEl.textContent = order.error?.message || 'Only received orders can be rated.';
+        button.disabled = false;
+        button.textContent = 'Submit feedback';
+        return;
+    }
+
+    const { error } = await supabaseClient.from('order_feedback').insert({
+        order_id: feedbackOrderId,
+        customer_id: currentCustomerProfile.id,
+        shop_id: order.data.shop_id,
+        rating: feedbackRating,
+        comment: comment || null
+    });
+
+    button.disabled = false;
+    button.textContent = 'Submit feedback';
+    if (error) {
+        errorEl.textContent = error.code === '23505' ? 'Feedback was already submitted for this order.' : error.message;
+        return;
+    }
+
+    bootstrap.Modal.getInstance(document.getElementById('feedbackModal'))?.hide();
+    showToast('Thank you. Your feedback was submitted.', 'success');
+    await loadCustomerOrders();
 }
 
 // -- 2. CART --------------------------------------------------
@@ -1742,6 +1830,13 @@ async function initCustomerPage() {
 
     syncNotificationSettingUI();
     watchNotificationPermission(syncNotificationSettingUI);
+    document.querySelectorAll('#feedback-stars button').forEach(button => {
+        button.addEventListener('click', () => setFeedbackRating(button.dataset.rating));
+    });
+    const feedbackComment = document.getElementById('feedback-comment');
+    feedbackComment?.addEventListener('input', () => {
+        document.getElementById('feedback-comment-count').textContent = String(feedbackComment.value.length);
+    });
 
     // Populate profile dropdown name
     const profileNameEl = document.getElementById('profile-name');

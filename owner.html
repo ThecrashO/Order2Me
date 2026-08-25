@@ -176,6 +176,11 @@
                 <span>Customers</span>
                 <span class="badge bg-secondary ms-auto d-none" id="customers-count-badge">0</span>
             </button>
+            <button class="sidebar-nav-item" id="owner-nav-feedback"
+                    onclick="showOwnerPanel('feedback')">
+                <span aria-hidden="true">★</span>
+                <span>Customer Feedback</span>
+            </button>
             <!-- Order History panel button -->
             <button class="sidebar-nav-item" id="owner-nav-history"
                     onclick="showOwnerPanel('history')">
@@ -269,6 +274,20 @@
 
             <div id="orders-list">
                 <p class="text-muted">Loading today's orders...</p>
+            </div>
+        </section>
+
+        <section id="owner-panel-feedback" class="customer-panel">
+            <div class="panel-header">
+                <div>
+                    <h2 class="panel-title">Customer Feedback</h2>
+                    <p class="text-muted small mb-0">Ratings from completed orders at your shop.</p>
+                </div>
+                <button class="btn btn-sm btn-outline-secondary" type="button" onclick="loadOwnerFeedback()">Refresh</button>
+            </div>
+            <div id="owner-feedback-summary" class="feedback-summary-grid"></div>
+            <div id="owner-feedback-list" class="feedback-owner-list">
+                <p class="text-muted">Open this section to load feedback.</p>
             </div>
         </section>
 
@@ -843,7 +862,7 @@
 
     /* ── Panel switcher ───────────────────────────────────── */
     function showOwnerPanel(name) {
-        if (!['orders', 'menu', 'customers', 'history'].includes(name)) return;
+        if (!['orders', 'menu', 'customers', 'feedback', 'history'].includes(name)) return;
 
         document.querySelectorAll('.customer-panel').forEach(p => p.classList.remove('active-panel'));
         const target = document.getElementById('owner-panel-' + name);
@@ -862,6 +881,7 @@
         // Lazy-load on first switch
         if (name === 'menu') loadMenuItems();
         if (name === 'customers') loadCustomers();
+        if (name === 'feedback') loadOwnerFeedback();
         if (name === 'history') initOwnerHistoryPanel();
     }
 
@@ -875,7 +895,7 @@
     })();
 
     const savedOwnerPanel = window.location.hash.replace('#', '').trim();
-    if (['orders', 'menu', 'customers', 'history'].includes(savedOwnerPanel)) {
+    if (['orders', 'menu', 'customers', 'feedback', 'history'].includes(savedOwnerPanel)) {
         showOwnerPanel(savedOwnerPanel);
     }
 
