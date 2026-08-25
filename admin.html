@@ -151,7 +151,7 @@
 
     <section id="admin-panel-moderation" class="admin-view">
         <div class="admin-welcome"><div><span class="admin-eyebrow">Content safety</span><h1>Menu & feedback moderation</h1><p>Hide inappropriate content without deleting historical records.</p></div><button class="btn btn-light" onclick="loadAdminModeration()">↻ Refresh</button></div>
-        <section class="admin-panel"><div class="admin-filter-row mb-3"><button class="admin-filter active" data-moderation="menu">Menu items</button><button class="admin-filter" data-moderation="feedback">Feedback</button></div><input class="form-control mb-3" id="admin-moderation-search" type="search" placeholder="Search content or shop…"><div id="admin-moderation-list" class="admin-data-list"></div></section>
+        <section class="admin-panel"><div class="admin-filter-row mb-3"><button class="admin-filter active" data-moderation="menu">Menu items</button><button class="admin-filter" data-moderation="feedback">Feedback</button></div><div class="admin-segment-filters mb-3"><select class="form-select" id="admin-moderation-shop"><option value="all">All shops</option></select><select class="form-select" id="admin-moderation-customer"><option value="all">All customers</option></select><select class="form-select" id="admin-moderation-state"><option value="all">All states</option><option value="visible">Visible</option><option value="hidden">Hidden</option></select><input class="form-control" id="admin-moderation-search" type="search" placeholder="Search content, shop or customer…"></div><div id="admin-moderation-list" class="admin-data-list admin-grouped-list"></div></section>
     </section>
 
     <section id="admin-panel-announcements" class="admin-view">
@@ -167,7 +167,7 @@
 
     <section id="admin-panel-audit" class="admin-view">
         <div class="admin-welcome"><div><span class="admin-eyebrow">Accountability</span><h1>Admin audit logs</h1><p>Immutable history of sensitive administrative changes.</p></div><button class="btn btn-light" onclick="loadAdminAudit()">↻ Refresh</button></div>
-        <section class="admin-panel"><input class="form-control mb-3" id="admin-audit-search" type="search" placeholder="Search action, entity, admin or reason…"><div id="admin-audit-list" class="admin-data-list"></div></section>
+        <section class="admin-panel"><div class="admin-segment-filters mb-3"><select class="form-select" id="admin-audit-action"><option value="all">All actions</option></select><select class="form-select" id="admin-audit-entity"><option value="all">All entity types</option></select><select class="form-select" id="admin-audit-admin"><option value="all">All admins</option></select><input class="form-control" id="admin-audit-search" type="search" placeholder="Search ID or reason…"></div><div id="admin-audit-list" class="admin-data-list admin-grouped-list"></div></section>
     </section>
 
     <section id="admin-panel-system" class="admin-view">
@@ -179,6 +179,19 @@
 
 <div class="modal fade" id="adminActionModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered"><div class="modal-content"><div class="modal-header"><h5 class="modal-title" id="admin-action-title">Confirm action</h5><button class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><p id="admin-action-copy" class="text-muted small"></p><label class="form-label" for="admin-action-reason">Reason</label><textarea class="form-control" id="admin-action-reason" rows="3" maxlength="500"></textarea><div class="text-danger small mt-2 d-none" id="admin-action-error"></div></div><div class="modal-footer"><button class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button><button class="btn btn-danger" id="admin-action-confirm">Confirm</button></div></div></div>
+</div>
+
+<div class="modal fade" id="adminEntityProfileModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-lg">
+        <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
+            <div class="modal-header admin-entity-modal-header">
+                <div><span class="admin-eyebrow" id="admin-entity-profile-type">Profile</span><h5 class="modal-title" id="admin-entity-profile-title">Details</h5></div>
+                <button class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="admin-entity-profile-body"><div class="hist-loading"><div class="hist-spinner"></div><span>Loading profile…</span></div></div>
+            <div class="modal-footer border-0"><button class="btn btn-secondary" data-bs-dismiss="modal">Close</button></div>
+        </div>
+    </div>
 </div>
 
 <div class="toast-container position-fixed bottom-0 end-0 p-3" id="app-toast-container"></div>

@@ -49,6 +49,8 @@ University canteen များအတွက် ပြုလုပ်ထားသ
 - Audited user suspension၊ shop force-close နှင့် order cancellation
 - Menu/feedback moderation၊ platform announcements နှင့် runtime system settings
 - Platform overview၊ cross-shop analytics နှင့် searchable admin audit log
+- Moderation ကို shop/customer/state အလိုက်နှင့် audit logs ကို action/entity/admin အလိုက် group/filter လုပ်ခြင်း
+- App User နှင့် Shop cards မှ profile detail view ဖွင့်ပြီး contact၊ status၊ shop/menu၊ recent orders နှင့် summary metrics ကြည့်ခြင်း
 
 ## Order workflow
 
@@ -206,6 +208,7 @@ supabase/admin_control_center_fix.sql
 Corrective patch ပြီးနောက်—
 
 - Suspended customer/owner သည် အများဆုံး 15 စက္ကန့်အတွင်း sign out ဖြစ်ပြီး ပြန်ဝင်၍မရပါ။ Historical records မဖျက်ပါ။
+- Suspend RPC အောင်မြင်သည်နှင့် user card ရှိ `Suspend user` button သည် `Restore access` သို့ ချက်ချင်းပြောင်းပြီး database list နှင့် background sync ပြန်လုပ်သည်။
 - Shop suspend/force-close သည် database order acceptance ကိုပိတ်ပါသည်။
 - `ordering_enabled=false` သို့မဟုတ် `maintenance_mode=true` ဖြစ်လျှင် order အသစ်တင်၍မရပါ။
 - `maximum_order_amount` ကို order insert policy ကစစ်ပါသည်။
@@ -213,6 +216,8 @@ Corrective patch ပြီးနောက်—
 - `feedback_enabled=false` ဖြစ်လျှင် feedback အသစ်တင်၍မရပါ။
 - Admin sensitive action တစ်ခုစီသည် `admin_audit_logs` တွင် distinct action name၊ old/new values နှင့် reason တစ်ကြောင်းစီရေးပါသည်။
 - Announcement end time ထည့်ပါက လက်ရှိအချိန်ထက် အနည်းဆုံးတစ်မိနစ်နောက်ကျရပြီး end time မလိုလျှင် အလွတ်ထားနိုင်သည်။
+- Menu moderation ကို ဆိုင်အလိုက် group လုပ်ပြီး shop နှင့် visible/hidden state အလိုက် filter လုပ်နိုင်သည်။ Feedback moderation တွင် shop အပြင် customer အလိုက်ပါ filter လုပ်နိုင်သည်။
+- Audit logs ကို entity type အလိုက် group လုပ်ပြီး action၊ entity type၊ လုပ်ဆောင်ခဲ့သော admin နှင့် search text အလိုက် ခွဲကြည့်နိုင်သည်။
 
 Payment proof ကို Owner က order လက်ခံစဉ်စစ်ပြီး မမှန်ပါက order cancel လုပ်သည့် workflow ကိုဆက်သုံးပါသည်။ Admin dashboard တွင် payment verification မပါဝင်ပါ။
 
