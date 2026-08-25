@@ -565,7 +565,7 @@ window.addEventListener('beforeunload', () => {
 // ── 2. ORDERS ─────────────────────────────────────────────────
 
 async function loadOrders() {
-    const buildOrderSelect = includeScreenshotPath => `
+    const buildOrderSelect = (includeScreenshotPath, includeTracking = true) => `
             id,
             customer_id,
             customer_name,
@@ -573,6 +573,7 @@ async function loadOrders() {
             total_amount,
             delivery_note,
             created_at,
+            ${includeTracking ? 'estimated_delivery_at, accepted_at, ready_at, sent_at,' : ''}
             order_items (
                 quantity,
                 price,
@@ -584,17 +585,22 @@ async function loadOrders() {
                 ${includeScreenshotPath ? ', screenshot_path' : ''}
             )
         `;
-    const fetchOrders = includeScreenshotPath => supabaseClient
+    const fetchOrders = (includeScreenshotPath, includeTracking = true) => supabaseClient
         .from('orders')
-        .select(buildOrderSelect(includeScreenshotPath))
+        .select(buildOrderSelect(includeScreenshotPath, includeTracking))
         .eq('shop_id', ownerShop.id)
         .order('created_at', { ascending: false });
 
-    let { data, error } = await fetchOrders(true);
+    let { data, error } = await fetchOrders(true, true);
     const errorText = [error?.message, error?.details, error?.hint].filter(Boolean).join(' ');
-    if (error && (error.code === '42703' || /screenshot_path/i.test(errorText))) {
+    if (error && (error.code === '42703' || /estimated_delivery_at|accepted_at|ready_at|sent_at/i.test(errorText))) {
+        console.warn('Order queue migration is not available yet; loading without ETA fields.');
+        ({ data, error } = await fetchOrders(true, false));
+    }
+    const fallbackErrorText = [error?.message, error?.details, error?.hint].filter(Boolean).join(' ');
+    if (error && (error.code === '42703' || /screenshot_path/i.test(fallbackErrorText))) {
         console.warn('payments.screenshot_path is not available yet; loading orders with the legacy schema. Run the Supabase SQL patch.');
-        ({ data, error } = await fetchOrders(false));
+        ({ data, error } = await fetchOrders(false, false));
     }
 
     if (error) {
@@ -888,6 +894,15 @@ function renderOrders() {
             (o.customer_name || '').toLowerCase().includes(q)
         );
     }
+
+    const activeStatuses = new Set(['pending', 'preparing', 'ready', 'out_for_delivery']);
+    if (activeFilter === 'today' || activeStatuses.has(activeFilter)) {
+        filtered.sort((a, b) => {
+            const activeDifference = Number(!activeStatuses.has(a.status)) - Number(!activeStatuses.has(b.status));
+            return activeDifference || new Date(a.created_at) - new Date(b.created_at);
+        });
+    }
+    renderOwnerQueueOverview();
 
     if (filtered.length === 0) {
         const isToday = activeFilter === 'today';
@@ -1219,6 +1234,18 @@ function buildOrderCard(order) {
     const time = new Date(order.created_at).toLocaleString('en-GB', {
         day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit'
     });
+    const queuePosition = getOrderQueuePosition(order.id);
+    const eta = formatEstimatedArrival(order.estimated_delivery_at);
+    const isQueued = ['pending', 'preparing', 'ready'].includes(order.status);
+    const queueHtml = isQueued ? `<div class="order-queue-row">
+        <span class="order-queue-position"><strong>#${queuePosition || '—'}</strong> in queue</span>
+        ${eta ? `<span class="order-eta-chip">◷ Est. arrival <strong>${eta}</strong></span>` : '<span class="order-eta-chip is-unset">ETA set when accepted</span>'}
+    </div>` : order.status === 'out_for_delivery' && eta
+        ? `<div class="order-queue-row"><span class="order-eta-chip">🛵 Expected by <strong>${eta}</strong></span></div>` : '';
+    const estimateControl = ['preparing', 'ready'].includes(order.status)
+        ? `<div class="order-time-control"><label for="eta-${order.id}">Update arrival</label><select id="eta-${order.id}" onchange="updateOrderEstimate(${order.id}, this.value)">
+            <option value="">Choose time</option><option value="10">+10 min</option><option value="15">+15 min</option><option value="25">+25 min</option><option value="35">+35 min</option><option value="45">+45 min</option>
+        </select></div>` : '';
 
     return `
         <div class="card mb-3 order-card--${cfg.key}" id="order-card-${order.id}">
@@ -1239,23 +1266,46 @@ function buildOrderCard(order) {
                 <span class="order-status order-status--${cfg.key}">${cfg.label}</span>
             </div>
             <div class="card-body py-2">
+                ${queueHtml}
                 <ul class="list-group list-group-flush mb-2">${itemsHtml}</ul>
                 ${deliveryNoteHtml}
                 ${paymentHtml}
                 <p class="mb-1 small"><strong>Total:</strong> ${order.total_amount} MMK</p>
                 <p class="mb-2 text-muted small"><strong>Placed:</strong> ${time}</p>
-                <div class="d-flex gap-2">${actionHtml}</div>
+                <div class="order-actions-row"><div class="d-flex gap-2">${actionHtml}</div>${estimateControl}</div>
             </div>
         </div>
     `;
 }
 
 async function updateStatus(orderId, newStatus) {
-    const { error } = await supabaseClient
+    const currentOrder = allOrders.find(o => Number(o.id) === Number(orderId));
+    const updates = { status: newStatus };
+    const now = new Date();
+    if (newStatus === 'preparing') {
+        updates.accepted_at = now.toISOString();
+        const ordersAhead = Math.max(0, (getOrderQueuePosition(orderId) || 1) - 1);
+        updates.estimated_delivery_at = new Date(now.getTime() + (25 + ordersAhead * 10) * 60000).toISOString();
+    } else if (newStatus === 'ready') {
+        updates.ready_at = now.toISOString();
+    } else if (newStatus === 'out_for_delivery') {
+        updates.sent_at = now.toISOString();
+        if (!currentOrder?.estimated_delivery_at || new Date(currentOrder.estimated_delivery_at) < now) {
+            updates.estimated_delivery_at = new Date(now.getTime() + 15 * 60000).toISOString();
+        }
+    }
+    let { error } = await supabaseClient
         .from('orders')
-        .update({ status: newStatus })
+        .update(updates)
         .eq('id', orderId)
         .eq('shop_id', ownerShop.id);
+
+    if (error && (error.code === '42703' || /estimated_delivery_at|accepted_at|ready_at|sent_at/i.test(error.message || ''))) {
+        console.warn('Queue tracking migration is missing; updating status only.');
+        ({ error } = await supabaseClient.from('orders')
+            .update({ status: newStatus }).eq('id', orderId).eq('shop_id', ownerShop.id));
+        Object.keys(updates).filter(key => key !== 'status').forEach(key => delete updates[key]);
+    }
 
     if (error) {
         console.error('Error updating status:', error);
@@ -1265,12 +1315,32 @@ async function updateStatus(orderId, newStatus) {
 
     // Update local cache and re-render without full reload
     const order = allOrders.find(o => o.id === orderId);
-    if (order) order.status = newStatus;
+    if (order) Object.assign(order, updates);
     updatePendingBadge();
     renderOrders();
     const statusLabel = newStatus === 'out_for_delivery' ? 'sent' : newStatus;
     showToast(`Order #${orderId} updated to ${statusLabel}.`, 'success');
     console.log(`Order ${orderId} updated to ${newStatus}`);
+}
+
+async function updateOrderEstimate(orderId, minutes) {
+    const amount = Number(minutes);
+    const select = document.getElementById(`eta-${orderId}`);
+    if (!Number.isFinite(amount) || amount <= 0) return;
+    if (select) select.disabled = true;
+    const estimatedDeliveryAt = new Date(Date.now() + amount * 60000).toISOString();
+    const { error } = await supabaseClient.from('orders')
+        .update({ estimated_delivery_at: estimatedDeliveryAt })
+        .eq('id', orderId).eq('shop_id', ownerShop.id);
+    if (select) { select.disabled = false; select.value = ''; }
+    if (error) {
+        showToast('Could not update estimated arrival: ' + error.message, 'danger');
+        return;
+    }
+    const order = allOrders.find(item => Number(item.id) === Number(orderId));
+    if (order) order.estimated_delivery_at = estimatedDeliveryAt;
+    renderOrders();
+    showToast(`Order #${orderId} arrival time updated.`, 'success');
 }
 
 // ── Reject flow ───────────────────────────────────────────────
@@ -1394,6 +1464,38 @@ function setupOwnerMenuAvailabilityFilters() {
     document.getElementById('owner-menu-availability-select')?.addEventListener('change', event => {
         setOwnerMenuAvailability(event.target.value);
     });
+}
+
+function getActiveQueueOrders() {
+    return allOrders
+        .filter(order => ['pending', 'preparing', 'ready'].includes(order.status))
+        .sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
+}
+
+function getOrderQueuePosition(orderId) {
+    const index = getActiveQueueOrders().findIndex(order => Number(order.id) === Number(orderId));
+    return index < 0 ? null : index + 1;
+}
+
+function renderOwnerQueueOverview() {
+    const container = document.getElementById('owner-queue-overview');
+    if (!container) return;
+    const active = getActiveQueueOrders();
+    const preparing = active.filter(order => order.status === 'preparing').length;
+    const ready = active.filter(order => order.status === 'ready').length;
+    const next = active[0];
+    container.innerHTML = `<div class="owner-queue-summary">
+        <div class="queue-summary-main"><span class="queue-summary-icon" aria-hidden="true">≡</span><div><small>Active queue</small><strong>${active.length} ${active.length === 1 ? 'order' : 'orders'}</strong></div></div>
+        <div class="queue-summary-stat"><small>Preparing</small><strong>${preparing}</strong></div>
+        <div class="queue-summary-stat"><small>Ready</small><strong>${ready}</strong></div>
+        <div class="queue-summary-next"><small>Next to handle</small><strong>${next ? `Order #${next.id}` : 'Queue is clear'}</strong></div>
+    </div>`;
+}
+
+function formatEstimatedArrival(value) {
+    if (!value) return '';
+    const date = new Date(value);
+    return Number.isNaN(date.getTime()) ? '' : date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
 }
 
 function updateOwnerMenuCategoryCounts() {

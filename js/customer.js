@@ -18,6 +18,7 @@ let customerShopRefreshTimer = null;
 let customerOrderPollTimer = null;
 let customerOrderPollBusy = false;
 let customerOrderSnapshot = new Map();
+let customerOrderEtaSnapshot = new Map();
 const CUSTOMER_ORDER_POLL_INTERVAL_MS = 8000;
 let feedbackOrderId = null;
 let feedbackRating = 0;
@@ -678,25 +679,30 @@ async function loadCustomerOrders() {
     const startISO = start.toISOString();
     const endISO   = end.toISOString();
 
-    const buildCustomerOrderSelect = includeFeedback => `
+    const buildCustomerOrderSelect = (includeFeedback, includeTracking = true) => `
         id, shop_id, status, total_amount, delivery_note, created_at,
+        ${includeTracking ? 'estimated_delivery_at,' : ''}
         shops (name),
         order_items (quantity, price, menu_items (name)),
         payments (payment_method, screenshot_url)
         ${includeFeedback ? ', order_feedback (id, rating, comment, created_at)' : ''}`;
-    const fetchCustomerOrders = includeFeedback => supabaseClient
+    const fetchCustomerOrders = (includeFeedback, includeTracking = true) => supabaseClient
         .from('orders')
-        .select(buildCustomerOrderSelect(includeFeedback))
+        .select(buildCustomerOrderSelect(includeFeedback, includeTracking))
         .eq('customer_id', currentCustomerProfile.id)
         .gte('created_at', startISO)
         .lte('created_at', endISO)
         .order('created_at', { ascending: false });
 
-    let { data, error } = await fetchCustomerOrders(true);
+    let { data, error } = await fetchCustomerOrders(true, true);
+    if (error && (error.code === '42703' || /estimated_delivery_at/i.test(error.message || ''))) {
+        console.warn('Order queue migration is not available yet; loading without ETA.');
+        ({ data, error } = await fetchCustomerOrders(true, false));
+    }
     if (error && (/order_feedback/i.test(error.message || '') || ['PGRST200', 'PGRST205'].includes(error.code))) {
         feedbackFeatureAvailable = false;
         console.warn('Feedback table is not available yet. Run supabase/order_feedback.sql.');
-        ({ data, error } = await fetchCustomerOrders(false));
+        ({ data, error } = await fetchCustomerOrders(false, false));
     } else if (!error) {
         feedbackFeatureAvailable = true;
     }
@@ -711,6 +717,7 @@ async function loadCustomerOrders() {
     if (customerOrderSnapshot.size === 0) {
         customerOrderSnapshot = new Map(orders.map(order => [Number(order.id), order.status]));
     }
+    customerOrderEtaSnapshot = new Map(orders.map(order => [Number(order.id), order.estimated_delivery_at || null]));
     displayTodayOrders(orders);
 }
 
@@ -813,6 +820,15 @@ function displayTodayOrders(orders) {
         const time = new Date(order.created_at).toLocaleString('en-GB', {
             hour: '2-digit', minute: '2-digit'
         });
+        const estimatedDate = order.estimated_delivery_at ? new Date(order.estimated_delivery_at) : null;
+        const estimatedTime = estimatedDate && !Number.isNaN(estimatedDate.getTime())
+            ? estimatedDate.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }) : '';
+        const estimateHtml = !isCancelled && order.status !== 'delivered'
+            ? `<div class="customer-order-estimate ${order.status === 'out_for_delivery' ? 'is-sent' : ''}">
+                <span class="customer-estimate-icon" aria-hidden="true">${order.status === 'out_for_delivery' ? '🛵' : '◷'}</span>
+                <div><small>Estimated arrival</small><strong>${estimatedTime || (order.status === 'pending' ? 'Confirming shortly' : 'Being calculated')}</strong></div>
+                <span class="customer-estimate-live">Live</span>
+              </div>` : '';
 
         const statusLabel = `<span class="order-status ${STATUS_CLASSES[order.status] || 'order-status--unknown'}">${STATUS_LABELS[order.status] || escapeHtml(order.status)}</span>`;
 
@@ -861,6 +877,7 @@ function displayTodayOrders(orders) {
             <div class="order-tracker-body">
                 <!-- Progress tracker -->
                 <div class="order-steps">${stepsHtml}</div>
+                ${estimateHtml}
                 <!-- Items -->
                 <div class="order-tracker-items">${itemsText || '—'}</div>
                 <div class="order-tracker-total">💰 ${Number(order.total_amount).toLocaleString()} MMK</div>
@@ -1922,13 +1939,10 @@ async function subscribeCustomerRealtime() {
                 const snapshotStatus = customerOrderSnapshot.get(Number(updated.id));
                 customerOrderSnapshot.set(Number(updated.id), updated.status);
 
-                // Only react to status changes
-                if (old && old.status === updated.status) return;
-
-                // Refresh today's orders UI
+                // Refresh for both status and estimated-arrival changes.
                 loadCustomerOrders();
 
-                // Show notification for the new status
+                // Only show a notification when the status itself changes.
                 if (snapshotStatus !== updated.status) notifyCustomerOrderStatus(updated);
             }
         )
@@ -1980,23 +1994,34 @@ async function pollCustomerOrders() {
     customerOrderPollBusy = true;
     try {
         const { start, end } = getTodayBounds();
-        const { data, error } = await supabaseClient
+        let { data, error } = await supabaseClient
             .from('orders')
-            .select('id, status, created_at')
+            .select('id, status, created_at, estimated_delivery_at')
             .eq('customer_id', currentCustomerProfile.id)
             .gte('created_at', start.toISOString())
             .lte('created_at', end.toISOString());
+        if (error && (error.code === '42703' || /estimated_delivery_at/i.test(error.message || ''))) {
+            ({ data, error } = await supabaseClient.from('orders')
+                .select('id, status, created_at')
+                .eq('customer_id', currentCustomerProfile.id)
+                .gte('created_at', start.toISOString())
+                .lte('created_at', end.toISOString()));
+        }
         if (error) throw error;
 
         let changed = false;
         for (const order of data || []) {
             const id = Number(order.id);
             const previousStatus = customerOrderSnapshot.get(id);
+            const previousEta = customerOrderEtaSnapshot.get(id);
             customerOrderSnapshot.set(id, order.status);
+            customerOrderEtaSnapshot.set(id, order.estimated_delivery_at || null);
             if (previousStatus !== undefined && previousStatus !== order.status) {
                 notifyCustomerOrderStatus(order);
                 changed = true;
             } else if (previousStatus === undefined) {
+                changed = true;
+            } else if (previousEta !== (order.estimated_delivery_at || null)) {
                 changed = true;
             }
         }

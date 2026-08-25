@@ -177,8 +177,9 @@ SQL ဖိုင်များကို **Supabase Dashboard → SQL Editor** �
 8. `supabase/required_account_contact.sql`
 9. `supabase/remove_cash_payment.sql` — payment အသစ်များအတွက် KBZPay/WavePay သာလက်ခံရန်
 10. `supabase/order_feedback.sql` — delivered order rating/comment နှင့် Owner feedback view
-11. `supabase/create_admin.sql` — placeholder email ကိုပြင်ပြီး run ရန်
-12. `supabase/v1_security_lockdown.sql` — နောက်ဆုံး run ရမည့် anonymous-access lockdown
+11. `supabase/order_queue_tracking.sql` — FIFO queue၊ estimated arrival နှင့် status timestamps
+12. `supabase/create_admin.sql` — placeholder email ကိုပြင်ပြီး run ရန်
+13. `supabase/v1_security_lockdown.sql` — နောက်ဆုံး run ရမည့် anonymous-access lockdown
 
 လိုအပ်သည့် existing database များတွင်သာ `supabase/allow_duplicate_profile_names.sql` ကို run ပါ။ Abandoned Web Push objects ရှိသေးလျှင် `supabase/remove_web_push.sql` ဖြင့်ဖယ်ရှားနိုင်သည်။
 
