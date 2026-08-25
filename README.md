@@ -10,6 +10,7 @@ University canteen များအတွက် ပြုလုပ်ထားသ
 
 🚀 **Vercel deployment guide:** [VERCEL_DEPLOY.md](VERCEL_DEPLOY.md)
 
+
 ## အဓိကလုပ်ဆောင်ချက်များ
 
 ### Customer
@@ -337,3 +338,4 @@ Production release မတိုင်မီ final end-to-end testing၊ Supabase
 ---
 
 Built as a university project for a simpler canteen ordering experience.
+hi
