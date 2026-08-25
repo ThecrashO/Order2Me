@@ -51,6 +51,7 @@ University canteen များအတွက် ပြုလုပ်ထားသ
 - Platform overview၊ cross-shop analytics နှင့် searchable admin audit log
 - Moderation ကို shop/customer/state အလိုက်နှင့် audit logs ကို action/entity/admin အလိုက် group/filter လုပ်ခြင်း
 - App User နှင့် Shop cards မှ profile detail view ဖွင့်ပြီး contact၊ status၊ shop/menu၊ recent orders နှင့် summary metrics ကြည့်ခြင်း
+- Shop cards တွင် contextual primary action သာပြပြီး secondary Suspend/Reject/Force-close actions ကို More menu ထဲထားခြင်း၊ suspend ပြီးသည်နှင့် Restore button ချက်ချင်းပြောင်းခြင်း
 
 ## Order workflow
 
