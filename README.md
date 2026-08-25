@@ -46,6 +46,9 @@ University canteen များအတွက် ပြုလုပ်ထားသ
 - Owner account approve/reject လုပ်ခြင်း
 - User၊ shop နှင့် system activity စီမံကြည့်ရှုခြင်း
 - Admin dashboard ကို public signup မပေးဘဲ database မှ bootstrap လုပ်ခြင်း
+- Audited user suspension၊ shop force-close၊ order cancellation နှင့် payment review
+- Menu/feedback moderation၊ platform announcements နှင့် runtime system settings
+- Platform overview၊ cross-shop analytics နှင့် searchable admin audit log
 
 ## Order workflow
 
@@ -182,6 +185,7 @@ SQL ဖိုင်များကို **Supabase Dashboard → SQL Editor** �
 11. `supabase/order_queue_tracking.sql` — FIFO queue၊ estimated arrival နှင့် status timestamps
 12. `supabase/create_admin.sql` — placeholder email ကိုပြင်ပြီး run ရန်
 13. `supabase/v1_security_lockdown.sql` — နောက်ဆုံး run ရမည့် anonymous-access lockdown
+14. `supabase/admin_control_center.sql` — Admin audit/RPC foundation၊ user/shop/order/payment controls၊ moderation၊ announcements၊ system settings နှင့် analytics
 
 လိုအပ်သည့် existing database များတွင်သာ `supabase/allow_duplicate_profile_names.sql` ကို run ပါ။ Abandoned Web Push objects ရှိသေးလျှင် `supabase/remove_web_push.sql` ဖြင့်ဖယ်ရှားနိုင်သည်။
 

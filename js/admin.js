@@ -292,12 +292,9 @@ async function loadAdminShops() {
 }
 
 async function approveShop(shopId) {
-    const { error } = await supabaseClient.from('shops').update({
-        status: 'approved',
-        approved_by: adminProfile.id,
-        approved_at: new Date().toISOString(),
-        rejection_reason: null
-    }).eq('id', shopId);
+    const { error } = await supabaseClient.rpc('admin_control_shop', {
+        p_shop_id: shopId, p_status: 'approved', p_force_closed: null, p_reason: null
+    });
     if (error) { adminToast(error.message, 'danger'); return; }
     adminToast('Shop approved successfully.');
     await loadAdminShops();
@@ -318,12 +315,9 @@ async function submitAdminDecision() {
     const reason = document.getElementById('admin-reason-text').value.trim();
     if (!reason) { document.getElementById('admin-reason-error').classList.remove('d-none'); return; }
 
-    const { error } = await supabaseClient.from('shops').update({
-        status,
-        rejection_reason: reason,
-        approved_by: null,
-        approved_at: null
-    }).eq('id', id);
+    const { error } = await supabaseClient.rpc('admin_control_shop', {
+        p_shop_id: id, p_status: status, p_force_closed: null, p_reason: reason
+    });
     if (error) { adminToast(error.message, 'danger'); return; }
     adminReasonModal.hide();
     adminToast(status === 'suspended' ? 'Shop suspended.' : 'Application rejected.', 'warning');
@@ -336,9 +330,9 @@ async function initAdminPage() {
     syncAdminProfileUI();
     adminReasonModal = new bootstrap.Modal(document.getElementById('adminReasonModal'));
 
-    document.querySelectorAll('.admin-filter').forEach(button => {
+    document.querySelectorAll('#admin-filter-row .admin-filter').forEach(button => {
         button.addEventListener('click', () => {
-            document.querySelectorAll('.admin-filter').forEach(item => item.classList.remove('active'));
+            document.querySelectorAll('#admin-filter-row .admin-filter').forEach(item => item.classList.remove('active'));
             button.classList.add('active');
             adminActiveFilter = button.dataset.status;
             renderAdminShops();

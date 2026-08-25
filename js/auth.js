@@ -82,6 +82,9 @@ function getShopOrderAvailability(shop, date = new Date()) {
     if (shop.is_open === false) {
         return result(false, 'closed', 'Closed', 'The owner has temporarily closed this shop.');
     }
+    if (shop.admin_force_closed === true) {
+        return result(false, 'closed', 'Closed by administrator', shop.admin_close_reason || 'Ordering has been disabled by the platform administrator.');
+    }
     if (!isShopAcceptingOrdersToday(shop, date)) {
         return result(false, 'paused', 'Orders paused', 'This shop is not accepting orders today.');
     }
@@ -290,6 +293,10 @@ async function signOut() {
 
 async function signUpAccount(account) {
     const role = account.role === 'owner' ? 'owner' : 'customer';
+    if (role === 'owner') {
+        const { data: ownerSignupSetting } = await supabaseClient.from('system_settings').select('value').eq('key', 'owner_signup_enabled').maybeSingle();
+        if (ownerSignupSetting?.value === false) return { error: new Error('New owner registration is temporarily disabled.') };
+    }
     const metadata = {
         name: account.name,
         phone: account.phone || null,

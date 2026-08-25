@@ -53,6 +53,9 @@
         <button class="sidebar-close-btn" onclick="closeAdminSidebar()" aria-label="Close sidebar">&times;</button>
     </div>
     <nav class="sidebar-nav">
+        <button class="sidebar-nav-item" id="admin-nav-overview" onclick="showAdminPanel('overview')">
+            <span aria-hidden="true">▦</span><span>Overview</span>
+        </button>
         <button class="sidebar-nav-item active" id="admin-nav-shops" onclick="showAdminPanel('shops')" aria-current="page">
             <span aria-hidden="true">🏪</span><span>Shops</span>
             <span class="badge bg-warning text-dark ms-auto d-none" id="admin-pending-badge">0</span>
@@ -61,10 +64,22 @@
             <span aria-hidden="true">👥</span><span>App Users</span>
             <span class="badge bg-secondary ms-auto" id="admin-users-badge">0</span>
         </button>
+        <button class="sidebar-nav-item" id="admin-nav-orders" onclick="showAdminPanel('orders')"><span>🧾</span><span>Orders</span></button>
+        <button class="sidebar-nav-item" id="admin-nav-payments" onclick="showAdminPanel('payments')"><span>💳</span><span>Payments</span></button>
+        <button class="sidebar-nav-item" id="admin-nav-moderation" onclick="showAdminPanel('moderation')"><span>🛡</span><span>Moderation</span></button>
+        <button class="sidebar-nav-item" id="admin-nav-announcements" onclick="showAdminPanel('announcements')"><span>📣</span><span>Announcements</span></button>
+        <button class="sidebar-nav-item" id="admin-nav-analytics" onclick="showAdminPanel('analytics')"><span>📈</span><span>Analytics</span></button>
+        <button class="sidebar-nav-item" id="admin-nav-audit" onclick="showAdminPanel('audit')"><span>📋</span><span>Audit logs</span></button>
+        <button class="sidebar-nav-item" id="admin-nav-system" onclick="showAdminPanel('system')"><span>⚙</span><span>System settings</span></button>
     </nav>
 </aside>
 
 <main class="admin-main container-fluid">
+    <section id="admin-panel-overview" class="admin-view">
+        <div class="admin-welcome"><div><span class="admin-eyebrow">Operations center</span><h1>Platform overview</h1><p>Live health, workload, revenue, and attention items.</p></div><button class="btn btn-light" onclick="loadAdminOverview()">↻ Refresh</button></div>
+        <section class="admin-control-stats" id="admin-overview-stats"></section>
+        <section class="admin-panel"><div class="admin-section-head"><div><h2>Needs attention</h2><p>Shortcuts to pending operational work.</p></div></div><div id="admin-attention-list" class="admin-attention-grid"></div></section>
+    </section>
     <section id="admin-panel-shops" class="admin-view active-admin-view">
     <div class="admin-welcome">
         <div>
@@ -129,7 +144,47 @@
             </div>
         </section>
     </section>
+
+    <section id="admin-panel-orders" class="admin-view admin-generic-view" data-title="Order control" data-copy="Search all orders, inspect details, and cancel active orders with a recorded reason.">
+        <div class="admin-welcome"><div><span class="admin-eyebrow">Fulfilment</span><h1>Order control</h1><p>Search, inspect and resolve orders across every shop.</p></div><button class="btn btn-light" onclick="loadAdminOrders()">↻ Refresh</button></div>
+        <section class="admin-panel"><div class="admin-toolbar"><select class="form-select admin-compact-control" id="admin-order-status"><option value="all">All statuses</option><option>pending</option><option>preparing</option><option>ready</option><option>out_for_delivery</option><option>delivered</option><option>cancelled</option></select><input class="form-control" id="admin-order-search" type="search" placeholder="Order ID, customer or shop…"></div><div id="admin-order-list" class="admin-data-list"></div></section>
+    </section>
+
+    <section id="admin-panel-payments" class="admin-view">
+        <div class="admin-welcome"><div><span class="admin-eyebrow">Payment assurance</span><h1>Payment review</h1><p>Verify or reject uploaded payment evidence.</p></div><button class="btn btn-light" onclick="loadAdminPayments()">↻ Refresh</button></div>
+        <section class="admin-panel"><div class="admin-toolbar"><select class="form-select admin-compact-control" id="admin-payment-status"><option value="all">All reviews</option><option value="pending">Pending</option><option value="verified">Verified</option><option value="rejected">Rejected</option></select><input class="form-control" id="admin-payment-search" type="search" placeholder="Order ID, shop or method…"></div><div id="admin-payment-list" class="admin-data-list"></div></section>
+    </section>
+
+    <section id="admin-panel-moderation" class="admin-view">
+        <div class="admin-welcome"><div><span class="admin-eyebrow">Content safety</span><h1>Menu & feedback moderation</h1><p>Hide inappropriate content without deleting historical records.</p></div><button class="btn btn-light" onclick="loadAdminModeration()">↻ Refresh</button></div>
+        <section class="admin-panel"><div class="admin-filter-row mb-3"><button class="admin-filter active" data-moderation="menu">Menu items</button><button class="admin-filter" data-moderation="feedback">Feedback</button></div><input class="form-control mb-3" id="admin-moderation-search" type="search" placeholder="Search content or shop…"><div id="admin-moderation-list" class="admin-data-list"></div></section>
+    </section>
+
+    <section id="admin-panel-announcements" class="admin-view">
+        <div class="admin-welcome"><div><span class="admin-eyebrow">Communication</span><h1>Announcements</h1><p>Publish targeted customer, owner, or platform messages.</p></div></div>
+        <section class="admin-panel admin-form-panel"><form id="admin-announcement-form" class="admin-control-form"><div><label class="form-label">Title</label><input class="form-control" id="announcement-title" maxlength="160" required></div><div><label class="form-label">Audience</label><select class="form-select" id="announcement-audience"><option value="all">Everyone</option><option value="customers">Customers</option><option value="owners">Owners</option></select></div><div class="admin-form-wide"><label class="form-label">Message</label><textarea class="form-control" id="announcement-message" maxlength="2000" rows="3" required></textarea></div><div><label class="form-label">Ends at (optional)</label><input class="form-control" id="announcement-ends" type="datetime-local"></div><div class="admin-form-action"><button class="btn btn-primary" type="submit">Publish announcement</button></div></form></section>
+        <section class="admin-panel"><div id="admin-announcement-list" class="admin-data-list"></div></section>
+    </section>
+
+    <section id="admin-panel-analytics" class="admin-view">
+        <div class="admin-welcome"><div><span class="admin-eyebrow">Business intelligence</span><h1>Advanced analytics</h1><p>Revenue, order status, shop performance, and rating trends.</p></div><button class="btn btn-light" onclick="loadAdminAnalytics()">↻ Refresh</button></div>
+        <section class="admin-control-stats" id="admin-analytics-stats"></section><section class="admin-panel"><div id="admin-analytics-content"></div></section>
+    </section>
+
+    <section id="admin-panel-audit" class="admin-view">
+        <div class="admin-welcome"><div><span class="admin-eyebrow">Accountability</span><h1>Admin audit logs</h1><p>Immutable history of sensitive administrative changes.</p></div><button class="btn btn-light" onclick="loadAdminAudit()">↻ Refresh</button></div>
+        <section class="admin-panel"><input class="form-control mb-3" id="admin-audit-search" type="search" placeholder="Search action, entity, admin or reason…"><div id="admin-audit-list" class="admin-data-list"></div></section>
+    </section>
+
+    <section id="admin-panel-system" class="admin-view">
+        <div class="admin-welcome"><div><span class="admin-eyebrow">Platform configuration</span><h1>System settings</h1><p>Control availability and operational limits without redeploying.</p></div><button class="btn btn-light" onclick="loadAdminSystemSettings()">↻ Refresh</button></div>
+        <section class="admin-panel"><div id="admin-system-settings" class="admin-settings-grid"></div></section>
+    </section>
 </main>
+</div>
+
+<div class="modal fade" id="adminActionModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered"><div class="modal-content"><div class="modal-header"><h5 class="modal-title" id="admin-action-title">Confirm action</h5><button class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><p id="admin-action-copy" class="text-muted small"></p><label class="form-label" for="admin-action-reason">Reason</label><textarea class="form-control" id="admin-action-reason" rows="3" maxlength="500"></textarea><div class="text-danger small mt-2 d-none" id="admin-action-error"></div></div><div class="modal-footer"><button class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button><button class="btn btn-danger" id="admin-action-confirm">Confirm</button></div></div></div>
 </div>
 
 <div class="toast-container position-fixed bottom-0 end-0 p-3" id="app-toast-container"></div>
@@ -222,5 +277,6 @@
 <script src="js/auth.js"></script>
 <script src="js/profile.js"></script>
 <script src="js/admin.js"></script>
+<script src="js/admin-control.js"></script>
 </body>
 </html>

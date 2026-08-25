@@ -6,7 +6,7 @@
 //   2. Offline fallback for cached assets
 // ============================================================
 
-const CACHE_NAME = 'order2me-v41';
+const CACHE_NAME = 'order2me-v42';
 
 // Assets to cache on install (app shell)
 const APP_SHELL = [
@@ -27,6 +27,7 @@ const APP_SHELL = [
     './images/logo.png',
     './js/supabase.js',
     './js/auth.js',
+    './js/runtime-controls.js',
     './js/email-confirmation.js',
     './js/password-recovery.js',
     './js/profile.js',
@@ -36,6 +37,7 @@ const APP_SHELL = [
     './js/owner-analytics.js',
     './js/history.js',
     './js/admin.js',
+    './js/admin-control.js',
     './js/pending.js',
 ];
 
