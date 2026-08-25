@@ -270,6 +270,10 @@ CREATE OR REPLACE FUNCTION public.admin_create_announcement(
 ) RETURNS public.announcements LANGUAGE plpgsql SECURITY DEFINER SET search_path = '' AS $$
 DECLARE new_row public.announcements; actor bigint := public.admin_actor_id();
 BEGIN
+  IF nullif(trim(p_title),'') IS NULL THEN RAISE EXCEPTION 'Announcement title is required'; END IF;
+  IF nullif(trim(p_message),'') IS NULL THEN RAISE EXCEPTION 'Announcement message is required'; END IF;
+  IF p_audience NOT IN ('all','customers','owners') THEN RAISE EXCEPTION 'Invalid announcement audience'; END IF;
+  IF p_ends_at IS NOT NULL AND p_ends_at<=now() THEN RAISE EXCEPTION 'Announcement end time must be in the future'; END IF;
   INSERT INTO public.announcements(title,message,audience,target_user_id,target_shop_id,ends_at,created_by)
   VALUES(trim(p_title),trim(p_message),p_audience,p_target_user_id,p_target_shop_id,p_ends_at,actor)
   RETURNING * INTO new_row;

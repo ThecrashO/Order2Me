@@ -212,6 +212,7 @@ Corrective patch ပြီးနောက်—
 - `owner_signup_enabled=false` ဖြစ်လျှင် owner profile အသစ်ဖန်တီး၍မရပါ။
 - `feedback_enabled=false` ဖြစ်လျှင် feedback အသစ်တင်၍မရပါ။
 - Admin sensitive action တစ်ခုစီသည် `admin_audit_logs` တွင် distinct action name၊ old/new values နှင့် reason တစ်ကြောင်းစီရေးပါသည်။
+- Announcement end time ထည့်ပါက လက်ရှိအချိန်ထက် အနည်းဆုံးတစ်မိနစ်နောက်ကျရပြီး end time မလိုလျှင် အလွတ်ထားနိုင်သည်။
 
 Payment proof ကို Owner က order လက်ခံစဉ်စစ်ပြီး မမှန်ပါက order cancel လုပ်သည့် workflow ကိုဆက်သုံးပါသည်။ Admin dashboard တွင် payment verification မပါဝင်ပါ။
 

@@ -6,6 +6,11 @@ BEGIN;
 -- Payment validation remains the owner's order-acceptance responsibility.
 DROP FUNCTION IF EXISTS public.admin_review_payment(bigint,text,text);
 
+ALTER TABLE public.announcements DROP CONSTRAINT IF EXISTS announcements_check;
+ALTER TABLE public.announcements DROP CONSTRAINT IF EXISTS announcements_end_after_start_check;
+ALTER TABLE public.announcements ADD CONSTRAINT announcements_end_after_start_check
+  CHECK (ends_at IS NULL OR ends_at>starts_at);
+
 -- A suspended account no longer resolves as an operational identity.
 CREATE OR REPLACE FUNCTION public.current_profile_id()
 RETURNS bigint LANGUAGE sql STABLE SECURITY DEFINER SET search_path = '' AS $$
@@ -134,13 +139,33 @@ BEGIN
 END;
 $$;
 
+CREATE OR REPLACE FUNCTION public.admin_create_announcement(
+  p_title text, p_message text, p_audience text DEFAULT 'all', p_target_user_id bigint DEFAULT NULL,
+  p_target_shop_id bigint DEFAULT NULL, p_ends_at timestamptz DEFAULT NULL
+) RETURNS public.announcements LANGUAGE plpgsql SECURITY DEFINER SET search_path = '' AS $$
+DECLARE new_row public.announcements; actor bigint:=public.admin_actor_id();
+BEGIN
+  IF nullif(trim(p_title),'') IS NULL THEN RAISE EXCEPTION 'Announcement title is required'; END IF;
+  IF nullif(trim(p_message),'') IS NULL THEN RAISE EXCEPTION 'Announcement message is required'; END IF;
+  IF p_audience NOT IN ('all','customers','owners') THEN RAISE EXCEPTION 'Invalid announcement audience'; END IF;
+  IF p_ends_at IS NOT NULL AND p_ends_at<=now() THEN RAISE EXCEPTION 'Announcement end time must be in the future'; END IF;
+  INSERT INTO public.announcements(title,message,audience,target_user_id,target_shop_id,ends_at,created_by)
+  VALUES(trim(p_title),trim(p_message),p_audience,p_target_user_id,p_target_shop_id,p_ends_at,actor)
+  RETURNING * INTO new_row;
+  PERFORM public.admin_log_action('ANNOUNCEMENT_CREATED','announcement',new_row.id::text,NULL,to_jsonb(new_row),NULL);
+  RETURN new_row;
+END;
+$$;
+
 REVOKE ALL ON FUNCTION public.enforce_owner_signup_setting() FROM PUBLIC;
 REVOKE ALL ON FUNCTION public.admin_control_shop(bigint,text,boolean,text) FROM PUBLIC;
 REVOKE ALL ON FUNCTION public.get_admin_overview() FROM PUBLIC;
 REVOKE ALL ON FUNCTION public.admin_update_setting(text,jsonb) FROM PUBLIC;
+REVOKE ALL ON FUNCTION public.admin_create_announcement(text,text,text,bigint,bigint,timestamptz) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION public.admin_control_shop(bigint,text,boolean,text) TO authenticated;
 GRANT EXECUTE ON FUNCTION public.get_admin_overview() TO authenticated;
 GRANT EXECUTE ON FUNCTION public.admin_update_setting(text,jsonb) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.admin_create_announcement(text,text,text,bigint,bigint,timestamptz) TO authenticated;
 GRANT EXECUTE ON FUNCTION public.shop_accepts_orders(bigint) TO authenticated;
 
 NOTIFY pgrst, 'reload schema';
