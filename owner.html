@@ -286,8 +286,38 @@
                 <button class="btn btn-sm btn-outline-secondary" type="button" onclick="loadOwnerFeedback()">Refresh</button>
             </div>
             <div id="owner-feedback-summary" class="feedback-summary-grid"></div>
+            <div class="feedback-toolbar">
+                <div class="feedback-search-wrap">
+                    <span aria-hidden="true">⌕</span>
+                    <input type="search" id="owner-feedback-search" class="form-control"
+                        placeholder="Search customer or Order ID..." autocomplete="off"
+                        oninput="scheduleOwnerFeedbackSearch()">
+                </div>
+                <select id="owner-feedback-rating" class="form-select" onchange="loadOwnerFeedback(true)" aria-label="Filter by rating">
+                    <option value="all">All ratings</option>
+                    <option value="5">5 stars</option>
+                    <option value="4">4 stars</option>
+                    <option value="3">3 stars</option>
+                    <option value="2">2 stars</option>
+                    <option value="1">1 star</option>
+                </select>
+                <select id="owner-feedback-date" class="form-select" onchange="loadOwnerFeedback(true)" aria-label="Filter by date">
+                    <option value="all">All time</option>
+                    <option value="today">Today</option>
+                    <option value="7days">Last 7 days</option>
+                    <option value="30days">Last 30 days</option>
+                </select>
+                <select id="owner-feedback-sort" class="form-select" onchange="loadOwnerFeedback(true)" aria-label="Sort feedback">
+                    <option value="newest">Newest first</option>
+                    <option value="oldest">Oldest first</option>
+                </select>
+            </div>
+            <div class="feedback-result-line" id="owner-feedback-result-line"></div>
             <div id="owner-feedback-list" class="feedback-owner-list">
                 <p class="text-muted">Open this section to load feedback.</p>
+            </div>
+            <div class="text-center mt-3 d-none" id="owner-feedback-load-more-wrap">
+                <button type="button" class="btn btn-outline-primary" id="owner-feedback-load-more" onclick="loadMoreOwnerFeedback()">Load more</button>
             </div>
         </section>
 

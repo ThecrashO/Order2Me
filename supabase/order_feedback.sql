@@ -15,6 +15,9 @@ CREATE TABLE IF NOT EXISTS public.order_feedback (
 CREATE INDEX IF NOT EXISTS idx_order_feedback_shop_created
   ON public.order_feedback(shop_id, created_at DESC);
 
+CREATE INDEX IF NOT EXISTS idx_order_feedback_shop_rating
+  ON public.order_feedback(shop_id, rating);
+
 ALTER TABLE public.order_feedback ENABLE ROW LEVEL SECURITY;
 
 DROP POLICY IF EXISTS "Customers create feedback for delivered orders" ON public.order_feedback;
@@ -74,6 +77,34 @@ DROP TRIGGER IF EXISTS trg_protect_order_feedback_identity ON public.order_feedb
 CREATE TRIGGER trg_protect_order_feedback_identity
 BEFORE UPDATE ON public.order_feedback
 FOR EACH ROW EXECUTE FUNCTION public.protect_order_feedback_identity();
+
+-- Aggregate the complete shop history without sending every feedback row to
+-- the browser. RLS still applies because this is SECURITY INVOKER (default).
+CREATE OR REPLACE FUNCTION public.get_shop_feedback_summary(target_shop_id bigint)
+RETURNS TABLE (
+  average_rating numeric,
+  total_feedback bigint,
+  five_star_count bigint,
+  this_month_count bigint
+)
+LANGUAGE sql
+STABLE
+SECURITY INVOKER
+SET search_path = public
+AS $$
+  SELECT
+    round(coalesce(avg(f.rating), 0), 1),
+    count(*),
+    count(*) FILTER (WHERE f.rating = 5),
+    count(*) FILTER (
+      WHERE f.created_at >= date_trunc('month', now())
+    )
+  FROM public.order_feedback f
+  WHERE f.shop_id = target_shop_id;
+$$;
+
+REVOKE ALL ON FUNCTION public.get_shop_feedback_summary(bigint) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION public.get_shop_feedback_summary(bigint) TO authenticated;
 
 DO $$
 BEGIN

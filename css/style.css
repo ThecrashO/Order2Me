@@ -3675,7 +3675,7 @@ textarea {
 }
 .customer-feedback-complete > span:last-child { color: #64748b; font-size: .82rem; }
 .feedback-stars-static { color: #f59e0b; font-size: 1.05rem; letter-spacing: .05rem; white-space: nowrap; }
-.feedback-summary-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .85rem; margin-bottom: 1rem; }
+.feedback-summary-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: .85rem; margin-bottom: 1rem; }
 .feedback-summary-grid article {
     display: grid; gap: .25rem; padding: 1rem; border: 1px solid #e2e8f0;
     border-radius: 15px; background: #fff;
@@ -3691,6 +3691,15 @@ textarea {
 .owner-feedback-card p { margin: .75rem 0 0; color: #334155; }
 .feedback-empty { display: grid; place-items: center; gap: .3rem; padding: 2.5rem 1rem; color: #64748b; text-align: center; }
 .feedback-empty strong { color: #334155; }
+.feedback-toolbar {
+    display: grid; grid-template-columns: minmax(220px, 1fr) repeat(3, minmax(130px, auto));
+    gap: .7rem; margin-bottom: .6rem; padding: .8rem; border: 1px solid #e2e8f0;
+    border-radius: 15px; background: #f8fafc;
+}
+.feedback-search-wrap { position: relative; }
+.feedback-search-wrap > span { position: absolute; left: .75rem; top: 50%; transform: translateY(-50%); color: #64748b; z-index: 1; }
+.feedback-search-wrap .form-control { padding-left: 2rem; }
+.feedback-result-line { min-height: 1.25rem; margin: 0 0 .65rem; color: #64748b; font-size: .78rem; font-weight: 650; }
 
 @media (max-width: 767.98px) {
     .shop-picker-list { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; }
@@ -3700,10 +3709,15 @@ textarea {
     .admin-stats { grid-template-columns: 1fr 1fr; }
     .admin-toolbar { flex-direction: column; }
     .admin-toolbar > .form-control { width: 100%; }
+    .feedback-summary-grid { grid-template-columns: 1fr 1fr; }
+    .feedback-toolbar { grid-template-columns: 1fr 1fr; }
+    .feedback-search-wrap { grid-column: 1 / -1; }
 }
 
 @media (max-width: 575.98px) {
     .feedback-summary-grid { grid-template-columns: 1fr; }
+    .feedback-toolbar { grid-template-columns: 1fr; }
+    .feedback-search-wrap { grid-column: auto; }
     .owner-feedback-heading { flex-direction: column; }
     .receipt-confirm-panel {
         align-items: stretch;

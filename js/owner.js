@@ -13,6 +13,10 @@ let addFoodModal;
 let editFoodModal;
 let rejectModal;
 let ownerFeedbackLoading = false;
+let ownerFeedbackOffset = 0;
+let ownerFeedbackTotal = 0;
+let ownerFeedbackSearchTimer = null;
+const OWNER_FEEDBACK_PAGE_SIZE = 10;
 const NOTIFICATION_PREF_KEY = 'order2me-notifications-enabled';
 
 function syncOwnerNotificationSettingUI() {
@@ -915,44 +919,50 @@ function filterOrdersBySearch(query) {
     renderOrders();
 }
 
-async function loadOwnerFeedback() {
-    const list = document.getElementById('owner-feedback-list');
+function getOwnerFeedbackFilters() {
+    return {
+        search: document.getElementById('owner-feedback-search')?.value.trim() || '',
+        rating: document.getElementById('owner-feedback-rating')?.value || 'all',
+        date: document.getElementById('owner-feedback-date')?.value || 'all',
+        sort: document.getElementById('owner-feedback-sort')?.value || 'newest'
+    };
+}
+
+function getOwnerFeedbackDateStart(mode) {
+    if (mode === 'all') return null;
+    const start = new Date();
+    if (mode === 'today') start.setHours(0, 0, 0, 0);
+    if (mode === '7days') start.setDate(start.getDate() - 7);
+    if (mode === '30days') start.setDate(start.getDate() - 30);
+    return start.toISOString();
+}
+
+function scheduleOwnerFeedbackSearch() {
+    window.clearTimeout(ownerFeedbackSearchTimer);
+    ownerFeedbackSearchTimer = window.setTimeout(() => loadOwnerFeedback(true), 350);
+}
+
+async function loadOwnerFeedbackSummary() {
     const summary = document.getElementById('owner-feedback-summary');
-    if (!list || !summary || !ownerShop || ownerFeedbackLoading) return;
-    ownerFeedbackLoading = true;
-    list.innerHTML = '<p class="text-muted">Loading feedback…</p>';
-
-    const { data, error } = await supabaseClient
-        .from('order_feedback')
-        .select('id, order_id, rating, comment, created_at, orders!inner(customer_name)')
-        .eq('shop_id', ownerShop.id)
-        .order('created_at', { ascending: false });
-
-    ownerFeedbackLoading = false;
+    if (!summary || !ownerShop) return;
+    const { data, error } = await supabaseClient.rpc('get_shop_feedback_summary', {
+        target_shop_id: ownerShop.id
+    });
     if (error) {
-        const missing = /order_feedback/i.test(error.message || '') || error.code === 'PGRST205';
+        console.warn('Unable to load feedback summary:', error.message);
         summary.innerHTML = '';
-        list.innerHTML = `<div class="alert alert-${missing ? 'warning' : 'danger'}">${missing
-            ? 'Feedback database is not ready yet. Run supabase/order_feedback.sql in Supabase.'
-            : `Unable to load feedback: ${escapeHtml(error.message)}`}</div>`;
         return;
     }
-
-    const feedback = data || [];
-    const average = feedback.length
-        ? feedback.reduce((total, item) => total + Number(item.rating), 0) / feedback.length
-        : 0;
+    const stats = Array.isArray(data) ? data[0] : data;
     summary.innerHTML = `
-        <article><span>Average rating</span><strong>${feedback.length ? average.toFixed(1) : '—'} <small>/ 5</small></strong></article>
-        <article><span>Total responses</span><strong>${feedback.length}</strong></article>
-        <article><span>5-star ratings</span><strong>${feedback.filter(item => Number(item.rating) === 5).length}</strong></article>`;
+        <article><span>Average rating</span><strong>${Number(stats?.total_feedback || 0) ? Number(stats.average_rating).toFixed(1) : '—'} <small>/ 5</small></strong></article>
+        <article><span>Total feedback</span><strong>${Number(stats?.total_feedback || 0).toLocaleString()}</strong></article>
+        <article><span>5-star ratings</span><strong>${Number(stats?.five_star_count || 0).toLocaleString()}</strong></article>
+        <article><span>This month</span><strong>${Number(stats?.this_month_count || 0).toLocaleString()}</strong></article>`;
+}
 
-    if (!feedback.length) {
-        list.innerHTML = '<div class="feedback-empty"><strong>No feedback yet</strong><span>Delivered orders can be rated by customers.</span></div>';
-        return;
-    }
-
-    list.innerHTML = feedback.map(item => {
+function renderOwnerFeedbackCards(feedback) {
+    return feedback.map(item => {
         const customerName = item.orders?.customer_name || 'Customer';
         const date = new Date(item.created_at).toLocaleString('en-GB', {
             day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit'
@@ -965,6 +975,81 @@ async function loadOwnerFeedback() {
             <p>${item.comment ? escapeHtml(item.comment) : '<span class="text-muted">No written comment.</span>'}</p>
         </article>`;
     }).join('');
+}
+
+async function loadOwnerFeedback(reset = true) {
+    const list = document.getElementById('owner-feedback-list');
+    const summary = document.getElementById('owner-feedback-summary');
+    const resultLine = document.getElementById('owner-feedback-result-line');
+    const moreWrap = document.getElementById('owner-feedback-load-more-wrap');
+    const moreButton = document.getElementById('owner-feedback-load-more');
+    if (!list || !summary || !ownerShop || ownerFeedbackLoading) return;
+    ownerFeedbackLoading = true;
+    if (reset) {
+        ownerFeedbackOffset = 0;
+        ownerFeedbackTotal = 0;
+        list.innerHTML = '<p class="text-muted">Loading feedback…</p>';
+        await loadOwnerFeedbackSummary();
+    } else {
+        moreButton.disabled = true;
+        moreButton.textContent = 'Loading…';
+    }
+    const filters = getOwnerFeedbackFilters();
+    let query = supabaseClient
+        .from('order_feedback')
+        .select('id, order_id, rating, comment, created_at, orders!inner(customer_name)', { count: 'exact' })
+        .eq('shop_id', ownerShop.id)
+        .order('created_at', { ascending: filters.sort === 'oldest' })
+        .range(ownerFeedbackOffset, ownerFeedbackOffset + OWNER_FEEDBACK_PAGE_SIZE - 1);
+
+    if (filters.rating !== 'all') query = query.eq('rating', Number(filters.rating));
+    const dateStart = getOwnerFeedbackDateStart(filters.date);
+    if (dateStart) query = query.gte('created_at', dateStart);
+    if (filters.search) {
+        if (/^#?\d+$/.test(filters.search)) {
+            query = query.eq('order_id', Number(filters.search.replace('#', '')));
+        } else {
+            query = query.ilike('orders.customer_name', `%${filters.search}%`);
+        }
+    }
+
+    const { data, error, count } = await query;
+
+    ownerFeedbackLoading = false;
+    moreButton.disabled = false;
+    moreButton.textContent = 'Load more';
+    if (error) {
+        const missing = /order_feedback/i.test(error.message || '') || error.code === 'PGRST205';
+        if (reset) summary.innerHTML = '';
+        list.innerHTML = `<div class="alert alert-${missing ? 'warning' : 'danger'}">${missing
+            ? 'Feedback database is not ready yet. Run supabase/order_feedback.sql in Supabase.'
+            : `Unable to load feedback: ${escapeHtml(error.message)}`}</div>`;
+        moreWrap.classList.add('d-none');
+        return;
+    }
+
+    const feedback = data || [];
+    ownerFeedbackTotal = Number(count || 0);
+
+    if (reset && !feedback.length) {
+        list.innerHTML = '<div class="feedback-empty"><strong>No feedback yet</strong><span>Delivered orders can be rated by customers.</span></div>';
+        resultLine.textContent = filters.search || filters.rating !== 'all' || filters.date !== 'all'
+            ? 'No feedback matches the selected filters.' : '';
+        moreWrap.classList.add('d-none');
+        return;
+    }
+
+    const cards = renderOwnerFeedbackCards(feedback);
+    if (reset) list.innerHTML = cards;
+    else list.insertAdjacentHTML('beforeend', cards);
+
+    ownerFeedbackOffset += feedback.length;
+    resultLine.textContent = `Showing ${ownerFeedbackOffset.toLocaleString()} of ${ownerFeedbackTotal.toLocaleString()} feedback responses`;
+    moreWrap.classList.toggle('d-none', ownerFeedbackOffset >= ownerFeedbackTotal);
+}
+
+function loadMoreOwnerFeedback() {
+    if (ownerFeedbackOffset < ownerFeedbackTotal) loadOwnerFeedback(false);
 }
 
 function getStoredScreenshotPath(payment) {
