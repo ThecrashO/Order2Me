@@ -4,6 +4,7 @@ let adminActiveFilter = 'all';
 let adminReasonModal = null;
 let adminShopChannel = null;
 let adminUserChannel = null;
+let adminRealtimeClient = null;
 let adminUsers = [];
 let adminActiveUserRole = 'all';
 
@@ -358,19 +359,20 @@ async function initAdminPage() {
     await loadAdminUsers();
     const requestedPanel = location.hash.replace('#', '');
     if (['shops', 'users'].includes(requestedPanel)) showAdminPanel(requestedPanel);
-    adminShopChannel = supabaseClient
+    adminRealtimeClient = await getOrder2MeRealtimeClient();
+    adminShopChannel = adminRealtimeClient
         .channel('admin-shops-realtime')
         .on('postgres_changes', { event: '*', schema: 'public', table: 'shops' }, loadAdminShops)
         .subscribe();
-    adminUserChannel = supabaseClient
+    adminUserChannel = adminRealtimeClient
         .channel('admin-users-realtime')
         .on('postgres_changes', { event: '*', schema: 'public', table: 'users' }, loadAdminUsers)
         .subscribe();
 }
 
 window.addEventListener('beforeunload', () => {
-    if (adminShopChannel) supabaseClient.removeChannel(adminShopChannel);
-    if (adminUserChannel) supabaseClient.removeChannel(adminUserChannel);
+    if (adminShopChannel) adminRealtimeClient?.removeChannel(adminShopChannel);
+    if (adminUserChannel) adminRealtimeClient?.removeChannel(adminUserChannel);
 });
 
 document.addEventListener('DOMContentLoaded', initAdminPage);

@@ -122,7 +122,7 @@ function renderAdminUsers() {
 
 async function loadAdminUsers() {
     adminLoading('admin-user-list');
-    const { data, error } = await supabaseClient.from('users').select('id,name,email,phone_number,role,avatar_path,created_at,account_status,suspension_reason,suspended_until,shops(id,name,status)').order('created_at',{ascending:false});
+    const { data, error } = await supabaseClient.from('users').select('id,name,email,phone_number,role,avatar_path,created_at,account_status,suspension_reason,suspended_until,shops!shops_owner_id_fkey(id,name,status)').order('created_at',{ascending:false});
     if (error) return adminFailure('admin-user-list', error);
     adminUsers = data || []; updateAdminUserStats(); renderAdminUsers();
 }

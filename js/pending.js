@@ -1,5 +1,6 @@
 let pendingOwnerProfile = null;
 let pendingShopChannel = null;
+let pendingRealtimeClient = null;
 
 function renderApprovalState(shop) {
     const icon = document.getElementById('approval-status-icon');
@@ -61,7 +62,8 @@ async function initPendingPage() {
     if (!pendingOwnerProfile) return;
     renderApprovalState(pendingOwnerProfile.shop);
 
-    pendingShopChannel = supabaseClient
+    pendingRealtimeClient = await getOrder2MeRealtimeClient();
+    pendingShopChannel = pendingRealtimeClient
         .channel(`owner-shop-approval-${pendingOwnerProfile.id}`)
         .on('postgres_changes', {
             event: 'UPDATE', schema: 'public', table: 'shops',
@@ -71,7 +73,7 @@ async function initPendingPage() {
 }
 
 window.addEventListener('beforeunload', () => {
-    if (pendingShopChannel) supabaseClient.removeChannel(pendingShopChannel);
+    if (pendingShopChannel) pendingRealtimeClient?.removeChannel(pendingShopChannel);
 });
 
 document.addEventListener('DOMContentLoaded', initPendingPage);
