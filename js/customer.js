@@ -23,6 +23,48 @@ const CUSTOMER_ORDER_POLL_INTERVAL_MS = 8000;
 let feedbackOrderId = null;
 let feedbackRating = 0;
 let feedbackFeatureAvailable = true;
+const UCSY_MAP_CENTER = [17.0021126, 96.0924138];
+const UCSY_MAP_BOUNDS = [[16.994, 96.083], [17.011, 96.102]];
+let checkoutDeliveryMap = null;
+let checkoutDeliveryMarker = null;
+let selectedDeliveryLocation = null;
+
+function setDeliveryLocation(lat, lng) {
+    selectedDeliveryLocation = { lat: Number(lat.toFixed(7)), lng: Number(lng.toFixed(7)) };
+    if (!checkoutDeliveryMarker) {
+        checkoutDeliveryMarker = L.marker([lat, lng], { draggable: true }).addTo(checkoutDeliveryMap);
+        checkoutDeliveryMarker.on('dragend', event => {
+            const point = event.target.getLatLng();
+            setDeliveryLocation(point.lat, point.lng);
+        });
+    } else checkoutDeliveryMarker.setLatLng([lat, lng]);
+    checkoutDeliveryMarker.bindPopup('Deliver here').openPopup();
+    document.getElementById('checkout-map-selection').textContent = `Selected: ${selectedDeliveryLocation.lat}, ${selectedDeliveryLocation.lng}`;
+    document.getElementById('checkout-map-error').classList.add('d-none');
+}
+
+function initDeliveryMap() {
+    if (typeof L === 'undefined') return;
+    if (!checkoutDeliveryMap) {
+        checkoutDeliveryMap = L.map('checkout-delivery-map', { maxBounds: UCSY_MAP_BOUNDS, maxBoundsViscosity: 0.9 })
+            .setView(UCSY_MAP_CENTER, 17);
+        L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19,
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        }).addTo(checkoutDeliveryMap);
+        checkoutDeliveryMap.on('click', event => setDeliveryLocation(event.latlng.lat, event.latlng.lng));
+    }
+    window.setTimeout(() => checkoutDeliveryMap.invalidateSize(), 50);
+}
+
+function resetDeliveryMap() {
+    selectedDeliveryLocation = null;
+    if (checkoutDeliveryMarker && checkoutDeliveryMap) checkoutDeliveryMap.removeLayer(checkoutDeliveryMarker);
+    checkoutDeliveryMarker = null;
+    checkoutDeliveryMap?.setView(UCSY_MAP_CENTER, 17);
+    const label = document.getElementById('checkout-map-selection');
+    if (label) label.textContent = 'No location selected yet.';
+}
 
 function isNotificationPreferenceEnabled() {
     return localStorage.getItem(NOTIFICATION_PREF_KEY) === 'true';
@@ -1223,6 +1265,8 @@ async function openCheckout() {
     document.getElementById('checkout-payment-error').classList.add('d-none');
     document.getElementById('checkout-screenshot-error').classList.add('d-none');
     document.getElementById('checkout-error').classList.add('d-none');
+    document.getElementById('checkout-map-error').classList.add('d-none');
+    resetDeliveryMap();
     document.getElementById('payment-info-panel').classList.add('d-none');
     document.getElementById('payment-screenshot').value = '';
     document.getElementById('screenshot-preview-wrap').classList.add('d-none');
@@ -1238,7 +1282,9 @@ async function openCheckout() {
     if (cartModal) cartModal.hide();
 
     setTimeout(() => {
-        new bootstrap.Modal(document.getElementById('checkoutModal')).show();
+        const checkoutElement = document.getElementById('checkoutModal');
+        checkoutElement.addEventListener('shown.bs.modal', initDeliveryMap, { once: true });
+        new bootstrap.Modal(checkoutElement).show();
     }, 300);
 }
 
@@ -1310,6 +1356,7 @@ async function submitCheckout() {
     const btn              = document.getElementById('place-order-btn');
     const spinner          = document.getElementById('place-order-spinner');
     const screenshotInput  = document.getElementById('payment-screenshot');
+    const mapError         = document.getElementById('checkout-map-error');
 
     let valid = true;
 
@@ -1322,6 +1369,11 @@ async function submitCheckout() {
     } else {
         noteError.classList.add('d-none');
     }
+
+    if (!selectedDeliveryLocation) {
+        mapError.classList.remove('d-none');
+        valid = false;
+    } else mapError.classList.add('d-none');
 
     // Validate payment method
     if (!['KBZPay', 'WavePay'].includes(selectedPaymentMethod)) {
@@ -1353,7 +1405,7 @@ async function submitCheckout() {
     spinner.classList.remove('d-none');
 
     try {
-        await createOrder(deliveryNote, selectedPaymentMethod, screenshotFile);
+        await createOrder(deliveryNote, selectedPaymentMethod, screenshotFile, selectedDeliveryLocation);
     } finally {
         btn.disabled = false;
         spinner.classList.add('d-none');
@@ -1439,7 +1491,7 @@ async function confirmOrderReceived(orderId) {
     await loadCustomerOrders();
 }
 
-async function createOrder(deliveryNote, paymentMethod, screenshotFile) {
+async function createOrder(deliveryNote, paymentMethod, screenshotFile, deliveryLocation) {
     const errorBanner = document.getElementById('checkout-error');
 
     if (!activeShopId || !activeShop || cart.some(item => item.shopId !== activeShopId)) {
@@ -1484,6 +1536,8 @@ async function createOrder(deliveryNote, paymentMethod, screenshotFile) {
             shop_id:        activeShopId,
             total_amount:  totalAmount,
             delivery_note: deliveryNote,
+            delivery_lat: deliveryLocation.lat,
+            delivery_lng: deliveryLocation.lng,
             status:        'pending'
         })
         .select()
