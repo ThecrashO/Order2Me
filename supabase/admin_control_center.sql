@@ -21,16 +21,6 @@ ALTER TABLE public.orders
   ADD COLUMN IF NOT EXISTS cancellation_reason text,
   ADD COLUMN IF NOT EXISTS cancelled_by bigint REFERENCES public.users(id) ON DELETE SET NULL;
 
-ALTER TABLE public.payments
-  ADD COLUMN IF NOT EXISTS review_status text NOT NULL DEFAULT 'pending',
-  ADD COLUMN IF NOT EXISTS review_reason text,
-  ADD COLUMN IF NOT EXISTS reviewed_by bigint REFERENCES public.users(id) ON DELETE SET NULL,
-  ADD COLUMN IF NOT EXISTS reviewed_at timestamptz;
-
-ALTER TABLE public.payments DROP CONSTRAINT IF EXISTS payments_review_status_check;
-ALTER TABLE public.payments ADD CONSTRAINT payments_review_status_check
-  CHECK (review_status IN ('pending', 'verified', 'rejected'));
-
 ALTER TABLE public.menu_items
   ADD COLUMN IF NOT EXISTS is_hidden_by_admin boolean NOT NULL DEFAULT false,
   ADD COLUMN IF NOT EXISTS moderation_reason text;
@@ -222,7 +212,15 @@ BEGIN
     admin_force_closed = COALESCE(p_force_closed, admin_force_closed),
     admin_close_reason = CASE WHEN p_force_closed = true THEN trim(p_reason) WHEN p_force_closed = false THEN NULL ELSE admin_close_reason END
   WHERE id = p_shop_id RETURNING * INTO new_row;
-  PERFORM public.admin_log_action('SHOP_CONTROL_UPDATED', 'shop', p_shop_id::text,
+  PERFORM public.admin_log_action(
+    CASE
+      WHEN p_force_closed=true THEN 'SHOP_FORCE_CLOSED'
+      WHEN p_force_closed=false THEN 'SHOP_FORCE_REOPENED'
+      WHEN p_status='approved' THEN 'SHOP_APPROVED'
+      WHEN p_status='rejected' THEN 'SHOP_REJECTED'
+      WHEN p_status='suspended' THEN 'SHOP_SUSPENDED'
+      ELSE 'SHOP_CONTROL_UPDATED'
+    END, 'shop', p_shop_id::text,
     to_jsonb(old_row), to_jsonb(new_row), p_reason);
   RETURN new_row;
 END;
@@ -239,21 +237,6 @@ BEGIN
   UPDATE public.orders SET status='cancelled', cancellation_reason=trim(p_reason), cancelled_by=actor
   WHERE id=p_order_id RETURNING * INTO new_row;
   PERFORM public.admin_log_action('ORDER_CANCELLED','order',p_order_id::text,to_jsonb(old_row),to_jsonb(new_row),p_reason);
-  RETURN new_row;
-END;
-$$;
-
-CREATE OR REPLACE FUNCTION public.admin_review_payment(p_payment_id bigint, p_status text, p_reason text DEFAULT NULL)
-RETURNS public.payments LANGUAGE plpgsql SECURITY DEFINER SET search_path = '' AS $$
-DECLARE old_row public.payments; new_row public.payments; actor bigint := public.admin_actor_id();
-BEGIN
-  IF p_status NOT IN ('pending','verified','rejected') THEN RAISE EXCEPTION 'Invalid review status'; END IF;
-  IF p_status='rejected' AND nullif(trim(p_reason),'') IS NULL THEN RAISE EXCEPTION 'Rejection reason is required'; END IF;
-  SELECT * INTO old_row FROM public.payments WHERE id=p_payment_id FOR UPDATE;
-  IF old_row.id IS NULL THEN RAISE EXCEPTION 'Payment not found'; END IF;
-  UPDATE public.payments SET review_status=p_status, review_reason=nullif(trim(p_reason),''),
-    reviewed_by=actor, reviewed_at=now() WHERE id=p_payment_id RETURNING * INTO new_row;
-  PERFORM public.admin_log_action('PAYMENT_' || upper(p_status),'payment',p_payment_id::text,to_jsonb(old_row),to_jsonb(new_row),p_reason);
   RETURN new_row;
 END;
 $$;
@@ -320,7 +303,6 @@ BEGIN
     'orders_today', (SELECT count(*) FROM public.orders WHERE created_at >= date_trunc('day',timezone('Asia/Yangon',now())) AT TIME ZONE 'Asia/Yangon'),
     'revenue_today', (SELECT coalesce(sum(total_amount),0) FROM public.orders WHERE status='delivered' AND created_at >= date_trunc('day',timezone('Asia/Yangon',now())) AT TIME ZONE 'Asia/Yangon'),
     'active_orders', (SELECT count(*) FROM public.orders WHERE status IN ('pending','preparing','ready','out_for_delivery')),
-    'pending_payments', (SELECT count(*) FROM public.payments WHERE review_status='pending'),
     'average_rating', (SELECT round(coalesce(avg(rating),0),1) FROM public.order_feedback WHERE moderation_status='visible')
   ) INTO result;
   RETURN result;
@@ -368,7 +350,6 @@ GRANT EXECUTE ON FUNCTION public.admin_actor_id() TO authenticated;
 GRANT EXECUTE ON FUNCTION public.admin_set_user_suspension(bigint,boolean,text,timestamptz) TO authenticated;
 GRANT EXECUTE ON FUNCTION public.admin_control_shop(bigint,text,boolean,text) TO authenticated;
 GRANT EXECUTE ON FUNCTION public.admin_cancel_order(bigint,text) TO authenticated;
-GRANT EXECUTE ON FUNCTION public.admin_review_payment(bigint,text,text) TO authenticated;
 GRANT EXECUTE ON FUNCTION public.admin_moderate_content(text,bigint,boolean,text) TO authenticated;
 GRANT EXECUTE ON FUNCTION public.admin_create_announcement(text,text,text,bigint,bigint,timestamptz) TO authenticated;
 GRANT EXECUTE ON FUNCTION public.admin_update_setting(text,jsonb) TO authenticated;
@@ -379,7 +360,6 @@ REVOKE ALL ON FUNCTION public.admin_actor_id() FROM PUBLIC;
 REVOKE ALL ON FUNCTION public.admin_set_user_suspension(bigint,boolean,text,timestamptz) FROM PUBLIC;
 REVOKE ALL ON FUNCTION public.admin_control_shop(bigint,text,boolean,text) FROM PUBLIC;
 REVOKE ALL ON FUNCTION public.admin_cancel_order(bigint,text) FROM PUBLIC;
-REVOKE ALL ON FUNCTION public.admin_review_payment(bigint,text,text) FROM PUBLIC;
 REVOKE ALL ON FUNCTION public.admin_moderate_content(text,bigint,boolean,text) FROM PUBLIC;
 REVOKE ALL ON FUNCTION public.admin_create_announcement(text,text,text,bigint,bigint,timestamptz) FROM PUBLIC;
 REVOKE ALL ON FUNCTION public.admin_update_setting(text,jsonb) FROM PUBLIC;
@@ -390,7 +370,6 @@ GRANT EXECUTE ON FUNCTION public.admin_actor_id() TO authenticated;
 GRANT EXECUTE ON FUNCTION public.admin_set_user_suspension(bigint,boolean,text,timestamptz) TO authenticated;
 GRANT EXECUTE ON FUNCTION public.admin_control_shop(bigint,text,boolean,text) TO authenticated;
 GRANT EXECUTE ON FUNCTION public.admin_cancel_order(bigint,text) TO authenticated;
-GRANT EXECUTE ON FUNCTION public.admin_review_payment(bigint,text,text) TO authenticated;
 GRANT EXECUTE ON FUNCTION public.admin_moderate_content(text,bigint,boolean,text) TO authenticated;
 GRANT EXECUTE ON FUNCTION public.admin_create_announcement(text,text,text,bigint,bigint,timestamptz) TO authenticated;
 GRANT EXECUTE ON FUNCTION public.admin_update_setting(text,jsonb) TO authenticated;

@@ -145,6 +145,9 @@ async function getOwnerShop(ownerProfileId) {
 }
 
 async function createOwnerShop(profile, user, metadata = {}) {
+    const { data: preparationSetting } = await supabaseClient
+        .from('system_settings').select('value').eq('key', 'default_preparation_minutes').maybeSingle();
+    const defaultPreparationMinutes = Math.min(180, Math.max(1, Number(preparationSetting?.value || 15)));
     const shopPayload = {
         owner_id: profile.id,
         name: metadata.shopName || `${profile.name}'s Shop`,
@@ -152,7 +155,8 @@ async function createOwnerShop(profile, user, metadata = {}) {
         description: metadata.shopDescription || null,
         address: metadata.shopAddress || null,
         phone_number: metadata.shopPhone || metadata.phone || profile.phone_number || null,
-        status: 'pending'
+        status: 'pending',
+        preparation_minutes: defaultPreparationMinutes
     };
     const { data, error } = await supabaseClient
         .from('shops')
@@ -176,7 +180,7 @@ async function createProfileAndShop(user, metadata = {}) {
     const { data: profile, error: profileError } = await supabaseClient
         .from('users')
         .insert(profilePayload)
-        .select('id, name, email, phone_number, role, avatar_path')
+        .select('id, name, email, phone_number, role, avatar_path, account_status, suspension_reason, suspended_until')
         .single();
 
     if (profileError) throw profileError;
@@ -194,7 +198,7 @@ async function getCurrentProfile() {
 
     const { data, error } = await supabaseClient
         .from('users')
-        .select('id, name, email, phone_number, role, avatar_path')
+        .select('id, name, email, phone_number, role, avatar_path, account_status, suspension_reason, suspended_until')
         .eq('auth_user_id', user.id)
         .maybeSingle();
 
@@ -254,6 +258,11 @@ async function requireRole(requiredRole) {
     const profile = await getCurrentProfile();
     if (!profile) {
         window.location.href = 'login.html';
+        return null;
+    }
+    if (profile.account_status === 'suspended') {
+        await supabaseClient.auth.signOut();
+        window.location.href = `login.html?suspended=1&reason=${encodeURIComponent(profile.suspension_reason || '')}`;
         return null;
     }
     if (profile.role !== requiredRole) {

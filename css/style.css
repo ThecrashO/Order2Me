@@ -3739,6 +3739,8 @@ textarea {
 .admin-bars > div > div { overflow:hidden; height:10px; border-radius:999px; background:#e2e8f0; }
 .admin-bars i { display:block; height:100%; border-radius:inherit; background:linear-gradient(90deg,var(--brand),#06b6d4); }
 .admin-bars strong { text-align:right; }
+.admin-audit-changes { display:grid; gap:.35rem; margin-top:.65rem; }
+.admin-audit-changes span { padding:.35rem .5rem; border-radius:8px; background:#f8fafc; color:#475569; font-size:.72rem; }
 .runtime-notice-stack { position:relative; z-index:1020; display:grid; gap:.35rem; padding:.5rem max(.75rem,calc((100% - 1320px)/2)); background:#fff; }
 .runtime-notice { display:flex; justify-content:space-between; gap:1rem; padding:.7rem .85rem; border:1px solid #bfdbfe; border-radius:12px; background:#eff6ff; color:#1e3a8a; }
 .runtime-notice-warning { border-color:#fde68a; background:#fffbeb; color:#92400e; }

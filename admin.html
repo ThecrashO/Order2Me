@@ -65,7 +65,6 @@
             <span class="badge bg-secondary ms-auto" id="admin-users-badge">0</span>
         </button>
         <button class="sidebar-nav-item" id="admin-nav-orders" onclick="showAdminPanel('orders')"><span>🧾</span><span>Orders</span></button>
-        <button class="sidebar-nav-item" id="admin-nav-payments" onclick="showAdminPanel('payments')"><span>💳</span><span>Payments</span></button>
         <button class="sidebar-nav-item" id="admin-nav-moderation" onclick="showAdminPanel('moderation')"><span>🛡</span><span>Moderation</span></button>
         <button class="sidebar-nav-item" id="admin-nav-announcements" onclick="showAdminPanel('announcements')"><span>📣</span><span>Announcements</span></button>
         <button class="sidebar-nav-item" id="admin-nav-analytics" onclick="showAdminPanel('analytics')"><span>📈</span><span>Analytics</span></button>
@@ -148,11 +147,6 @@
     <section id="admin-panel-orders" class="admin-view admin-generic-view" data-title="Order control" data-copy="Search all orders, inspect details, and cancel active orders with a recorded reason.">
         <div class="admin-welcome"><div><span class="admin-eyebrow">Fulfilment</span><h1>Order control</h1><p>Search, inspect and resolve orders across every shop.</p></div><button class="btn btn-light" onclick="loadAdminOrders()">↻ Refresh</button></div>
         <section class="admin-panel"><div class="admin-toolbar"><select class="form-select admin-compact-control" id="admin-order-status"><option value="all">All statuses</option><option>pending</option><option>preparing</option><option>ready</option><option>out_for_delivery</option><option>delivered</option><option>cancelled</option></select><input class="form-control" id="admin-order-search" type="search" placeholder="Order ID, customer or shop…"></div><div id="admin-order-list" class="admin-data-list"></div></section>
-    </section>
-
-    <section id="admin-panel-payments" class="admin-view">
-        <div class="admin-welcome"><div><span class="admin-eyebrow">Payment assurance</span><h1>Payment review</h1><p>Verify or reject uploaded payment evidence.</p></div><button class="btn btn-light" onclick="loadAdminPayments()">↻ Refresh</button></div>
-        <section class="admin-panel"><div class="admin-toolbar"><select class="form-select admin-compact-control" id="admin-payment-status"><option value="all">All reviews</option><option value="pending">Pending</option><option value="verified">Verified</option><option value="rejected">Rejected</option></select><input class="form-control" id="admin-payment-search" type="search" placeholder="Order ID, shop or method…"></div><div id="admin-payment-list" class="admin-data-list"></div></section>
     </section>
 
     <section id="admin-panel-moderation" class="admin-view">

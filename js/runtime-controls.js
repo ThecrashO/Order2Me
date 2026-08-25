@@ -25,4 +25,19 @@ async function initRuntimeControls() {
     if (nav) nav.insertAdjacentElement('afterend', host); else document.body.prepend(host);
 }
 
-document.addEventListener('DOMContentLoaded', initRuntimeControls);
+async function verifyRuntimeAccountAccess() {
+    const user = await getCurrentUser();
+    if (!user) return;
+    const { data } = await supabaseClient.from('users')
+        .select('account_status,suspension_reason').eq('auth_user_id', user.id).maybeSingle();
+    if (data?.account_status === 'suspended') {
+        await supabaseClient.auth.signOut();
+        window.location.replace(`login.html?suspended=1&reason=${encodeURIComponent(data.suspension_reason || '')}`);
+    }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    initRuntimeControls();
+    verifyRuntimeAccountAccess();
+    window.setInterval(verifyRuntimeAccountAccess, 15000);
+});

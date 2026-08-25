@@ -46,7 +46,7 @@ University canteen များအတွက် ပြုလုပ်ထားသ
 - Owner account approve/reject လုပ်ခြင်း
 - User၊ shop နှင့် system activity စီမံကြည့်ရှုခြင်း
 - Admin dashboard ကို public signup မပေးဘဲ database မှ bootstrap လုပ်ခြင်း
-- Audited user suspension၊ shop force-close၊ order cancellation နှင့် payment review
+- Audited user suspension၊ shop force-close နှင့် order cancellation
 - Menu/feedback moderation၊ platform announcements နှင့် runtime system settings
 - Platform overview၊ cross-shop analytics နှင့် searchable admin audit log
 
@@ -185,13 +185,37 @@ SQL ဖိုင်များကို **Supabase Dashboard → SQL Editor** �
 11. `supabase/order_queue_tracking.sql` — FIFO queue၊ estimated arrival နှင့် status timestamps
 12. `supabase/create_admin.sql` — placeholder email ကိုပြင်ပြီး run ရန်
 13. `supabase/v1_security_lockdown.sql` — နောက်ဆုံး run ရမည့် anonymous-access lockdown
-14. `supabase/admin_control_center.sql` — Admin audit/RPC foundation၊ user/shop/order/payment controls၊ moderation၊ announcements၊ system settings နှင့် analytics
+14. `supabase/admin_control_center.sql` — Admin audit/RPC foundation၊ user/shop/order controls၊ moderation၊ announcements၊ system settings နှင့် analytics
+15. `supabase/admin_control_center_fix.sql` — Suspension/session enforcement၊ working system limits၊ distinct audit events နှင့် production corrective fixes
 
 လိုအပ်သည့် existing database များတွင်သာ `supabase/allow_duplicate_profile_names.sql` ကို run ပါ။ Abandoned Web Push objects ရှိသေးလျှင် `supabase/remove_web_push.sql` ဖြင့်ဖယ်ရှားနိုင်သည်။
 
 ### Existing project
 
 Existing database တွင် `database.sql` အားလုံးကို ပြန်မ run ပါနှင့်။ လိုအပ်သော migration/patch များကို schema နှင့် migration history စစ်ပြီးမှ တစ်ခုချင်း run ပါ။ အသေးစိတ်ကို [PROJECT_DOCUMENTATION_MM.md](PROJECT_DOCUMENTATION_MM.md) တွင်ကြည့်နိုင်သည်။
+
+### Admin Control Center update
+
+Admin feature အသစ်များအသုံးပြုရန် existing project တွင် အောက်ပါ SQL နှစ်ဖိုင်ကို အစဉ်လိုက် run ပါ။ ပထမဖိုင် run ပြီးသားဖြစ်ပါက corrective patch တစ်ခုတည်း run နိုင်သည်။
+
+```text
+supabase/admin_control_center.sql
+supabase/admin_control_center_fix.sql
+```
+
+Corrective patch ပြီးနောက်—
+
+- Suspended customer/owner သည် အများဆုံး 15 စက္ကန့်အတွင်း sign out ဖြစ်ပြီး ပြန်ဝင်၍မရပါ။ Historical records မဖျက်ပါ။
+- Shop suspend/force-close သည် database order acceptance ကိုပိတ်ပါသည်။
+- `ordering_enabled=false` သို့မဟုတ် `maintenance_mode=true` ဖြစ်လျှင် order အသစ်တင်၍မရပါ။
+- `maximum_order_amount` ကို order insert policy ကစစ်ပါသည်။
+- `owner_signup_enabled=false` ဖြစ်လျှင် owner profile အသစ်ဖန်တီး၍မရပါ။
+- `feedback_enabled=false` ဖြစ်လျှင် feedback အသစ်တင်၍မရပါ။
+- Admin sensitive action တစ်ခုစီသည် `admin_audit_logs` တွင် distinct action name၊ old/new values နှင့် reason တစ်ကြောင်းစီရေးပါသည်။
+
+Payment proof ကို Owner က order လက်ခံစဉ်စစ်ပြီး မမှန်ပါက order cancel လုပ်သည့် workflow ကိုဆက်သုံးပါသည်။ Admin dashboard တွင် payment verification မပါဝင်ပါ။
+
+Migration ပြီးလျှင် Vercel redeploy လုပ်ပြီး Service Worker cache အဟောင်းမကျန်စေရန် hard refresh လုပ်ပါ။ Audit verification အတွက် SQL ဖိုင်အဆုံးရှိ query ကို run နိုင်သည်။
 
 ## Supabase configuration
 

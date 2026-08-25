@@ -8,11 +8,20 @@ async function initLoginPage() {
     } else if (params.get('password') === 'changed') {
         status.className = 'text-success mb-3';
         status.textContent = '✅ Password changed successfully. Sign in with your new password.';
+    } else if (params.get('suspended') === '1') {
+        status.className = 'text-danger mb-3';
+        status.textContent = `This account has been suspended.${params.get('reason') ? ` Reason: ${params.get('reason')}` : ''}`;
     }
 
     try {
         const profile = await getCurrentProfile();
         if (profile) {
+            if (profile.account_status === 'suspended') {
+                await supabaseClient.auth.signOut();
+                status.className = 'text-danger mb-3';
+                status.textContent = `This account has been suspended.${profile.suspension_reason ? ` Reason: ${profile.suspension_reason}` : ''}`;
+                return;
+            }
             window.location.href = dashboardForProfile(profile);
             return;
         }
@@ -48,6 +57,11 @@ async function initLoginPage() {
             if (!userProfile) {
                 status.textContent = 'Your account signed in, but its profile could not be loaded. Ask the administrator to apply the latest Supabase migrations.';
                 await supabaseClient.auth.signOut();
+                return;
+            }
+            if (userProfile.account_status === 'suspended') {
+                await supabaseClient.auth.signOut();
+                status.textContent = `This account has been suspended.${userProfile.suspension_reason ? ` Reason: ${userProfile.suspension_reason}` : ''}`;
                 return;
             }
 
