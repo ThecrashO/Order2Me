@@ -942,6 +942,18 @@ function scheduleOwnerFeedbackSearch() {
     ownerFeedbackSearchTimer = window.setTimeout(() => loadOwnerFeedback(true), 350);
 }
 
+function clearOwnerFeedbackFilters() {
+    const search = document.getElementById('owner-feedback-search');
+    const rating = document.getElementById('owner-feedback-rating');
+    const date = document.getElementById('owner-feedback-date');
+    const sort = document.getElementById('owner-feedback-sort');
+    if (search) search.value = '';
+    if (rating) rating.value = 'all';
+    if (date) date.value = 'all';
+    if (sort) sort.value = 'newest';
+    loadOwnerFeedback(true);
+}
+
 async function loadOwnerFeedbackSummary() {
     const summary = document.getElementById('owner-feedback-summary');
     if (!summary || !ownerShop) return;
@@ -954,25 +966,41 @@ async function loadOwnerFeedbackSummary() {
         return;
     }
     const stats = Array.isArray(data) ? data[0] : data;
-    summary.innerHTML = `
-        <article><span>Average rating</span><strong>${Number(stats?.total_feedback || 0) ? Number(stats.average_rating).toFixed(1) : '—'} <small>/ 5</small></strong></article>
-        <article><span>Total feedback</span><strong>${Number(stats?.total_feedback || 0).toLocaleString()}</strong></article>
-        <article><span>5-star ratings</span><strong>${Number(stats?.five_star_count || 0).toLocaleString()}</strong></article>
-        <article><span>This month</span><strong>${Number(stats?.this_month_count || 0).toLocaleString()}</strong></article>`;
+    const total = Number(stats?.total_feedback || 0);
+    const summaryItems = [
+        { icon: '★', tone: 'amber', label: 'Average rating', value: total ? Number(stats.average_rating).toFixed(1) : '—', suffix: '/ 5' },
+        { icon: '✦', tone: 'blue', label: 'Total feedback', value: total.toLocaleString(), suffix: 'responses' },
+        { icon: '♥', tone: 'rose', label: '5-star ratings', value: Number(stats?.five_star_count || 0).toLocaleString(), suffix: 'excellent' },
+        { icon: '↗', tone: 'green', label: 'This month', value: Number(stats?.this_month_count || 0).toLocaleString(), suffix: 'new reviews' }
+    ];
+    summary.innerHTML = summaryItems.map(item => `<article class="feedback-summary-card feedback-tone-${item.tone}">
+        <span class="feedback-summary-icon" aria-hidden="true">${item.icon}</span>
+        <div><span>${item.label}</span><strong>${item.value}</strong><small>${item.suffix}</small></div>
+    </article>`).join('');
 }
 
 function renderOwnerFeedbackCards(feedback) {
     return feedback.map(item => {
         const customerName = item.orders?.customer_name || 'Customer';
+        const initials = customerName.split(/\s+/).filter(Boolean).slice(0, 2).map(part => part[0]).join('').toUpperCase() || 'C';
         const date = new Date(item.created_at).toLocaleString('en-GB', {
             day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit'
         });
         return `<article class="owner-feedback-card">
             <div class="owner-feedback-heading">
-                <div><strong>${escapeHtml(customerName)}</strong><span>Order #${item.order_id} · ${date}</span></div>
-                <span class="feedback-stars-static" aria-label="${item.rating} out of 5 stars">${'★'.repeat(item.rating)}${'☆'.repeat(5 - item.rating)}</span>
+                <div class="owner-feedback-customer">
+                    <span class="owner-feedback-avatar" aria-hidden="true">${escapeHtml(initials)}</span>
+                    <div><strong>${escapeHtml(customerName)}</strong><span>Order #${item.order_id} <i aria-hidden="true">•</i> ${date}</span></div>
+                </div>
+                <div class="owner-feedback-rating" aria-label="${item.rating} out of 5 stars">
+                    <span class="feedback-stars-static">${'★'.repeat(item.rating)}${'☆'.repeat(5 - item.rating)}</span>
+                    <strong>${item.rating}.0</strong>
+                </div>
             </div>
-            <p>${item.comment ? escapeHtml(item.comment) : '<span class="text-muted">No written comment.</span>'}</p>
+            <div class="owner-feedback-comment ${item.comment ? '' : 'is-empty'}">
+                <span class="feedback-quote-mark" aria-hidden="true">“</span>
+                <p>${item.comment ? escapeHtml(item.comment) : 'Customer left a rating without a written comment.'}</p>
+            </div>
         </article>`;
     }).join('');
 }
@@ -981,6 +1009,7 @@ async function loadOwnerFeedback(reset = true) {
     const list = document.getElementById('owner-feedback-list');
     const summary = document.getElementById('owner-feedback-summary');
     const resultLine = document.getElementById('owner-feedback-result-line');
+    const clearButton = document.getElementById('owner-feedback-clear');
     const moreWrap = document.getElementById('owner-feedback-load-more-wrap');
     const moreButton = document.getElementById('owner-feedback-load-more');
     if (!list || !summary || !ownerShop || ownerFeedbackLoading) return;
@@ -988,13 +1017,15 @@ async function loadOwnerFeedback(reset = true) {
     if (reset) {
         ownerFeedbackOffset = 0;
         ownerFeedbackTotal = 0;
-        list.innerHTML = '<p class="text-muted">Loading feedback…</p>';
+        list.innerHTML = Array.from({ length: 3 }, () => '<article class="owner-feedback-card feedback-skeleton" aria-hidden="true"><div></div><div></div><div></div></article>').join('');
         await loadOwnerFeedbackSummary();
     } else {
         moreButton.disabled = true;
         moreButton.textContent = 'Loading…';
     }
     const filters = getOwnerFeedbackFilters();
+    const hasActiveFilters = Boolean(filters.search || filters.rating !== 'all' || filters.date !== 'all' || filters.sort !== 'newest');
+    clearButton?.classList.toggle('d-none', !hasActiveFilters);
     let query = supabaseClient
         .from('order_feedback')
         .select('id, order_id, rating, comment, created_at, orders!inner(customer_name)', { count: 'exact' })
@@ -1032,7 +1063,7 @@ async function loadOwnerFeedback(reset = true) {
     ownerFeedbackTotal = Number(count || 0);
 
     if (reset && !feedback.length) {
-        list.innerHTML = '<div class="feedback-empty"><strong>No feedback yet</strong><span>Delivered orders can be rated by customers.</span></div>';
+        list.innerHTML = `<div class="feedback-empty"><span class="feedback-empty-icon" aria-hidden="true">${hasActiveFilters ? '⌕' : '☆'}</span><strong>${hasActiveFilters ? 'No matching feedback' : 'No feedback yet'}</strong><span>${hasActiveFilters ? 'Try changing or clearing your filters.' : 'Customer ratings will appear here after completed orders.'}</span>${hasActiveFilters ? '<button type="button" onclick="clearOwnerFeedbackFilters()">Clear all filters</button>' : ''}</div>`;
         resultLine.textContent = filters.search || filters.rating !== 'all' || filters.date !== 'all'
             ? 'No feedback matches the selected filters.' : '';
         moreWrap.classList.add('d-none');
