@@ -3569,7 +3569,15 @@ textarea {
    Admin shop approval dashboard
    ============================================================ */
 .admin-page { background: linear-gradient(135deg, var(--brand-soft), #f8fafc); }
-.admin-navbar { background: linear-gradient(135deg, var(--navy), var(--navy-mid)) !important; border-bottom: 1px solid rgba(37,99,235,.28); }
+.admin-navbar {
+    position: sticky;
+    top: 0;
+    z-index: 1035;
+    min-height: 60px;
+    background: linear-gradient(135deg, var(--navy), var(--navy-mid)) !important;
+    border-bottom: 1px solid rgba(37,99,235,.28);
+    box-shadow: 0 8px 24px rgba(11,31,58,.16);
+}
 .admin-layout { min-height: calc(100dvh - 60px); }
 .admin-main { max-width: 1320px; padding: 1.4rem 1rem 3rem; }
 .admin-view { display: none; animation: panelFadeIn .22s ease both; }
