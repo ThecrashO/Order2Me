@@ -19,24 +19,42 @@ let customerOrderPollTimer = null;
 let customerOrderPollBusy = false;
 let customerOrderSnapshot = new Map();
 let customerOrderEtaSnapshot = new Map();
+const customerDelayedOrderAlerts = new Set();
 const CUSTOMER_ORDER_POLL_INTERVAL_MS = 8000;
 let feedbackOrderId = null;
 let feedbackRating = 0;
 let feedbackFeatureAvailable = true;
 const UCSY_MAP_CENTER = [17.0021126, 96.0924138];
 const UCSY_MAP_BOUNDS = [[16.994, 96.083], [17.011, 96.102]];
+const UCSY_DELIVERY_BOUNDS = [[16.9987, 96.0890], [17.0057, 96.0964]];
+const UCSY_LANDMARKS = {
+    canteen: { label: 'Canteen', lat: 17.00172, lng: 96.09318 },
+    library: { label: 'UCSY Library', lat: 17.00142, lng: 96.09342 },
+    'building-e': { label: 'Building E', lat: 17.00272, lng: 96.09312 },
+    'main-entrance': { label: 'Main entrance', lat: 16.99972, lng: 96.09192 },
+    'football-field': { label: 'Football field', lat: 17.00078, lng: 96.09410 }
+};
 let checkoutDeliveryMap = null;
 let checkoutDeliveryMarker = null;
+let checkoutDeliveryBoundary = null;
+let checkoutSatelliteLayer = null;
+let checkoutMapTileErrors = 0;
+let checkoutMapAlternateHostUsed = false;
+let checkoutMapRetryTimer = null;
+let checkoutMapResizeObserver = null;
+let checkoutMapPlaceholder = null;
 let selectedDeliveryLocation = null;
+let checkoutSubmissionInProgress = false;
+let checkoutRequestId = null;
 const UCSY_DELIVERY_MARKER_ICON = typeof L !== 'undefined' ? L.divIcon({
     className: 'ucsy-delivery-marker',
-    html: '<span class="ucsy-delivery-marker-pin" aria-hidden="true"></span>',
-    iconSize: [38, 48],
-    iconAnchor: [19, 46],
+    html: '<svg width="44" height="54" viewBox="0 0 44 54" aria-hidden="true" style="display:block;filter:drop-shadow(0 5px 5px rgba(0,0,0,.55))"><path fill="#ef4444" stroke="#fff" stroke-width="3" d="M22 2C11 2 3 10.3 3 21c0 14.2 19 31 19 31s19-16.8 19-31C41 10.3 33 2 22 2Z"/><circle cx="22" cy="21" r="7" fill="#fff"/></svg>',
+    iconSize: [44, 54],
+    iconAnchor: [22, 52],
     popupAnchor: [0, -44]
 }) : null;
 
-function setDeliveryLocation(lat, lng) {
+function setDeliveryLocation(lat, lng, label = '') {
     selectedDeliveryLocation = { lat: Number(lat.toFixed(7)), lng: Number(lng.toFixed(7)) };
     if (!checkoutDeliveryMarker) {
         checkoutDeliveryMarker = L.marker([lat, lng], {
@@ -50,8 +68,15 @@ function setDeliveryLocation(lat, lng) {
             setDeliveryLocation(point.lat, point.lng);
         });
     } else checkoutDeliveryMarker.setLatLng([lat, lng]);
-    checkoutDeliveryMarker.bindPopup('Deliver here').openPopup();
-    document.getElementById('checkout-map-selection').textContent = `Selected: ${selectedDeliveryLocation.lat}, ${selectedDeliveryLocation.lng}`;
+    checkoutDeliveryMarker.setZIndexOffset(1000).bindPopup(label || 'Deliver here').openPopup();
+    checkoutDeliveryMap.panTo([lat, lng]);
+    const insideCampus = L.latLngBounds(UCSY_DELIVERY_BOUNDS).contains([lat, lng]);
+    const warning = document.getElementById('checkout-map-boundary-warning');
+    if (warning) {
+        warning.textContent = insideCampus ? '' : '⚠ This point appears to be outside the UCSY delivery area. Please check the marker.';
+        warning.classList.toggle('d-none', insideCampus);
+    }
+    document.getElementById('checkout-map-selection').textContent = `${label ? `${label} · ` : ''}Selected: ${selectedDeliveryLocation.lat}, ${selectedDeliveryLocation.lng}`;
     document.getElementById('checkout-map-error').classList.add('d-none');
 }
 
@@ -60,13 +85,87 @@ function initDeliveryMap() {
     if (!checkoutDeliveryMap) {
         checkoutDeliveryMap = L.map('checkout-delivery-map', { maxBounds: UCSY_MAP_BOUNDS, maxBoundsViscosity: 0.9 })
             .setView(UCSY_MAP_CENTER, 17);
-        L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+        checkoutSatelliteLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
             maxZoom: 19,
+            maxNativeZoom: 18,
+            updateWhenIdle: true,
+            keepBuffer: 2,
+            crossOrigin: true,
             attribution: 'Tiles &copy; Esri — Source: Esri, Maxar, Earthstar Geographics, and the GIS User Community'
         }).addTo(checkoutDeliveryMap);
+        checkoutSatelliteLayer.on('loading', () => {
+            checkoutMapTileErrors = 0;
+        });
+        checkoutSatelliteLayer.on('load', () => {
+            if (checkoutMapTileErrors === 0) {
+                document.getElementById('checkout-map-network-status')?.classList.add('d-none');
+            }
+        });
+        checkoutSatelliteLayer.on('tileerror', () => {
+            checkoutMapTileErrors += 1;
+            if (checkoutMapTileErrors < 2) return;
+            const status = document.getElementById('checkout-map-network-status');
+            status?.classList.remove('d-none');
+            if (!checkoutMapAlternateHostUsed && !checkoutMapRetryTimer) {
+                checkoutMapAlternateHostUsed = true;
+                checkoutMapRetryTimer = window.setTimeout(() => {
+                    checkoutMapRetryTimer = null;
+                    checkoutSatelliteLayer?.setUrl('https://services.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', false);
+                    checkoutSatelliteLayer?.redraw();
+                }, 900);
+            }
+        });
+        checkoutDeliveryBoundary = L.rectangle(UCSY_DELIVERY_BOUNDS, {
+            color: '#38bdf8', weight: 2, fillColor: '#38bdf8', fillOpacity: 0.06, dashArray: '7 6', interactive: false
+        }).addTo(checkoutDeliveryMap).bindTooltip('UCSY delivery area');
         checkoutDeliveryMap.on('click', event => setDeliveryLocation(event.latlng.lat, event.latlng.lng));
+        const mapElement = document.getElementById('checkout-delivery-map');
+        if (window.ResizeObserver && mapElement) {
+            checkoutMapResizeObserver = new ResizeObserver(() => checkoutDeliveryMap?.invalidateSize({ pan: false }));
+            checkoutMapResizeObserver.observe(mapElement);
+        }
     }
-    window.setTimeout(() => checkoutDeliveryMap.invalidateSize(), 50);
+    [50, 250, 500].forEach(delay => window.setTimeout(() => checkoutDeliveryMap.invalidateSize({ pan: false }), delay));
+}
+
+function retryDeliveryMapTiles() {
+    const status = document.getElementById('checkout-map-network-status');
+    if (!navigator.onLine) {
+        if (status) status.querySelector('span').textContent = 'Your device is offline. Reconnect and retry.';
+        return;
+    }
+    if (status) status.querySelector('span').textContent = 'Reloading satellite images…';
+    checkoutMapTileErrors = 0;
+    checkoutSatelliteLayer?.redraw();
+    checkoutDeliveryMap?.invalidateSize({ pan: false });
+}
+
+function selectDeliveryLandmark(key) {
+    if (!key || !UCSY_LANDMARKS[key]) return;
+    initDeliveryMap();
+    const landmark = UCSY_LANDMARKS[key];
+    checkoutDeliveryMap.setView([landmark.lat, landmark.lng], 18);
+    setDeliveryLocation(landmark.lat, landmark.lng, landmark.label);
+}
+
+function useCurrentDeliveryLocation() {
+    const button = document.getElementById('use-current-location-btn');
+    if (!navigator.geolocation) {
+        showToast('Location is not supported by this browser.', 'warning');
+        return;
+    }
+    if (button) { button.disabled = true; button.textContent = 'Locating…'; }
+    navigator.geolocation.getCurrentPosition(position => {
+        initDeliveryMap();
+        const { latitude, longitude, accuracy } = position.coords;
+        checkoutDeliveryMap.setView([latitude, longitude], 18);
+        setDeliveryLocation(latitude, longitude, `Current location (±${Math.round(accuracy)} m)`);
+        if (button) { button.disabled = false; button.textContent = '⌖ Use my location'; }
+    }, error => {
+        const messages = { 1: 'Location permission was denied.', 2: 'Your location is unavailable.', 3: 'Location request timed out.' };
+        showToast(messages[error.code] || 'Could not get your location.', 'warning');
+        if (button) { button.disabled = false; button.textContent = '⌖ Use my location'; }
+    }, { enableHighAccuracy: true, timeout: 12000, maximumAge: 30000 });
 }
 
 function resetDeliveryMap() {
@@ -74,6 +173,9 @@ function resetDeliveryMap() {
     if (checkoutDeliveryMarker && checkoutDeliveryMap) checkoutDeliveryMap.removeLayer(checkoutDeliveryMarker);
     checkoutDeliveryMarker = null;
     checkoutDeliveryMap?.setView(UCSY_MAP_CENTER, 17);
+    const landmarkSelect = document.getElementById('delivery-landmark-select');
+    if (landmarkSelect) landmarkSelect.value = '';
+    document.getElementById('checkout-map-boundary-warning')?.classList.add('d-none');
     const label = document.getElementById('checkout-map-selection');
     if (label) label.textContent = 'No location selected yet.';
 }
@@ -86,12 +188,21 @@ function toggleDeliveryMapFullscreen(forceOpen) {
     const shouldOpen = typeof forceOpen === 'boolean'
         ? forceOpen
         : !picker.classList.contains('is-fullscreen');
+    if (shouldOpen && !checkoutMapPlaceholder) {
+        checkoutMapPlaceholder = document.createComment('delivery-map-placeholder');
+        picker.parentNode.insertBefore(checkoutMapPlaceholder, picker);
+        document.body.appendChild(picker);
+    } else if (!shouldOpen && checkoutMapPlaceholder?.parentNode) {
+        checkoutMapPlaceholder.parentNode.insertBefore(picker, checkoutMapPlaceholder);
+        checkoutMapPlaceholder.remove();
+        checkoutMapPlaceholder = null;
+    }
     picker.classList.toggle('is-fullscreen', shouldOpen);
     document.body.classList.toggle('delivery-map-fullscreen-open', shouldOpen);
     button.innerHTML = shouldOpen ? '✓ Done' : '⛶ Full screen';
     button.setAttribute('aria-pressed', String(shouldOpen));
     button.setAttribute('aria-label', shouldOpen ? 'Close full screen map' : 'Open full screen map');
-    window.setTimeout(() => checkoutDeliveryMap?.invalidateSize(), 80);
+    [80, 250, 500].forEach(delay => window.setTimeout(() => checkoutDeliveryMap?.invalidateSize({ pan: false }), delay));
 }
 
 document.addEventListener('keydown', event => {
@@ -757,7 +868,7 @@ async function loadCustomerOrders() {
     const endISO   = end.toISOString();
 
     const buildCustomerOrderSelect = (includeFeedback, includeTracking = true) => `
-        id, shop_id, status, total_amount, delivery_note, created_at,
+        id, shop_id, status, total_amount, delivery_note, cancellation_reason, created_at,
         ${includeTracking ? 'estimated_delivery_at,' : ''}
         shops (name),
         order_items (quantity, price, menu_items (name)),
@@ -893,6 +1004,9 @@ function displayTodayOrders(orders) {
         const noteHtml = order.delivery_note
             ? `<div class="order-tracker-note">📍 ${escapeHtml(order.delivery_note)}</div>`
             : '';
+        const cancellationHtml = order.status === 'cancelled' && order.cancellation_reason
+            ? `<div class="alert alert-danger py-2 px-3 small mb-2"><strong>Cancellation reason:</strong> ${escapeHtml(order.cancellation_reason)}</div>`
+            : '';
 
         const time = new Date(order.created_at).toLocaleString('en-GB', {
             hour: '2-digit', minute: '2-digit'
@@ -955,6 +1069,7 @@ function displayTodayOrders(orders) {
                 <!-- Progress tracker -->
                 <div class="order-steps">${stepsHtml}</div>
                 ${estimateHtml}
+                ${cancellationHtml}
                 <!-- Items -->
                 <div class="order-tracker-items">${itemsText || '—'}</div>
                 <div class="order-tracker-total">💰 ${Number(order.total_amount).toLocaleString()} MMK</div>
@@ -1383,6 +1498,10 @@ function previewScreenshot(input) {
 }
 
 async function submitCheckout() {
+    if (checkoutSubmissionInProgress) {
+        showToast('Your order is already being submitted. Please wait.', 'warning');
+        return;
+    }
     const noteInput        = document.getElementById('checkout-note');
     const noteError        = document.getElementById('checkout-note-error');
     const paymentError     = document.getElementById('checkout-payment-error');
@@ -1436,12 +1555,15 @@ async function submitCheckout() {
     if (!valid) return;
 
     errorBanner.classList.add('d-none');
+    checkoutSubmissionInProgress = true;
+    checkoutRequestId = checkoutRequestId || (crypto.randomUUID?.() || `${Date.now()}-${Math.random().toString(16).slice(2)}`);
     btn.disabled = true;
     spinner.classList.remove('d-none');
 
     try {
         await createOrder(deliveryNote, selectedPaymentMethod, screenshotFile, selectedDeliveryLocation);
     } finally {
+        checkoutSubmissionInProgress = false;
         btn.disabled = false;
         spinner.classList.add('d-none');
     }
@@ -1563,20 +1685,28 @@ async function createOrder(deliveryNote, paymentMethod, screenshotFile, delivery
     }
 
     // Step 1: Insert order
-    const { data: orderData, error: orderError } = await supabaseClient
+    const orderPayload = {
+        customer_id: currentCustomerProfile.id,
+        customer_name: currentCustomerProfile.name,
+        shop_id: activeShopId,
+        total_amount: totalAmount,
+        delivery_note: deliveryNote,
+        delivery_lat: deliveryLocation.lat,
+        delivery_lng: deliveryLocation.lng,
+        client_request_id: checkoutRequestId,
+        status: 'pending'
+    };
+    let { data: orderData, error: orderError } = await supabaseClient
         .from('orders')
-        .insert({
-            customer_id:    currentCustomerProfile.id,
-            customer_name:  currentCustomerProfile.name,
-            shop_id:        activeShopId,
-            total_amount:  totalAmount,
-            delivery_note: deliveryNote,
-            delivery_lat: deliveryLocation.lat,
-            delivery_lng: deliveryLocation.lng,
-            status:        'pending'
-        })
+        .insert(orderPayload)
         .select()
         .single();
+
+    const orderErrorText = [orderError?.message, orderError?.details, orderError?.hint].filter(Boolean).join(' ');
+    if (orderError && (orderError.code === '42703' || /client_request_id/i.test(orderErrorText))) {
+        delete orderPayload.client_request_id;
+        ({ data: orderData, error: orderError } = await supabaseClient.from('orders').insert(orderPayload).select().single());
+    }
 
     if (orderError) {
         console.error('Error creating order:', orderError);
@@ -1650,6 +1780,7 @@ async function createOrder(deliveryNote, paymentMethod, screenshotFile, delivery
     // Step 5: Success
     cart = [];
     selectedPaymentMethod = null;
+    checkoutRequestId = null;
     updateCartCount();
 
     // Close checkout modal
@@ -2105,6 +2236,17 @@ async function pollCustomerOrders() {
             const previousEta = customerOrderEtaSnapshot.get(id);
             customerOrderSnapshot.set(id, order.status);
             customerOrderEtaSnapshot.set(id, order.estimated_delivery_at || null);
+            const etaTime = order.estimated_delivery_at ? new Date(order.estimated_delivery_at).getTime() : NaN;
+            if (['preparing', 'ready', 'out_for_delivery'].includes(order.status)
+                && Number.isFinite(etaTime) && etaTime < Date.now() && !customerDelayedOrderAlerts.has(id)) {
+                customerDelayedOrderAlerts.add(id);
+                const message = `Order #${id} is later than its estimated arrival time. The shop is still working on it.`;
+                showToast(message, 'warning');
+                if (isNotificationPreferenceEnabled()) {
+                    playNotificationSound('warning');
+                    maybeBrowserNotification('Order delayed', message, { tag: `order2me-delay-${id}`, orderId: id, url: 'customer.html#orders' });
+                }
+            }
             if (previousStatus !== undefined && previousStatus !== order.status) {
                 notifyCustomerOrderStatus(order);
                 changed = true;

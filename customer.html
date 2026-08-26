@@ -702,8 +702,26 @@
                             </div>
                         </div>
                         <p class="small text-muted mb-2">Tap the campus map where the owner should deliver your order.</p>
+                        <div class="delivery-location-tools mb-2">
+                            <button type="button" class="btn btn-sm btn-primary" id="use-current-location-btn"
+                                onclick="useCurrentDeliveryLocation()">⌖ Use my location</button>
+                            <select class="form-select form-select-sm" id="delivery-landmark-select"
+                                onchange="selectDeliveryLandmark(this.value)" aria-label="Choose a UCSY landmark">
+                                <option value="">Choose landmark…</option>
+                                <option value="canteen">Canteen</option>
+                                <option value="library">UCSY Library</option>
+                                <option value="building-e">Building E</option>
+                                <option value="main-entrance">Main entrance</option>
+                                <option value="football-field">Football field</option>
+                            </select>
+                        </div>
+                        <div id="checkout-map-network-status" class="delivery-map-network-status d-none" role="status">
+                            <span>Satellite images did not finish loading.</span>
+                            <button type="button" class="btn btn-sm btn-light" onclick="retryDeliveryMapTiles()">Retry map</button>
+                        </div>
                         <div id="checkout-delivery-map" aria-label="Select delivery location on UCSY campus map"></div>
                         <div id="checkout-map-selection" class="delivery-map-selection">No location selected yet.</div>
+                        <div id="checkout-map-boundary-warning" class="alert alert-warning py-2 px-3 small mt-2 d-none" role="alert"></div>
                         <div id="checkout-map-error" class="text-danger small mt-1 d-none">⚠ Please select a delivery point on the map.</div>
                     </div>
 

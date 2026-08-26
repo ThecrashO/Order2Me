@@ -607,6 +607,7 @@ async function loadOrders() {
             status,
             total_amount,
             delivery_note,
+            cancellation_reason,
             ${includeDeliveryLocation ? 'delivery_lat, delivery_lng,' : ''}
             created_at,
             ${includeTracking ? 'estimated_delivery_at, accepted_at, ready_at, sent_at,' : ''}
@@ -1251,8 +1252,12 @@ function buildOrderCard(order) {
     const hasDeliveryPoint = order.delivery_lat != null && order.delivery_lng != null
         && Number.isFinite(deliveryLat) && Number.isFinite(deliveryLng);
     const deliveryMapHtml = hasDeliveryPoint
-        ? `<a class="order-delivery-map-link" href="https://www.google.com/maps/search/?api=1&amp;query=${deliveryLat},${deliveryLng}"
-              target="_blank" rel="noopener noreferrer">🛰️ View delivery point</a>`
+        ? `<div class="order-delivery-location"><div>${deliveryNoteHtml}</div><div class="order-delivery-map-actions">
+              <a class="order-delivery-map-link" href="https://www.google.com/maps/search/?api=1&amp;query=${deliveryLat},${deliveryLng}"
+                 target="_blank" rel="noopener noreferrer">🛰️ View point</a>
+              <a class="order-delivery-map-link" href="https://www.google.com/maps/dir/?api=1&amp;destination=${deliveryLat},${deliveryLng}"
+                 target="_blank" rel="noopener noreferrer">🧭 Navigate</a>
+           </div></div>`
         : '';
 
     // Payment info
@@ -1323,15 +1328,46 @@ function buildOrderCard(order) {
             <div class="card-body py-2">
                 ${queueHtml}
                 <ul class="list-group list-group-flush mb-2">${itemsHtml}</ul>
-                ${deliveryNoteHtml}
-                ${deliveryMapHtml}
+                ${hasDeliveryPoint ? deliveryMapHtml : deliveryNoteHtml}
                 ${paymentHtml}
                 <p class="mb-1 small"><strong>Total:</strong> ${order.total_amount} MMK</p>
                 <p class="mb-2 text-muted small"><strong>Placed:</strong> ${time}</p>
-                <div class="order-actions-row"><div class="d-flex gap-2">${actionHtml}</div>${estimateControl}</div>
+                <div class="order-actions-row"><div class="d-flex gap-2 flex-wrap">${actionHtml}<button class="btn btn-sm btn-outline-secondary" onclick="openOrderDetailDrawer(${order.id})">Details</button></div>${estimateControl}</div>
             </div>
         </div>
     `;
+}
+
+function openOrderDetailDrawer(orderId) {
+    const order = allOrders.find(item => Number(item.id) === Number(orderId));
+    if (!order) return;
+    document.getElementById('owner-order-detail-drawer')?.remove();
+    const lat = Number(order.delivery_lat);
+    const lng = Number(order.delivery_lng);
+    const hasPoint = order.delivery_lat != null && order.delivery_lng != null && Number.isFinite(lat) && Number.isFinite(lng);
+    const distance = hasPoint ? getStraightLineDistanceMeters(17.0021126, 96.0924138, lat, lng) : null;
+    const items = (order.order_items || []).map(item => `<li>${escapeHtml(item.menu_items?.name || 'Item')} × ${item.quantity}</li>`).join('');
+    const drawer = document.createElement('div');
+    drawer.id = 'owner-order-detail-drawer';
+    drawer.className = 'offcanvas offcanvas-end owner-order-drawer';
+    drawer.tabIndex = -1;
+    drawer.innerHTML = `<div class="offcanvas-header"><div><small class="text-muted">Order details</small><h5 class="offcanvas-title">Order #${order.id}</h5></div><button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button></div>
+      <div class="offcanvas-body"><section><h6>Customer note</h6><p>${escapeHtml(order.delivery_note || 'No note')}</p></section>
+      ${hasPoint ? `<section><h6>Delivery point</h6><p>Approximately ${Math.round(distance)} m from UCSY centre</p><div class="d-grid gap-2"><a class="btn btn-primary" target="_blank" rel="noopener noreferrer" href="https://www.google.com/maps/dir/?api=1&amp;destination=${lat},${lng}">🧭 Open route</a><a class="btn btn-outline-primary" target="_blank" rel="noopener noreferrer" href="https://www.google.com/maps/search/?api=1&amp;query=${lat},${lng}">🛰️ View satellite point</a></div></section>` : '<section><p class="text-muted">No map point was saved for this order.</p></section>'}
+      <section><h6>Items</h6><ul>${items || '<li>No items</li>'}</ul></section>
+      <section><h6>Status</h6><p>${escapeHtml(order.status)}${order.estimated_delivery_at ? ` · ETA ${escapeHtml(formatEstimatedArrival(order.estimated_delivery_at))}` : ''}</p>${order.cancellation_reason ? `<p class="text-danger">${escapeHtml(order.cancellation_reason)}</p>` : ''}</section></div>`;
+    document.body.appendChild(drawer);
+    const instance = new bootstrap.Offcanvas(drawer);
+    drawer.addEventListener('hidden.bs.offcanvas', () => drawer.remove(), { once: true });
+    instance.show();
+}
+
+function getStraightLineDistanceMeters(lat1, lng1, lat2, lng2) {
+    const toRad = value => value * Math.PI / 180;
+    const dLat = toRad(lat2 - lat1);
+    const dLng = toRad(lng2 - lng1);
+    const a = Math.sin(dLat / 2) ** 2 + Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLng / 2) ** 2;
+    return 6371000 * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 }
 
 async function updateStatus(orderId, newStatus) {
@@ -1430,7 +1466,7 @@ async function confirmReject() {
 
     const { error } = await supabaseClient
         .from('orders')
-        .update({ status: 'cancelled' })
+        .update({ status: 'cancelled', cancellation_reason: finalReason })
         .eq('id', orderId)
         .eq('shop_id', ownerShop.id);
 

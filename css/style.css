@@ -3580,6 +3580,9 @@ textarea {
 }
 .delivery-map-picker { padding:1rem; border:1px solid #bfdbfe; border-radius:16px; background:#f8fbff; }
 .delivery-map-actions { display:flex; flex:0 0 auto; gap:.4rem; }
+.delivery-location-tools { display:grid; grid-template-columns:auto minmax(160px,1fr); gap:.5rem; }
+.delivery-map-network-status { display:flex; align-items:center; justify-content:space-between; gap:.7rem; margin-bottom:.5rem; padding:.55rem .7rem; border-radius:10px; background:#b45309; color:#fff; font-size:.72rem; font-weight:700; }
+.delivery-map-network-status.d-none { display:none !important; }
 #checkout-delivery-map { width:100%; height:300px; overflow:hidden; border:1px solid #cbd5e1; border-radius:14px; background:#e2e8f0; }
 .delivery-map-picker.is-fullscreen {
     position:fixed;
@@ -3595,7 +3598,7 @@ textarea {
 }
 .delivery-map-picker.is-fullscreen #checkout-delivery-map { flex:1 1 auto; min-height:0; height:auto; border-radius:12px; }
 body.delivery-map-fullscreen-open { overflow:hidden; }
-.ucsy-delivery-marker { background:transparent; border:0; }
+.ucsy-delivery-marker { display:block !important; visibility:visible !important; background:transparent !important; border:0 !important; z-index:1000 !important; }
 .ucsy-delivery-marker-pin {
     position:relative;
     display:block;
@@ -3620,12 +3623,19 @@ body.delivery-map-fullscreen-open { overflow:hidden; }
 .delivery-map-selection { margin-top:.55rem; padding:.5rem .65rem; border-radius:9px; background:#fff; color:var(--text-muted); font-size:.72rem; font-weight:650; }
 .order-delivery-map-link { display:inline-flex; align-items:center; gap:.35rem; margin-top:.55rem; padding:.45rem .7rem; border:1px solid #2563eb; border-radius:9px; color:#1d4ed8; background:#fff; font-size:.75rem; font-weight:800; text-decoration:none; }
 .order-delivery-map-link:hover { background:#eff6ff; color:#1e40af; }
+.order-delivery-location { margin-bottom:.65rem; padding:.75rem; border:1px solid #bfdbfe; border-radius:12px; background:#f8fbff; }
+.order-delivery-location .order-delivery-note { margin-bottom:0 !important; padding:0; border:0; background:transparent; }
+.order-delivery-map-actions { display:flex; flex-wrap:wrap; gap:.45rem; }
+.owner-order-drawer { width:min(440px, 100vw) !important; }
+.owner-order-drawer section { margin-bottom:.8rem; padding:1rem; border:1px solid #e2e8f0; border-radius:14px; background:#f8fafc; }
+.owner-order-drawer section h6 { font-weight:850; color:#0f172a; }
 @media (max-width:575.98px) {
     .delivery-map-picker > .d-flex { align-items:flex-start !important; }
     .delivery-map-actions { flex-direction:column; }
     .delivery-map-actions .btn { white-space:nowrap; }
     .delivery-map-picker.is-fullscreen > .d-flex { align-items:center !important; }
     .delivery-map-picker.is-fullscreen .delivery-map-actions { flex-direction:row; }
+    .delivery-location-tools { grid-template-columns:1fr; }
 }
 .admin-layout { min-height: calc(100dvh - 60px); }
 .admin-main { max-width: 1320px; padding: 1.4rem 1rem 3rem; }

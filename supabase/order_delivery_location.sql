@@ -5,7 +5,13 @@ BEGIN;
 
 ALTER TABLE public.orders
   ADD COLUMN IF NOT EXISTS delivery_lat double precision,
-  ADD COLUMN IF NOT EXISTS delivery_lng double precision;
+  ADD COLUMN IF NOT EXISTS delivery_lng double precision,
+  ADD COLUMN IF NOT EXISTS client_request_id text,
+  ADD COLUMN IF NOT EXISTS cancellation_reason text;
+
+CREATE UNIQUE INDEX IF NOT EXISTS orders_customer_client_request_unique
+  ON public.orders (customer_id, client_request_id)
+  WHERE client_request_id IS NOT NULL;
 
 ALTER TABLE public.orders DROP CONSTRAINT IF EXISTS orders_delivery_lat_check;
 ALTER TABLE public.orders DROP CONSTRAINT IF EXISTS orders_delivery_lng_check;
