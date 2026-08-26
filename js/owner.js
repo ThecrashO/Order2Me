@@ -600,13 +600,14 @@ window.addEventListener('beforeunload', () => {
 // ── 2. ORDERS ─────────────────────────────────────────────────
 
 async function loadOrders() {
-    const buildOrderSelect = (includeScreenshotPath, includeTracking = true) => `
+    const buildOrderSelect = (includeScreenshotPath, includeTracking = true, includeDeliveryLocation = true) => `
             id,
             customer_id,
             customer_name,
             status,
             total_amount,
             delivery_note,
+            ${includeDeliveryLocation ? 'delivery_lat, delivery_lng,' : ''}
             created_at,
             ${includeTracking ? 'estimated_delivery_at, accepted_at, ready_at, sent_at,' : ''}
             order_items (
@@ -620,22 +621,33 @@ async function loadOrders() {
                 ${includeScreenshotPath ? ', screenshot_path' : ''}
             )
         `;
-    const fetchOrders = (includeScreenshotPath, includeTracking = true) => supabaseClient
+    const fetchOrders = (includeScreenshotPath, includeTracking = true, includeDeliveryLocation = true) => supabaseClient
         .from('orders')
-        .select(buildOrderSelect(includeScreenshotPath, includeTracking))
+        .select(buildOrderSelect(includeScreenshotPath, includeTracking, includeDeliveryLocation))
         .eq('shop_id', ownerShop.id)
         .order('created_at', { ascending: false });
 
-    let { data, error } = await fetchOrders(true, true);
-    const errorText = [error?.message, error?.details, error?.hint].filter(Boolean).join(' ');
+    let includeTracking = true;
+    let includeDeliveryLocation = true;
+    let includeScreenshotPath = true;
+    let { data, error } = await fetchOrders(includeScreenshotPath, includeTracking, includeDeliveryLocation);
+    let errorText = [error?.message, error?.details, error?.hint].filter(Boolean).join(' ');
     if (error && (error.code === '42703' || /estimated_delivery_at|accepted_at|ready_at|sent_at/i.test(errorText))) {
         console.warn('Order queue migration is not available yet; loading without ETA fields.');
-        ({ data, error } = await fetchOrders(true, false));
+        includeTracking = false;
+        ({ data, error } = await fetchOrders(includeScreenshotPath, includeTracking, includeDeliveryLocation));
     }
-    const fallbackErrorText = [error?.message, error?.details, error?.hint].filter(Boolean).join(' ');
-    if (error && (error.code === '42703' || /screenshot_path/i.test(fallbackErrorText))) {
+    errorText = [error?.message, error?.details, error?.hint].filter(Boolean).join(' ');
+    if (error && (error.code === '42703' || /delivery_lat|delivery_lng/i.test(errorText))) {
+        console.warn('Order delivery map migration is not available yet; loading orders without map coordinates.');
+        includeDeliveryLocation = false;
+        ({ data, error } = await fetchOrders(includeScreenshotPath, includeTracking, includeDeliveryLocation));
+    }
+    errorText = [error?.message, error?.details, error?.hint].filter(Boolean).join(' ');
+    if (error && (error.code === '42703' || /screenshot_path/i.test(errorText))) {
         console.warn('payments.screenshot_path is not available yet; loading orders with the legacy schema. Run the Supabase SQL patch.');
-        ({ data, error } = await fetchOrders(false, false));
+        includeScreenshotPath = false;
+        ({ data, error } = await fetchOrders(includeScreenshotPath, includeTracking, includeDeliveryLocation));
     }
 
     if (error) {
@@ -1234,6 +1246,14 @@ function buildOrderCard(order) {
                <span class="small">${escapeHtml(order.delivery_note)}</span>
            </div>`
         : '';
+    const deliveryLat = Number(order.delivery_lat);
+    const deliveryLng = Number(order.delivery_lng);
+    const hasDeliveryPoint = order.delivery_lat != null && order.delivery_lng != null
+        && Number.isFinite(deliveryLat) && Number.isFinite(deliveryLng);
+    const deliveryMapHtml = hasDeliveryPoint
+        ? `<a class="order-delivery-map-link" href="https://www.google.com/maps/search/?api=1&amp;query=${deliveryLat},${deliveryLng}"
+              target="_blank" rel="noopener noreferrer">🛰️ View delivery point</a>`
+        : '';
 
     // Payment info
     // NOTE: Supabase returns payments as a plain object (not array) because
@@ -1304,6 +1324,7 @@ function buildOrderCard(order) {
                 ${queueHtml}
                 <ul class="list-group list-group-flush mb-2">${itemsHtml}</ul>
                 ${deliveryNoteHtml}
+                ${deliveryMapHtml}
                 ${paymentHtml}
                 <p class="mb-1 small"><strong>Total:</strong> ${order.total_amount} MMK</p>
                 <p class="mb-2 text-muted small"><strong>Placed:</strong> ${time}</p>

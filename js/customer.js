@@ -28,11 +28,23 @@ const UCSY_MAP_BOUNDS = [[16.994, 96.083], [17.011, 96.102]];
 let checkoutDeliveryMap = null;
 let checkoutDeliveryMarker = null;
 let selectedDeliveryLocation = null;
+const UCSY_DELIVERY_MARKER_ICON = typeof L !== 'undefined' ? L.divIcon({
+    className: 'ucsy-delivery-marker',
+    html: '<span class="ucsy-delivery-marker-pin" aria-hidden="true"></span>',
+    iconSize: [38, 48],
+    iconAnchor: [19, 46],
+    popupAnchor: [0, -44]
+}) : null;
 
 function setDeliveryLocation(lat, lng) {
     selectedDeliveryLocation = { lat: Number(lat.toFixed(7)), lng: Number(lng.toFixed(7)) };
     if (!checkoutDeliveryMarker) {
-        checkoutDeliveryMarker = L.marker([lat, lng], { draggable: true }).addTo(checkoutDeliveryMap);
+        checkoutDeliveryMarker = L.marker([lat, lng], {
+            draggable: true,
+            icon: UCSY_DELIVERY_MARKER_ICON,
+            title: 'Selected delivery point',
+            riseOnHover: true
+        }).addTo(checkoutDeliveryMap);
         checkoutDeliveryMarker.on('dragend', event => {
             const point = event.target.getLatLng();
             setDeliveryLocation(point.lat, point.lng);
@@ -48,9 +60,9 @@ function initDeliveryMap() {
     if (!checkoutDeliveryMap) {
         checkoutDeliveryMap = L.map('checkout-delivery-map', { maxBounds: UCSY_MAP_BOUNDS, maxBoundsViscosity: 0.9 })
             .setView(UCSY_MAP_CENTER, 17);
-        L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
             maxZoom: 19,
-            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+            attribution: 'Tiles &copy; Esri — Source: Esri, Maxar, Earthstar Geographics, and the GIS User Community'
         }).addTo(checkoutDeliveryMap);
         checkoutDeliveryMap.on('click', event => setDeliveryLocation(event.latlng.lat, event.latlng.lng));
     }
@@ -65,6 +77,29 @@ function resetDeliveryMap() {
     const label = document.getElementById('checkout-map-selection');
     if (label) label.textContent = 'No location selected yet.';
 }
+
+function toggleDeliveryMapFullscreen(forceOpen) {
+    const picker = document.querySelector('.delivery-map-picker');
+    const button = document.getElementById('checkout-map-fullscreen-btn');
+    if (!picker || !button) return;
+
+    const shouldOpen = typeof forceOpen === 'boolean'
+        ? forceOpen
+        : !picker.classList.contains('is-fullscreen');
+    picker.classList.toggle('is-fullscreen', shouldOpen);
+    document.body.classList.toggle('delivery-map-fullscreen-open', shouldOpen);
+    button.innerHTML = shouldOpen ? '✓ Done' : '⛶ Full screen';
+    button.setAttribute('aria-pressed', String(shouldOpen));
+    button.setAttribute('aria-label', shouldOpen ? 'Close full screen map' : 'Open full screen map');
+    window.setTimeout(() => checkoutDeliveryMap?.invalidateSize(), 80);
+}
+
+document.addEventListener('keydown', event => {
+    if (event.key === 'Escape' && document.querySelector('.delivery-map-picker.is-fullscreen')) {
+        event.preventDefault();
+        toggleDeliveryMapFullscreen(false);
+    }
+});
 
 function isNotificationPreferenceEnabled() {
     return localStorage.getItem(NOTIFICATION_PREF_KEY) === 'true';

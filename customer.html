@@ -660,7 +660,7 @@
 
     <!-- ② Checkout Modal -->
     <div class="modal fade" id="checkoutModal" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title">🛒 Checkout</h5>
@@ -695,7 +695,11 @@
                     <div class="mb-4 delivery-map-picker">
                         <div class="d-flex align-items-center justify-content-between gap-2 mb-2">
                             <label class="form-label fw-semibold mb-0">🗺️ Pin your UCSY delivery point <span class="text-danger">*</span></label>
-                            <button type="button" class="btn btn-sm btn-outline-secondary" onclick="resetDeliveryMap()">Reset</button>
+                            <div class="delivery-map-actions">
+                                <button type="button" class="btn btn-sm btn-outline-primary" id="checkout-map-fullscreen-btn"
+                                    onclick="toggleDeliveryMapFullscreen()" aria-pressed="false">⛶ Full screen</button>
+                                <button type="button" class="btn btn-sm btn-outline-secondary" onclick="resetDeliveryMap()">Reset</button>
+                            </div>
                         </div>
                         <p class="small text-muted mb-2">Tap the campus map where the owner should deliver your order.</p>
                         <div id="checkout-delivery-map" aria-label="Select delivery location on UCSY campus map"></div>

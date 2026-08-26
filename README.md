@@ -19,7 +19,7 @@ University canteen များအတွက် ပြုလုပ်ထားသ
 - မဖြစ်မနေထည့်ရသော phone number နှင့် ပြင်ဆင်နိုင်သော profile photo
 - Approved shop များ၊ shop owner profile နှင့် menu ပုံများကြည့်ခြင်း
 - Category/search filter ဖြင့် menu ရှာခြင်း
-- Cart ထဲထည့်ပြီး delivery note နှင့် order တင်ခြင်း
+- Cart ထဲထည့်ပြီး delivery note နှင့် fullscreen ပြုလုပ်နိုင်သော UCSY satellite map ပေါ် delivery point pin ထောက်ကာ order တင်ခြင်း
 - KBZPay၊ WavePay payment method နှင့် payment screenshot
 - Order status ကို Realtime သို့မဟုတ် polling fallback ဖြင့်ကြည့်ခြင်း
 - Owner ကို ဖုန်းခေါ်ရန် profile/call action
@@ -37,7 +37,7 @@ University canteen များအတွက် ပြုလုပ်ထားသ
 - Incoming order စာရင်းနှင့် order status workflow
 - Business Insights dashboard — revenue၊ sales trend၊ best-selling menu၊ peak hours၊ order performance၊ ratings နှင့် searchable order records
 - Customer profile ကြည့်ခြင်းနှင့် phone-call button
-- Payment screenshot နှင့် delivery note ကြည့်ခြင်း
+- Payment screenshot၊ delivery note နှင့် customer ထောက်ထားသော delivery point ကို map တွင်ကြည့်ခြင်း
 - Browser notification၊ sound နှင့် toast alerts
 
 ### Administrator
@@ -190,6 +190,7 @@ SQL ဖိုင်များကို **Supabase Dashboard → SQL Editor** �
 13. `supabase/v1_security_lockdown.sql` — နောက်ဆုံး run ရမည့် anonymous-access lockdown
 14. `supabase/admin_control_center.sql` — Admin audit/RPC foundation၊ user/shop/order controls၊ moderation၊ announcements၊ system settings နှင့် analytics
 15. `supabase/admin_control_center_fix.sql` — Suspension/session enforcement၊ working system limits၊ distinct audit events နှင့် production corrective fixes
+16. `supabase/order_delivery_location.sql` — Customer map pin coordinates နှင့် owner-only delivery location protection
 
 လိုအပ်သည့် existing database များတွင်သာ `supabase/allow_duplicate_profile_names.sql` ကို run ပါ။ Abandoned Web Push objects ရှိသေးလျှင် `supabase/remove_web_push.sql` ဖြင့်ဖယ်ရှားနိုင်သည်။
 
@@ -303,6 +304,7 @@ Release မလုပ်မီ Customer၊ Owner နှင့် Admin account �
 - [ ] Owner shop availability open/closed
 - [ ] Menu add/edit/delete၊ image upload နှင့် Available/Unavailable filter
 - [ ] Customer shop/menu view၊ cart နှင့် order placement
+- [ ] UCSY satellite map ပေါ် marker ထောက်ပြီး Owner ဘက် `View delivery point` link မှ နေရာမှန်ဖွင့်ခြင်း
 - [ ] KBZPay/WavePay နှင့် payment screenshot order
 - [ ] Owner receives new order and changes every status
 - [ ] Customer receives status updates and confirms receipt

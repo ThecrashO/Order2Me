@@ -3579,10 +3579,54 @@ textarea {
     box-shadow: 0 8px 24px rgba(11,31,58,.16);
 }
 .delivery-map-picker { padding:1rem; border:1px solid #bfdbfe; border-radius:16px; background:#f8fbff; }
+.delivery-map-actions { display:flex; flex:0 0 auto; gap:.4rem; }
 #checkout-delivery-map { width:100%; height:300px; overflow:hidden; border:1px solid #cbd5e1; border-radius:14px; background:#e2e8f0; }
+.delivery-map-picker.is-fullscreen {
+    position:fixed;
+    inset:0;
+    z-index:2000;
+    display:flex;
+    flex-direction:column;
+    margin:0 !important;
+    padding:max(1rem, env(safe-area-inset-top)) max(1rem, env(safe-area-inset-right)) max(1rem, env(safe-area-inset-bottom)) max(1rem, env(safe-area-inset-left));
+    border:0;
+    border-radius:0;
+    background:#f8fbff;
+}
+.delivery-map-picker.is-fullscreen #checkout-delivery-map { flex:1 1 auto; min-height:0; height:auto; border-radius:12px; }
+body.delivery-map-fullscreen-open { overflow:hidden; }
+.ucsy-delivery-marker { background:transparent; border:0; }
+.ucsy-delivery-marker-pin {
+    position:relative;
+    display:block;
+    width:34px;
+    height:34px;
+    border:3px solid #fff;
+    border-radius:50% 50% 50% 0;
+    background:#ef4444;
+    box-shadow:0 5px 16px rgba(15,23,42,.55);
+    transform:rotate(-45deg);
+}
+.ucsy-delivery-marker-pin::after {
+    content:'';
+    position:absolute;
+    width:10px;
+    height:10px;
+    top:12px;
+    left:12px;
+    border-radius:50%;
+    background:#fff;
+}
 .delivery-map-selection { margin-top:.55rem; padding:.5rem .65rem; border-radius:9px; background:#fff; color:var(--text-muted); font-size:.72rem; font-weight:650; }
 .order-delivery-map-link { display:inline-flex; align-items:center; gap:.35rem; margin-top:.55rem; padding:.45rem .7rem; border:1px solid #2563eb; border-radius:9px; color:#1d4ed8; background:#fff; font-size:.75rem; font-weight:800; text-decoration:none; }
 .order-delivery-map-link:hover { background:#eff6ff; color:#1e40af; }
+@media (max-width:575.98px) {
+    .delivery-map-picker > .d-flex { align-items:flex-start !important; }
+    .delivery-map-actions { flex-direction:column; }
+    .delivery-map-actions .btn { white-space:nowrap; }
+    .delivery-map-picker.is-fullscreen > .d-flex { align-items:center !important; }
+    .delivery-map-picker.is-fullscreen .delivery-map-actions { flex-direction:row; }
+}
 .admin-layout { min-height: calc(100dvh - 60px); }
 .admin-main { max-width: 1320px; padding: 1.4rem 1rem 3rem; }
 .admin-view { display: none; animation: panelFadeIn .22s ease both; }
