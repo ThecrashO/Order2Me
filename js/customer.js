@@ -94,14 +94,19 @@ let checkoutRequestId = null;
 function setDeliveryLocation(lat, lng, label = '') {
     selectedDeliveryLocation = { lat: Number(lat.toFixed(7)), lng: Number(lng.toFixed(7)) };
     if (!checkoutDeliveryMarker) {
-        checkoutDeliveryMarker = L.circleMarker([lat, lng], {
-            radius: 14,
-            color: '#ffffff',
-            weight: 5,
-            fillColor: '#ef4444',
-            fillOpacity: 1,
-            opacity: 1,
-            className: 'delivery-point-marker'
+        const deliveryPinIcon = L.divIcon({
+            className: 'delivery-point-icon',
+            html: '<div style="display:grid!important;place-items:center!important;box-sizing:border-box!important;width:46px!important;height:46px!important;border:5px solid #fff!important;border-radius:50%!important;background:#ef4444!important;color:#fff!important;font-size:22px!important;font-weight:900!important;line-height:1!important;box-shadow:0 5px 16px rgba(0,0,0,.75)!important;">●</div>',
+            iconSize: [46, 46],
+            iconAnchor: [23, 23],
+            popupAnchor: [0, -27]
+        });
+        checkoutDeliveryMarker = L.marker([lat, lng], {
+            icon: deliveryPinIcon,
+            pane: 'deliveryPointPane',
+            interactive: false,
+            keyboard: false,
+            zIndexOffset: 10000
         }).addTo(checkoutDeliveryMap);
     } else checkoutDeliveryMarker.setLatLng([lat, lng]);
     checkoutDeliveryMarker.unbindTooltip();
@@ -112,7 +117,7 @@ function setDeliveryLocation(lat, lng, label = '') {
         offset: [0, -13],
         className: 'ucsy-location-label'
     }).openTooltip();
-    checkoutDeliveryMarker.bringToFront();
+    checkoutDeliveryMarker.setZIndexOffset(10000);
     checkoutDeliveryMap.panTo([lat, lng]);
     const insideCampus = isPointInsideUCSYBoundary(lat, lng);
     const warning = document.getElementById('checkout-map-boundary-warning');
@@ -129,6 +134,9 @@ function initDeliveryMap() {
     if (!checkoutDeliveryMap) {
         checkoutDeliveryMap = L.map('checkout-delivery-map', { maxBounds: UCSY_MAP_BOUNDS, maxBoundsViscosity: 0.9 })
             .setView(UCSY_MAP_CENTER, 17);
+        const deliveryPointPane = checkoutDeliveryMap.createPane('deliveryPointPane');
+        deliveryPointPane.style.zIndex = '10000';
+        deliveryPointPane.style.pointerEvents = 'none';
         const satelliteUrl = buildUCSYSatelliteImageUrl('server.arcgisonline.com');
         const mapStatus = document.getElementById('checkout-map-network-status');
         if (mapStatus) {
