@@ -21,6 +21,7 @@ University canteen များအတွက် ပြုလုပ်ထားသ
 - Category/search filter ဖြင့် menu ရှာခြင်း
 - Cart ထဲထည့်ပြီး delivery note နှင့် fullscreen ပြုလုပ်နိုင်သော UCSY satellite map ပေါ် GPS/landmark delivery point pin ထောက်ကာ order တင်ခြင်း
 - UCSY delivery boundary warning နှင့် duplicate order submission protection
+- အလင်္ကာ၊ မုဒြာနှင့် ဒီပအဆောင် အပါအဝင် UCSY landmark quick selection
 - KBZPay၊ WavePay payment method နှင့် payment screenshot
 - Order status timeline၊ ETA နှင့် delayed-order alert ကို Realtime သို့မဟုတ် polling fallback ဖြင့်ကြည့်ခြင်း
 - Owner ကို ဖုန်းခေါ်ရန် profile/call action

@@ -3598,28 +3598,9 @@ textarea {
 }
 .delivery-map-picker.is-fullscreen #checkout-delivery-map { flex:1 1 auto; min-height:0; height:auto; border-radius:12px; }
 body.delivery-map-fullscreen-open { overflow:hidden; }
-.ucsy-delivery-marker { display:block !important; visibility:visible !important; background:transparent !important; border:0 !important; z-index:1000 !important; }
-.ucsy-delivery-marker-pin {
-    position:relative;
-    display:block;
-    width:34px;
-    height:34px;
-    border:3px solid #fff;
-    border-radius:50% 50% 50% 0;
-    background:#ef4444;
-    box-shadow:0 5px 16px rgba(15,23,42,.55);
-    transform:rotate(-45deg);
-}
-.ucsy-delivery-marker-pin::after {
-    content:'';
-    position:absolute;
-    width:10px;
-    height:10px;
-    top:12px;
-    left:12px;
-    border-radius:50%;
-    background:#fff;
-}
+.leaflet-marker-pane .leaflet-interactive { visibility:visible !important; pointer-events:auto !important; }
+.ucsy-location-label { padding:.35rem .55rem; border:0; border-radius:8px; background:#0f172a; color:#fff; box-shadow:0 4px 12px rgba(15,23,42,.35); font-size:.72rem; font-weight:800; }
+.ucsy-location-label::before { border-top-color:#0f172a !important; }
 .delivery-map-selection { margin-top:.55rem; padding:.5rem .65rem; border-radius:9px; background:#fff; color:var(--text-muted); font-size:.72rem; font-weight:650; }
 .order-delivery-map-link { display:inline-flex; align-items:center; gap:.35rem; margin-top:.55rem; padding:.45rem .7rem; border:1px solid #2563eb; border-radius:9px; color:#1d4ed8; background:#fff; font-size:.75rem; font-weight:800; text-decoration:none; }
 .order-delivery-map-link:hover { background:#eff6ff; color:#1e40af; }

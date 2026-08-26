@@ -32,7 +32,10 @@ const UCSY_LANDMARKS = {
     library: { label: 'UCSY Library', lat: 17.00142, lng: 96.09342 },
     'building-e': { label: 'Building E', lat: 17.00272, lng: 96.09312 },
     'main-entrance': { label: 'Main entrance', lat: 16.99972, lng: 96.09192 },
-    'football-field': { label: 'Football field', lat: 17.00078, lng: 96.09410 }
+    'football-field': { label: 'Football field', lat: 17.00078, lng: 96.09410 },
+    'alinkar-hostel': { label: 'အလင်္ကာအဆောင်', lat: 17.0038569, lng: 96.0915146 },
+    'mudra-hostel': { label: 'မုဒြာအဆောင်', lat: 17.0042674, lng: 96.0920231 },
+    'depa-hostel': { label: 'ဒီပအဆောင်', lat: 17.0009572, lng: 96.0949135 }
 };
 let checkoutDeliveryMap = null;
 let checkoutDeliveryMarker = null;
@@ -46,29 +49,28 @@ let checkoutMapPlaceholder = null;
 let selectedDeliveryLocation = null;
 let checkoutSubmissionInProgress = false;
 let checkoutRequestId = null;
-const UCSY_DELIVERY_MARKER_ICON = typeof L !== 'undefined' ? L.divIcon({
-    className: 'ucsy-delivery-marker',
-    html: '<svg width="44" height="54" viewBox="0 0 44 54" aria-hidden="true" style="display:block;filter:drop-shadow(0 5px 5px rgba(0,0,0,.55))"><path fill="#ef4444" stroke="#fff" stroke-width="3" d="M22 2C11 2 3 10.3 3 21c0 14.2 19 31 19 31s19-16.8 19-31C41 10.3 33 2 22 2Z"/><circle cx="22" cy="21" r="7" fill="#fff"/></svg>',
-    iconSize: [44, 54],
-    iconAnchor: [22, 52],
-    popupAnchor: [0, -44]
-}) : null;
-
 function setDeliveryLocation(lat, lng, label = '') {
     selectedDeliveryLocation = { lat: Number(lat.toFixed(7)), lng: Number(lng.toFixed(7)) };
     if (!checkoutDeliveryMarker) {
-        checkoutDeliveryMarker = L.marker([lat, lng], {
-            draggable: true,
-            icon: UCSY_DELIVERY_MARKER_ICON,
-            title: 'Selected delivery point',
-            riseOnHover: true
+        checkoutDeliveryMarker = L.circleMarker([lat, lng], {
+            radius: 11,
+            color: '#ffffff',
+            weight: 4,
+            fillColor: '#ef4444',
+            fillOpacity: 1,
+            opacity: 1,
+            pane: 'markerPane'
         }).addTo(checkoutDeliveryMap);
-        checkoutDeliveryMarker.on('dragend', event => {
-            const point = event.target.getLatLng();
-            setDeliveryLocation(point.lat, point.lng);
-        });
     } else checkoutDeliveryMarker.setLatLng([lat, lng]);
-    checkoutDeliveryMarker.setZIndexOffset(1000).bindPopup(label || 'Deliver here').openPopup();
+    checkoutDeliveryMarker.unbindTooltip();
+    checkoutDeliveryMarker.bindPopup(label || 'Deliver here').openPopup();
+    if (label) checkoutDeliveryMarker.bindTooltip(label, {
+        permanent: true,
+        direction: 'top',
+        offset: [0, -13],
+        className: 'ucsy-location-label'
+    }).openTooltip();
+    checkoutDeliveryMarker.bringToFront();
     checkoutDeliveryMap.panTo([lat, lng]);
     const insideCampus = L.latLngBounds(UCSY_DELIVERY_BOUNDS).contains([lat, lng]);
     const warning = document.getElementById('checkout-map-boundary-warning');
@@ -146,6 +148,7 @@ function selectDeliveryLandmark(key) {
     const landmark = UCSY_LANDMARKS[key];
     checkoutDeliveryMap.setView([landmark.lat, landmark.lng], 18);
     setDeliveryLocation(landmark.lat, landmark.lng, landmark.label);
+    showToast(`${landmark.label} selected as your delivery point.`, 'success');
 }
 
 function useCurrentDeliveryLocation() {
