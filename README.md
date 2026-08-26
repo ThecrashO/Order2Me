@@ -38,7 +38,7 @@ University canteen များအတွက် ပြုလုပ်ထားသ
 - Category နှင့် search filter
 - Incoming order စာရင်းနှင့် order status workflow
 - Business Insights dashboard — revenue၊ sales trend၊ best-selling menu၊ peak hours၊ order performance၊ ratings နှင့် searchable order records
-- Customer profile ကြည့်ခြင်းနှင့် phone-call button
+- ကိုယ့်ဆိုင်တွင် order တင်ဖူးသော customers စာရင်း၊ profile နှင့် phone-call button
 - Payment screenshot၊ delivery note နှင့် customer ထောက်ထားသော delivery point ကို detail drawer/map/route ဖြင့်ကြည့်ခြင်း
 - Browser notification၊ sound နှင့် toast alerts
 

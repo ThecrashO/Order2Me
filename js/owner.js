@@ -1784,29 +1784,48 @@ async function loadCustomers() {
             Loading customers...
         </div>`;
 
-    // Fetch customers + their order count in one query via Supabase embedded select
-    const { data, error } = await supabaseClient
-        .from('users')
-        .select(`
-            id,
-            name,
-            email,
-            phone_number,
-            avatar_path,
-            created_at,
-            orders ( id )
-        `)
-        .eq('role', 'customer')
-        .order('created_at', { ascending: false });
-
-    if (error) {
-        container.innerHTML = `<p class="text-danger p-3"><strong>Error:</strong> ${escapeHtml(error.message)}</p>`;
+    if (!ownerShop?.id) {
+        container.innerHTML = '<p class="text-muted p-3">Shop information is not available yet.</p>';
         return;
     }
 
-    allCustomersArr = (data || []).map(s => ({
-        ...s,
-        order_count: Array.isArray(s.orders) ? s.orders.length : 0
+    // Query the shop's orders first. orders now has both customer_id and
+    // cancelled_by relationships to users, so automatic users -> orders
+    // embedding is intentionally avoided to prevent PGRST relationship ambiguity.
+    const { data: orderRows, error: orderError } = await supabaseClient
+        .from('orders')
+        .select('id, customer_id')
+        .eq('shop_id', ownerShop.id);
+
+    if (orderError) {
+        container.innerHTML = `<p class="text-danger p-3"><strong>Error:</strong> ${escapeHtml(orderError.message)}</p>`;
+        return;
+    }
+
+    const orderCounts = new Map();
+    (orderRows || []).forEach(order => {
+        const customerId = Number(order.customer_id);
+        if (Number.isFinite(customerId)) orderCounts.set(customerId, (orderCounts.get(customerId) || 0) + 1);
+    });
+    const customerIds = [...orderCounts.keys()];
+    let profiles = [];
+    if (customerIds.length) {
+        const { data, error } = await supabaseClient
+            .from('users')
+            .select('id, name, email, phone_number, avatar_path, created_at')
+            .eq('role', 'customer')
+            .in('id', customerIds)
+            .order('created_at', { ascending: false });
+        if (error) {
+            container.innerHTML = `<p class="text-danger p-3"><strong>Error:</strong> ${escapeHtml(error.message)}</p>`;
+            return;
+        }
+        profiles = data || [];
+    }
+
+    allCustomersArr = profiles.map(profile => ({
+        ...profile,
+        order_count: orderCounts.get(Number(profile.id)) || 0
     }));
     await hydrateProfileAvatars(allCustomersArr);
 
