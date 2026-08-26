@@ -157,15 +157,29 @@ BEGIN
 END;
 $$;
 
+CREATE OR REPLACE FUNCTION public.admin_delete_announcement(p_announcement_id bigint, p_reason text)
+RETURNS void LANGUAGE plpgsql SECURITY DEFINER SET search_path = '' AS $$
+DECLARE old_row public.announcements; actor bigint:=public.admin_actor_id();
+BEGIN
+  IF nullif(trim(p_reason),'') IS NULL THEN RAISE EXCEPTION 'A deletion reason is required'; END IF;
+  SELECT * INTO old_row FROM public.announcements WHERE id=p_announcement_id FOR UPDATE;
+  IF old_row.id IS NULL THEN RAISE EXCEPTION 'Announcement not found'; END IF;
+  DELETE FROM public.announcements WHERE id=p_announcement_id;
+  PERFORM public.admin_log_action('ANNOUNCEMENT_DELETED','announcement',p_announcement_id::text,to_jsonb(old_row),NULL,trim(p_reason));
+END;
+$$;
+
 REVOKE ALL ON FUNCTION public.enforce_owner_signup_setting() FROM PUBLIC;
 REVOKE ALL ON FUNCTION public.admin_control_shop(bigint,text,boolean,text) FROM PUBLIC;
 REVOKE ALL ON FUNCTION public.get_admin_overview() FROM PUBLIC;
 REVOKE ALL ON FUNCTION public.admin_update_setting(text,jsonb) FROM PUBLIC;
 REVOKE ALL ON FUNCTION public.admin_create_announcement(text,text,text,bigint,bigint,timestamptz) FROM PUBLIC;
+REVOKE ALL ON FUNCTION public.admin_delete_announcement(bigint,text) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION public.admin_control_shop(bigint,text,boolean,text) TO authenticated;
 GRANT EXECUTE ON FUNCTION public.get_admin_overview() TO authenticated;
 GRANT EXECUTE ON FUNCTION public.admin_update_setting(text,jsonb) TO authenticated;
 GRANT EXECUTE ON FUNCTION public.admin_create_announcement(text,text,text,bigint,bigint,timestamptz) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.admin_delete_announcement(bigint,text) TO authenticated;
 GRANT EXECUTE ON FUNCTION public.shop_accepts_orders(bigint) TO authenticated;
 
 NOTIFY pgrst, 'reload schema';

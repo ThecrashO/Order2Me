@@ -506,6 +506,16 @@ let activeShop            = null;
 let activeShopId          = null;
 const ACTIVE_SHOP_KEY     = 'order2me-active-shop-id';
 
+async function retryCustomerReadOnce(operation) {
+    let result = await operation();
+    const message = String(result?.error?.message || '');
+    if (result?.error && /failed to fetch|network request|load failed/i.test(message)) {
+        await new Promise(resolve => window.setTimeout(resolve, 700));
+        result = await operation();
+    }
+    return result;
+}
+
 function syncSelectedShopAvailabilityUI() {
     const availability = getShopOrderAvailability(activeShop);
     const card = document.getElementById('selected-shop-availability');
@@ -547,7 +557,8 @@ async function refreshSelectedShopAvailability() {
         return { verified: true, availability: getShopOrderAvailability(null) };
     }
 
-    const { data, error } = await supabaseClient.rpc('get_approved_shops_with_owner');
+    const { data, error } = await retryCustomerReadOnce(() =>
+        supabaseClient.rpc('get_approved_shops_with_owner'));
     if (error) {
         console.error('Unable to verify shop availability:', error);
         return { verified: false, availability: getShopOrderAvailability(activeShop) };
@@ -651,7 +662,8 @@ function openSelectedOwnerProfile() {
 
 async function loadApprovedShops() {
     const list = document.getElementById('shop-picker-list');
-    const { data, error } = await supabaseClient.rpc('get_approved_shops_with_owner');
+    const { data, error } = await retryCustomerReadOnce(() =>
+        supabaseClient.rpc('get_approved_shops_with_owner'));
 
     if (error) {
         console.error('Error loading shops:', error);
@@ -942,30 +954,46 @@ async function loadCustomerOrders() {
     const startISO = start.toISOString();
     const endISO   = end.toISOString();
 
-    const buildCustomerOrderSelect = (includeFeedback, includeTracking = true) => `
-        id, shop_id, status, total_amount, delivery_note, cancellation_reason, created_at,
+    const buildCustomerOrderSelect = (includeFeedback, includeTracking = true, includeCancellation = true) => `
+        id, shop_id, status, total_amount, delivery_note,
+        ${includeCancellation ? 'cancellation_reason,' : ''}
+        created_at,
         ${includeTracking ? 'estimated_delivery_at,' : ''}
-        shops (name),
-        order_items (quantity, price, menu_items (name)),
-        payments (payment_method, screenshot_url)
-        ${includeFeedback ? ', order_feedback (id, rating, comment, created_at)' : ''}`;
-    const fetchCustomerOrders = (includeFeedback, includeTracking = true) => supabaseClient
+        shops:shops!fk_orders_shop (name),
+        order_items:order_items!fk_order (quantity, price, menu_items:menu_items!fk_menu (name)),
+        payments:payments!fk_payment_order (payment_method, screenshot_url)
+        ${includeFeedback ? ', order_feedback:order_feedback!order_feedback_order_id_fkey (id, rating, comment, created_at)' : ''}`;
+    const fetchCustomerOrders = (includeFeedback, includeTracking = true, includeCancellation = true) => supabaseClient
         .from('orders')
-        .select(buildCustomerOrderSelect(includeFeedback, includeTracking))
+        .select(buildCustomerOrderSelect(includeFeedback, includeTracking, includeCancellation))
         .eq('customer_id', currentCustomerProfile.id)
         .gte('created_at', startISO)
         .lte('created_at', endISO)
         .order('created_at', { ascending: false });
 
-    let { data, error } = await fetchCustomerOrders(true, true);
+    let includeFeedback = true;
+    let includeTracking = true;
+    let includeCancellation = true;
+    let { data, error } = await retryCustomerReadOnce(() =>
+        fetchCustomerOrders(includeFeedback, includeTracking, includeCancellation));
     if (error && (error.code === '42703' || /estimated_delivery_at/i.test(error.message || ''))) {
         console.warn('Order queue migration is not available yet; loading without ETA.');
-        ({ data, error } = await fetchCustomerOrders(true, false));
+        includeTracking = false;
+        ({ data, error } = await retryCustomerReadOnce(() =>
+            fetchCustomerOrders(includeFeedback, includeTracking, includeCancellation)));
     }
-    if (error && (/order_feedback/i.test(error.message || '') || ['PGRST200', 'PGRST205'].includes(error.code))) {
+    if (error && /cancellation_reason/i.test([error.message, error.details, error.hint].filter(Boolean).join(' '))) {
+        console.warn('Cancellation reason column is not available yet; loading without it.');
+        includeCancellation = false;
+        ({ data, error } = await retryCustomerReadOnce(() =>
+            fetchCustomerOrders(includeFeedback, includeTracking, includeCancellation)));
+    }
+    if (error && /order_feedback/i.test([error.message, error.details, error.hint].filter(Boolean).join(' '))) {
         feedbackFeatureAvailable = false;
         console.warn('Feedback table is not available yet. Run supabase/order_feedback.sql.');
-        ({ data, error } = await fetchCustomerOrders(false, false));
+        includeFeedback = false;
+        ({ data, error } = await retryCustomerReadOnce(() =>
+            fetchCustomerOrders(includeFeedback, includeTracking, includeCancellation)));
     } else if (!error) {
         feedbackFeatureAvailable = true;
     }

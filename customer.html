@@ -984,10 +984,11 @@
 
             const { data, error } = await supabaseClient
                 .from('orders')
-                .select(`id, status, total_amount, delivery_note, created_at, shops (name),
-                    order_items ( quantity, price, menu_items (name) ),
-                    payments ( payment_method ),
-                    order_feedback ( id, rating, comment, created_at )`)
+                .select(`id, status, total_amount, delivery_note, created_at,
+                    shops:shops!fk_orders_shop (name),
+                    order_items:order_items!fk_order (quantity, price, menu_items:menu_items!fk_menu (name)),
+                    payments:payments!fk_payment_order (payment_method),
+                    order_feedback:order_feedback!order_feedback_order_id_fkey (id, rating, comment, created_at)`)
                 .eq('customer_id', profile.id)
                 .lt('created_at', todayStart.toISOString())
                 .order('created_at', { ascending: false });

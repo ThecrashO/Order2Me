@@ -3778,6 +3778,7 @@ body.delivery-map-fullscreen-open { overflow:hidden; }
 .admin-data-card p { margin:.45rem 0 0; }
 .admin-detail-body { margin-top:.8rem; padding-top:.8rem; border-top:1px solid var(--border); }
 .admin-payment-card { display:grid; grid-template-columns:1fr auto; align-items:center; gap:.7rem; }
+.admin-announcement-actions { display:flex; flex-direction:column; align-items:flex-end; gap:.55rem; }
 .admin-payment-card .admin-card-actions { grid-column:1/-1; }
 .admin-row-restricted { border-left:4px solid var(--danger) !important; background:#fffafa; }
 .admin-control-form { display:grid; grid-template-columns:1fr 220px; gap:.8rem; align-items:end; }

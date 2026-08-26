@@ -49,7 +49,7 @@ University canteen များအတွက် ပြုလုပ်ထားသ
 - User၊ shop နှင့် system activity စီမံကြည့်ရှုခြင်း
 - Admin dashboard ကို public signup မပေးဘဲ database မှ bootstrap လုပ်ခြင်း
 - Audited user suspension၊ shop force-close နှင့် order cancellation
-- Menu/feedback moderation၊ platform announcements နှင့် runtime system settings
+- Menu/feedback moderation၊ audited create/delete platform announcements နှင့် runtime system settings
 - Platform overview၊ cross-shop analytics နှင့် searchable admin audit log
 - Moderation ကို shop/customer/state အလိုက်နှင့် audit logs ကို action/entity/admin အလိုက် group/filter လုပ်ခြင်း
 - App User နှင့် Shop cards မှ profile detail view ဖွင့်ပြီး contact၊ status၊ shop/menu၊ recent orders နှင့် summary metrics ကြည့်ခြင်း
