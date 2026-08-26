@@ -26,7 +26,51 @@ let feedbackRating = 0;
 let feedbackFeatureAvailable = true;
 const UCSY_MAP_CENTER = [17.0021126, 96.0924138];
 const UCSY_MAP_BOUNDS = [[16.994, 96.083], [17.011, 96.102]];
-const UCSY_DELIVERY_BOUNDS = [[16.9987, 96.0890], [17.0057, 96.0964]];
+// Exact boundary exported from the user's Google Earth "UCSY boundary" polygon.
+const UCSY_DELIVERY_BOUNDARY = [
+    [16.99847164432281, 96.08887418679535],
+    [17.00099834467739, 96.0917924644623],
+    [17.00109409877783, 96.09206996950165],
+    [17.00115549824668, 96.09235607054363],
+    [17.00078197160767, 96.09243976451059],
+    [17.00052810278371, 96.09214576007443],
+    [17.00020176469859, 96.09235239115348],
+    [17.00015791092222, 96.09263356000432],
+    [17.0003136274375, 96.09287614084118],
+    [17.0001105485167, 96.09315958444996],
+    [17.00024014808984, 96.09349850679691],
+    [17.00051764063554, 96.09373514996589],
+    [17.00062664493086, 96.09411176796836],
+    [17.00069806949485, 96.09441420529822],
+    [17.00049611834281, 96.09484556398859],
+    [17.00047002502857, 96.09507744992167],
+    [17.00074473789371, 96.09544198551491],
+    [17.00119483818682, 96.0953958333762],
+    [17.00148734335533, 96.094941079951],
+    [17.00175766404782, 96.09460839284537],
+    [17.00205230651387, 96.09432029182878],
+    [17.00236710394384, 96.09396330558077],
+    [17.00253095032576, 96.09408739415011],
+    [17.00283705737561, 96.09434857858432],
+    [17.00308269432232, 96.09425003566292],
+    [17.00332997367006, 96.09405902815416],
+    [17.00365390855571, 96.09376824939741],
+    [17.00348409219023, 96.09350772539696],
+    [17.00367754011553, 96.09301335887059],
+    [17.00397260624025, 96.09280644282286],
+    [17.00423067819303, 96.09304489271949],
+    [17.00403702403774, 96.09340770495342],
+    [17.0041000658354, 96.0937652953554],
+    [17.00447276294428, 96.0938325121315],
+    [17.00466714873474, 96.09436619747582],
+    [17.00532962474701, 96.09439227058454],
+    [17.00534562915323, 96.09380404364137],
+    [17.00464929464304, 96.09246605279358],
+    [17.00482889890202, 96.09199981118275],
+    [17.0041958921952, 96.09094893169107],
+    [17.00134662865154, 96.0917590261344],
+    [16.9988076445325, 96.08855211607893]
+];
 const UCSY_LANDMARKS = {
     canteen: { label: 'Canteen', lat: 17.00172, lng: 96.09318 },
     library: { label: 'UCSY Library', lat: 17.00142, lng: 96.09342 },
@@ -41,9 +85,7 @@ let checkoutDeliveryMap = null;
 let checkoutDeliveryMarker = null;
 let checkoutDeliveryBoundary = null;
 let checkoutSatelliteLayer = null;
-let checkoutMapTileErrors = 0;
 let checkoutMapAlternateHostUsed = false;
-let checkoutMapRetryTimer = null;
 let checkoutMapResizeObserver = null;
 let checkoutMapPlaceholder = null;
 let selectedDeliveryLocation = null;
@@ -72,7 +114,7 @@ function setDeliveryLocation(lat, lng, label = '') {
     }).openTooltip();
     checkoutDeliveryMarker.bringToFront();
     checkoutDeliveryMap.panTo([lat, lng]);
-    const insideCampus = L.latLngBounds(UCSY_DELIVERY_BOUNDS).contains([lat, lng]);
+    const insideCampus = isPointInsideUCSYBoundary(lat, lng);
     const warning = document.getElementById('checkout-map-boundary-warning');
     if (warning) {
         warning.textContent = insideCampus ? '' : '⚠ This point appears to be outside the UCSY delivery area. Please check the marker.';
@@ -87,39 +129,34 @@ function initDeliveryMap() {
     if (!checkoutDeliveryMap) {
         checkoutDeliveryMap = L.map('checkout-delivery-map', { maxBounds: UCSY_MAP_BOUNDS, maxBoundsViscosity: 0.9 })
             .setView(UCSY_MAP_CENTER, 17);
-        checkoutSatelliteLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
-            maxZoom: 19,
-            maxNativeZoom: 18,
-            updateWhenIdle: true,
-            keepBuffer: 2,
+        const satelliteUrl = buildUCSYSatelliteImageUrl('server.arcgisonline.com');
+        const mapStatus = document.getElementById('checkout-map-network-status');
+        if (mapStatus) {
+            mapStatus.querySelector('span').textContent = 'Loading the UCSY satellite map…';
+            mapStatus.classList.remove('d-none');
+        }
+        checkoutSatelliteLayer = L.imageOverlay(satelliteUrl, UCSY_MAP_BOUNDS, {
+            opacity: 1,
+            interactive: false,
             crossOrigin: true,
-            attribution: 'Tiles &copy; Esri — Source: Esri, Maxar, Earthstar Geographics, and the GIS User Community'
+            className: 'ucsy-satellite-image'
         }).addTo(checkoutDeliveryMap);
-        checkoutSatelliteLayer.on('loading', () => {
-            checkoutMapTileErrors = 0;
-        });
         checkoutSatelliteLayer.on('load', () => {
-            if (checkoutMapTileErrors === 0) {
-                document.getElementById('checkout-map-network-status')?.classList.add('d-none');
-            }
+            document.getElementById('checkout-map-network-status')?.classList.add('d-none');
         });
-        checkoutSatelliteLayer.on('tileerror', () => {
-            checkoutMapTileErrors += 1;
-            if (checkoutMapTileErrors < 2) return;
+        checkoutSatelliteLayer.on('error', () => {
             const status = document.getElementById('checkout-map-network-status');
+            if (status) status.querySelector('span').textContent = 'The satellite image did not finish loading.';
             status?.classList.remove('d-none');
-            if (!checkoutMapAlternateHostUsed && !checkoutMapRetryTimer) {
+            if (!checkoutMapAlternateHostUsed) {
                 checkoutMapAlternateHostUsed = true;
-                checkoutMapRetryTimer = window.setTimeout(() => {
-                    checkoutMapRetryTimer = null;
-                    checkoutSatelliteLayer?.setUrl('https://services.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', false);
-                    checkoutSatelliteLayer?.redraw();
-                }, 900);
+                window.setTimeout(() => checkoutSatelliteLayer?.setUrl(buildUCSYSatelliteImageUrl('services.arcgisonline.com', true)), 900);
             }
         });
-        checkoutDeliveryBoundary = L.rectangle(UCSY_DELIVERY_BOUNDS, {
-            color: '#38bdf8', weight: 2, fillColor: '#38bdf8', fillOpacity: 0.06, dashArray: '7 6', interactive: false
-        }).addTo(checkoutDeliveryMap).bindTooltip('UCSY delivery area');
+        checkoutDeliveryMap.attributionControl.addAttribution('Imagery &copy; Esri, Maxar, Earthstar Geographics');
+        checkoutDeliveryBoundary = L.polygon(UCSY_DELIVERY_BOUNDARY, {
+            color: '#38bdf8', weight: 3, fillColor: '#38bdf8', fillOpacity: 0.08, dashArray: '8 6', interactive: false
+        }).addTo(checkoutDeliveryMap).bindTooltip('UCSY delivery boundary');
         checkoutDeliveryMap.on('click', event => setDeliveryLocation(event.latlng.lat, event.latlng.lng));
         const mapElement = document.getElementById('checkout-delivery-map');
         if (window.ResizeObserver && mapElement) {
@@ -130,6 +167,31 @@ function initDeliveryMap() {
     [50, 250, 500].forEach(delay => window.setTimeout(() => checkoutDeliveryMap.invalidateSize({ pan: false }), delay));
 }
 
+function isPointInsideUCSYBoundary(lat, lng) {
+    let inside = false;
+    for (let i = 0, j = UCSY_DELIVERY_BOUNDARY.length - 1; i < UCSY_DELIVERY_BOUNDARY.length; j = i++) {
+        const [latI, lngI] = UCSY_DELIVERY_BOUNDARY[i];
+        const [latJ, lngJ] = UCSY_DELIVERY_BOUNDARY[j];
+        const crossesLatitude = (latI > lat) !== (latJ > lat);
+        const boundaryLng = (lngJ - lngI) * (lat - latI) / ((latJ - latI) || Number.EPSILON) + lngI;
+        if (crossesLatitude && lng < boundaryLng) inside = !inside;
+    }
+    return inside;
+}
+
+function buildUCSYSatelliteImageUrl(host, cacheBust = false) {
+    const params = new URLSearchParams({
+        bbox: '96.083,16.994,96.102,17.011',
+        bboxSR: '4326',
+        imageSR: '4326',
+        size: '1600,1400',
+        format: 'jpg',
+        f: 'image'
+    });
+    if (cacheBust) params.set('_retry', String(Date.now()));
+    return `https://${host}/ArcGIS/rest/services/World_Imagery/MapServer/export?${params}`;
+}
+
 function retryDeliveryMapTiles() {
     const status = document.getElementById('checkout-map-network-status');
     if (!navigator.onLine) {
@@ -137,8 +199,10 @@ function retryDeliveryMapTiles() {
         return;
     }
     if (status) status.querySelector('span').textContent = 'Reloading satellite images…';
-    checkoutMapTileErrors = 0;
-    checkoutSatelliteLayer?.redraw();
+    checkoutSatelliteLayer?.setUrl(buildUCSYSatelliteImageUrl(
+        checkoutMapAlternateHostUsed ? 'services.arcgisonline.com' : 'server.arcgisonline.com',
+        true
+    ));
     checkoutDeliveryMap?.invalidateSize({ pan: false });
 }
 
