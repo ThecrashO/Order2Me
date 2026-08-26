@@ -95,13 +95,13 @@ function setDeliveryLocation(lat, lng, label = '') {
     selectedDeliveryLocation = { lat: Number(lat.toFixed(7)), lng: Number(lng.toFixed(7)) };
     if (!checkoutDeliveryMarker) {
         checkoutDeliveryMarker = L.circleMarker([lat, lng], {
-            radius: 11,
+            radius: 14,
             color: '#ffffff',
-            weight: 4,
+            weight: 5,
             fillColor: '#ef4444',
             fillOpacity: 1,
             opacity: 1,
-            pane: 'markerPane'
+            className: 'delivery-point-marker'
         }).addTo(checkoutDeliveryMap);
     } else checkoutDeliveryMarker.setLatLng([lat, lng]);
     checkoutDeliveryMarker.unbindTooltip();

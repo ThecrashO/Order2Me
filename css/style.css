@@ -3598,7 +3598,18 @@ textarea {
 }
 .delivery-map-picker.is-fullscreen #checkout-delivery-map { flex:1 1 auto; min-height:0; height:auto; border-radius:12px; }
 body.delivery-map-fullscreen-open { overflow:hidden; }
-.leaflet-marker-pane .leaflet-interactive { visibility:visible !important; pointer-events:auto !important; }
+.leaflet-overlay-pane .delivery-point-marker {
+    display:block !important;
+    visibility:visible !important;
+    stroke:#fff !important;
+    stroke-width:5px !important;
+    stroke-opacity:1 !important;
+    fill:#ef4444 !important;
+    fill-opacity:1 !important;
+    opacity:1 !important;
+    pointer-events:auto !important;
+    filter:drop-shadow(0 4px 5px rgba(15,23,42,.7));
+}
 .ucsy-location-label { padding:.35rem .55rem; border:0; border-radius:8px; background:#0f172a; color:#fff; box-shadow:0 4px 12px rgba(15,23,42,.35); font-size:.72rem; font-weight:800; }
 .ucsy-location-label::before { border-top-color:#0f172a !important; }
 .delivery-map-selection { margin-top:.55rem; padding:.5rem .65rem; border-radius:9px; background:#fff; color:var(--text-muted); font-size:.72rem; font-weight:650; }
