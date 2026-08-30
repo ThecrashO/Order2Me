@@ -600,7 +600,7 @@ window.addEventListener('beforeunload', () => {
 // ── 2. ORDERS ─────────────────────────────────────────────────
 
 async function loadOrders() {
-    const buildOrderSelect = (includeScreenshotPath, includeTracking = true, includeDeliveryLocation = true) => `
+    const buildOrderSelect = (includeScreenshotPath, includeTracking = true, includeDeliveryLocation = true, includeDeliveryLabel = true) => `
             id,
             customer_id,
             customer_name,
@@ -608,6 +608,7 @@ async function loadOrders() {
             total_amount,
             delivery_note,
             cancellation_reason,
+            ${includeDeliveryLabel ? 'delivery_location_label,' : ''}
             ${includeDeliveryLocation ? 'delivery_lat, delivery_lng,' : ''}
             created_at,
             ${includeTracking ? 'estimated_delivery_at, accepted_at, ready_at, sent_at,' : ''}
@@ -622,33 +623,40 @@ async function loadOrders() {
                 ${includeScreenshotPath ? ', screenshot_path' : ''}
             )
         `;
-    const fetchOrders = (includeScreenshotPath, includeTracking = true, includeDeliveryLocation = true) => supabaseClient
+    const fetchOrders = (includeScreenshotPath, includeTracking = true, includeDeliveryLocation = true, includeDeliveryLabel = true) => supabaseClient
         .from('orders')
-        .select(buildOrderSelect(includeScreenshotPath, includeTracking, includeDeliveryLocation))
+        .select(buildOrderSelect(includeScreenshotPath, includeTracking, includeDeliveryLocation, includeDeliveryLabel))
         .eq('shop_id', ownerShop.id)
         .order('created_at', { ascending: false });
 
     let includeTracking = true;
     let includeDeliveryLocation = true;
+    let includeDeliveryLabel = true;
     let includeScreenshotPath = true;
-    let { data, error } = await fetchOrders(includeScreenshotPath, includeTracking, includeDeliveryLocation);
+    let { data, error } = await fetchOrders(includeScreenshotPath, includeTracking, includeDeliveryLocation, includeDeliveryLabel);
     let errorText = [error?.message, error?.details, error?.hint].filter(Boolean).join(' ');
     if (error && (error.code === '42703' || /estimated_delivery_at|accepted_at|ready_at|sent_at/i.test(errorText))) {
         console.warn('Order queue migration is not available yet; loading without ETA fields.');
         includeTracking = false;
-        ({ data, error } = await fetchOrders(includeScreenshotPath, includeTracking, includeDeliveryLocation));
+        ({ data, error } = await fetchOrders(includeScreenshotPath, includeTracking, includeDeliveryLocation, includeDeliveryLabel));
+    }
+    errorText = [error?.message, error?.details, error?.hint].filter(Boolean).join(' ');
+    if (error && /delivery_location_label/i.test(errorText)) {
+        console.warn('Delivery location labels are not available yet; loading legacy orders.');
+        includeDeliveryLabel = false;
+        ({ data, error } = await fetchOrders(includeScreenshotPath, includeTracking, includeDeliveryLocation, includeDeliveryLabel));
     }
     errorText = [error?.message, error?.details, error?.hint].filter(Boolean).join(' ');
     if (error && (error.code === '42703' || /delivery_lat|delivery_lng/i.test(errorText))) {
         console.warn('Order delivery map migration is not available yet; loading orders without map coordinates.');
         includeDeliveryLocation = false;
-        ({ data, error } = await fetchOrders(includeScreenshotPath, includeTracking, includeDeliveryLocation));
+        ({ data, error } = await fetchOrders(includeScreenshotPath, includeTracking, includeDeliveryLocation, includeDeliveryLabel));
     }
     errorText = [error?.message, error?.details, error?.hint].filter(Boolean).join(' ');
     if (error && (error.code === '42703' || /screenshot_path/i.test(errorText))) {
         console.warn('payments.screenshot_path is not available yet; loading orders with the legacy schema. Run the Supabase SQL patch.');
         includeScreenshotPath = false;
-        ({ data, error } = await fetchOrders(includeScreenshotPath, includeTracking, includeDeliveryLocation));
+        ({ data, error } = await fetchOrders(includeScreenshotPath, includeTracking, includeDeliveryLocation, includeDeliveryLabel));
     }
 
     if (error) {
@@ -1243,21 +1251,27 @@ function buildOrderCard(order) {
     // Delivery note (now always required — display prominently)
     const deliveryNoteHtml = order.delivery_note
         ? `<div class="order-delivery-note mb-2">
-               <strong>📍 Delivery Note:</strong><br>
+               <strong>📝 Delivery note</strong><br>
                <span class="small">${escapeHtml(order.delivery_note)}</span>
            </div>`
         : '';
+    const deliveryLabel = order.delivery_location_label || (order.delivery_lat != null ? 'Custom delivery point' : 'Location not specified');
+    const customerPhone = String(order.customer_profile?.phone_number || '').trim();
+    const callablePhone = customerPhone.replace(/[^\d+]/g, '');
+    const deliveryLocationHtml = `<div class="order-delivery-location-summary mb-2">
+        <span class="order-delivery-location-icon">📍</span><div><small>Deliver to</small><strong>${escapeHtml(deliveryLabel)}</strong></div>
+        ${callablePhone ? `<a class="btn btn-sm btn-outline-success" href="tel:${callablePhone}">📞 Call</a>` : ''}
+    </div>`;
     const deliveryLat = Number(order.delivery_lat);
     const deliveryLng = Number(order.delivery_lng);
     const hasDeliveryPoint = order.delivery_lat != null && order.delivery_lng != null
         && Number.isFinite(deliveryLat) && Number.isFinite(deliveryLng);
+    const needsExactPoint = hasDeliveryPoint && (!order.delivery_location_label || /other|custom/i.test(order.delivery_location_label));
     const deliveryMapHtml = hasDeliveryPoint
-        ? `<div class="order-delivery-location"><div>${deliveryNoteHtml}</div><div class="order-delivery-map-actions">
+        ? `<div class="order-delivery-location"><div>${deliveryLocationHtml}${deliveryNoteHtml}</div>${needsExactPoint ? `<div class="order-delivery-map-actions">
               <a class="order-delivery-map-link" href="https://www.google.com/maps/search/?api=1&amp;query=${deliveryLat},${deliveryLng}"
-                 target="_blank" rel="noopener noreferrer">🛰️ View point</a>
-              <a class="order-delivery-map-link" href="https://www.google.com/maps/dir/?api=1&amp;destination=${deliveryLat},${deliveryLng}"
-                 target="_blank" rel="noopener noreferrer">🧭 Navigate</a>
-           </div></div>`
+                 target="_blank" rel="noopener noreferrer">View exact point</a>
+           </div>` : ''}</div>`
         : '';
 
     // Payment info
@@ -1328,7 +1342,7 @@ function buildOrderCard(order) {
             <div class="card-body py-2">
                 ${queueHtml}
                 <ul class="list-group list-group-flush mb-2">${itemsHtml}</ul>
-                ${hasDeliveryPoint ? deliveryMapHtml : deliveryNoteHtml}
+                ${hasDeliveryPoint ? deliveryMapHtml : `${deliveryLocationHtml}${deliveryNoteHtml}`}
                 ${paymentHtml}
                 <p class="mb-1 small"><strong>Total:</strong> ${order.total_amount} MMK</p>
                 <p class="mb-2 text-muted small"><strong>Placed:</strong> ${time}</p>
@@ -1346,14 +1360,18 @@ function openOrderDetailDrawer(orderId) {
     const lng = Number(order.delivery_lng);
     const hasPoint = order.delivery_lat != null && order.delivery_lng != null && Number.isFinite(lat) && Number.isFinite(lng);
     const distance = hasPoint ? getStraightLineDistanceMeters(17.0021126, 96.0924138, lat, lng) : null;
+    const deliveryLabel = order.delivery_location_label || (hasPoint ? 'Custom delivery point' : 'Location not specified');
+    const needsExactPoint = hasPoint && (!order.delivery_location_label || /other|custom/i.test(order.delivery_location_label));
+    const customerPhone = String(order.customer_profile?.phone_number || '').trim();
+    const callablePhone = customerPhone.replace(/[^\d+]/g, '');
     const items = (order.order_items || []).map(item => `<li>${escapeHtml(item.menu_items?.name || 'Item')} × ${item.quantity}</li>`).join('');
     const drawer = document.createElement('div');
     drawer.id = 'owner-order-detail-drawer';
     drawer.className = 'offcanvas offcanvas-end owner-order-drawer';
     drawer.tabIndex = -1;
     drawer.innerHTML = `<div class="offcanvas-header"><div><small class="text-muted">Order details</small><h5 class="offcanvas-title">Order #${order.id}</h5></div><button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button></div>
-      <div class="offcanvas-body"><section><h6>Customer note</h6><p>${escapeHtml(order.delivery_note || 'No note')}</p></section>
-      ${hasPoint ? `<section><h6>Delivery point</h6><p>Approximately ${Math.round(distance)} m from UCSY centre</p><div class="d-grid gap-2"><a class="btn btn-primary" target="_blank" rel="noopener noreferrer" href="https://www.google.com/maps/dir/?api=1&amp;destination=${lat},${lng}">🧭 Open route</a><a class="btn btn-outline-primary" target="_blank" rel="noopener noreferrer" href="https://www.google.com/maps/search/?api=1&amp;query=${lat},${lng}">🛰️ View satellite point</a></div></section>` : '<section><p class="text-muted">No map point was saved for this order.</p></section>'}
+      <div class="offcanvas-body"><section class="owner-delivery-primary"><small>Deliver to</small><h5>📍 ${escapeHtml(deliveryLabel)}</h5><p>${escapeHtml(order.delivery_note || 'No additional delivery note')}</p>${callablePhone ? `<a class="btn btn-success w-100" href="tel:${callablePhone}">📞 Call ${escapeHtml(customerPhone)}</a>` : '<span class="text-muted small">Customer phone is not available.</span>'}</section>
+      ${needsExactPoint ? `<section><h6>Exact point</h6><p>Approximately ${Math.round(distance)} m from UCSY centre. Campus roads may not appear correctly in external maps.</p><a class="btn btn-outline-primary w-100" target="_blank" rel="noopener noreferrer" href="https://www.google.com/maps/search/?api=1&amp;query=${lat},${lng}">View exact point</a></section>` : '<section><p class="text-muted">This landmark order does not require external navigation.</p></section>'}
       <section><h6>Items</h6><ul>${items || '<li>No items</li>'}</ul></section>
       <section><h6>Status</h6><p>${escapeHtml(order.status)}${order.estimated_delivery_at ? ` · ETA ${escapeHtml(formatEstimatedArrival(order.estimated_delivery_at))}` : ''}</p>${order.cancellation_reason ? `<p class="text-danger">${escapeHtml(order.cancellation_reason)}</p>` : ''}</section></div>`;
     document.body.appendChild(drawer);

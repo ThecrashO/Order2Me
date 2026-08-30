@@ -84,95 +84,109 @@ const UCSY_LANDMARKS = {
 let checkoutDeliveryMap = null;
 let checkoutDeliveryMarker = null;
 let checkoutDeliveryBoundary = null;
-let checkoutSatelliteLayer = null;
-let checkoutMapAlternateHostUsed = false;
+let checkoutBaseMapLayer = null;
 let checkoutMapResizeObserver = null;
 let checkoutMapPlaceholder = null;
 let selectedDeliveryLocation = null;
 let checkoutSubmissionInProgress = false;
 let checkoutRequestId = null;
-function setDeliveryLocation(lat, lng, label = '') {
-    selectedDeliveryLocation = { lat: Number(lat.toFixed(7)), lng: Number(lng.toFixed(7)) };
-    if (!checkoutDeliveryMarker) {
+
+function setDeliveryLocation(lat, lng, label = 'Other location', source = 'custom') {
+    selectedDeliveryLocation = {
+        lat: Number(Number(lat).toFixed(7)),
+        lng: Number(Number(lng).toFixed(7)),
+        label,
+        source
+    };
+    if (checkoutDeliveryMap && !checkoutDeliveryMarker) {
         const deliveryPinIcon = L.divIcon({
             className: 'delivery-point-icon',
-            html: '<div style="display:grid!important;place-items:center!important;box-sizing:border-box!important;width:46px!important;height:46px!important;border:5px solid #fff!important;border-radius:50%!important;background:#ef4444!important;color:#fff!important;font-size:22px!important;font-weight:900!important;line-height:1!important;box-shadow:0 5px 16px rgba(0,0,0,.75)!important;">●</div>',
-            iconSize: [46, 46],
-            iconAnchor: [23, 23],
-            popupAnchor: [0, -27]
+            html: '<span class="delivery-pin-shape"><span></span></span>',
+            iconSize: [40, 52],
+            iconAnchor: [20, 50],
+            popupAnchor: [0, -48]
         });
         checkoutDeliveryMarker = L.marker([lat, lng], {
             icon: deliveryPinIcon,
             pane: 'deliveryPointPane',
-            interactive: false,
-            keyboard: false,
+            interactive: true,
+            keyboard: true,
             zIndexOffset: 10000
         }).addTo(checkoutDeliveryMap);
-    } else checkoutDeliveryMarker.setLatLng([lat, lng]);
-    checkoutDeliveryMarker.unbindTooltip();
-    checkoutDeliveryMarker.bindPopup(label || 'Deliver here').openPopup();
-    if (label) checkoutDeliveryMarker.bindTooltip(label, {
-        permanent: true,
-        direction: 'top',
-        offset: [0, -13],
-        className: 'ucsy-location-label'
-    }).openTooltip();
-    checkoutDeliveryMarker.setZIndexOffset(10000);
-    checkoutDeliveryMap.panTo([lat, lng]);
+    } else if (checkoutDeliveryMarker) checkoutDeliveryMarker.setLatLng([lat, lng]);
+    if (checkoutDeliveryMarker) {
+        checkoutDeliveryMarker.unbindTooltip();
+        checkoutDeliveryMarker.bindTooltip(label, {
+            permanent: true,
+            direction: 'top',
+            offset: [0, -44],
+            className: 'ucsy-location-label'
+        }).openTooltip();
+        checkoutDeliveryMarker.setZIndexOffset(10000);
+    }
     const insideCampus = isPointInsideUCSYBoundary(lat, lng);
     const warning = document.getElementById('checkout-map-boundary-warning');
     if (warning) {
         warning.textContent = insideCampus ? '' : '⚠ This point appears to be outside the UCSY delivery area. Please check the marker.';
         warning.classList.toggle('d-none', insideCampus);
     }
-    document.getElementById('checkout-map-selection').textContent = `${label ? `${label} · ` : ''}Selected: ${selectedDeliveryLocation.lat}, ${selectedDeliveryLocation.lng}`;
+    const selection = document.getElementById('checkout-map-selection');
+    if (selection) {
+        selection.innerHTML = `<strong>${escapeHtml(label)}</strong><span>${source === 'gps' ? 'Selected using your current location' : source === 'landmark' ? 'Campus landmark selected' : 'Custom map point selected'}</span>`;
+        selection.classList.add('has-selection');
+    }
     document.getElementById('checkout-map-error').classList.add('d-none');
 }
 
 function initDeliveryMap() {
     if (typeof L === 'undefined') return;
     if (!checkoutDeliveryMap) {
-        checkoutDeliveryMap = L.map('checkout-delivery-map', { maxBounds: UCSY_MAP_BOUNDS, maxBoundsViscosity: 0.9 })
+        checkoutDeliveryMap = L.map('checkout-delivery-map', {
+            minZoom: 16,
+            maxZoom: 19,
+            zoomSnap: 0.5,
+            zoomDelta: 0.5,
+            maxBounds: UCSY_MAP_BOUNDS,
+            maxBoundsViscosity: 1,
+            doubleClickZoom: false,
+            scrollWheelZoom: false,
+            worldCopyJump: false
+        })
             .setView(UCSY_MAP_CENTER, 17);
         const deliveryPointPane = checkoutDeliveryMap.createPane('deliveryPointPane');
         deliveryPointPane.style.zIndex = '10000';
-        deliveryPointPane.style.pointerEvents = 'none';
-        const satelliteUrl = buildUCSYSatelliteImageUrl('server.arcgisonline.com');
+        deliveryPointPane.style.pointerEvents = 'auto';
         const mapStatus = document.getElementById('checkout-map-network-status');
         if (mapStatus) {
-            mapStatus.querySelector('span').textContent = 'Loading the UCSY satellite map…';
+            mapStatus.querySelector('span').textContent = 'Loading the campus map…';
             mapStatus.classList.remove('d-none');
         }
-        checkoutSatelliteLayer = L.imageOverlay(satelliteUrl, UCSY_MAP_BOUNDS, {
-            opacity: 1,
-            interactive: false,
-            crossOrigin: true,
-            className: 'ucsy-satellite-image'
+        checkoutBaseMapLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            minZoom: 16,
+            maxZoom: 19,
+            keepBuffer: 3,
+            updateWhenIdle: true,
+            attribution: '&copy; OpenStreetMap contributors'
         }).addTo(checkoutDeliveryMap);
-        checkoutSatelliteLayer.on('load', () => {
+        checkoutBaseMapLayer.on('load', () => {
             document.getElementById('checkout-map-network-status')?.classList.add('d-none');
         });
-        checkoutSatelliteLayer.on('error', () => {
+        checkoutBaseMapLayer.on('tileerror', () => {
             const status = document.getElementById('checkout-map-network-status');
-            if (status) status.querySelector('span').textContent = 'The satellite image did not finish loading.';
+            if (status) status.querySelector('span').textContent = 'Some map tiles did not load. Your delivery pin will still be saved.';
             status?.classList.remove('d-none');
-            if (!checkoutMapAlternateHostUsed) {
-                checkoutMapAlternateHostUsed = true;
-                window.setTimeout(() => checkoutSatelliteLayer?.setUrl(buildUCSYSatelliteImageUrl('services.arcgisonline.com', true)), 900);
-            }
         });
-        checkoutDeliveryMap.attributionControl.addAttribution('Imagery &copy; Esri, Maxar, Earthstar Geographics');
         checkoutDeliveryBoundary = L.polygon(UCSY_DELIVERY_BOUNDARY, {
             color: '#38bdf8', weight: 3, fillColor: '#38bdf8', fillOpacity: 0.08, dashArray: '8 6', interactive: false
         }).addTo(checkoutDeliveryMap).bindTooltip('UCSY delivery boundary');
-        checkoutDeliveryMap.on('click', event => setDeliveryLocation(event.latlng.lat, event.latlng.lng));
+        checkoutDeliveryMap.on('click', event => setDeliveryLocation(event.latlng.lat, event.latlng.lng, 'Other location', 'custom'));
         const mapElement = document.getElementById('checkout-delivery-map');
         if (window.ResizeObserver && mapElement) {
             checkoutMapResizeObserver = new ResizeObserver(() => checkoutDeliveryMap?.invalidateSize({ pan: false }));
             checkoutMapResizeObserver.observe(mapElement);
         }
     }
-    [50, 250, 500].forEach(delay => window.setTimeout(() => checkoutDeliveryMap.invalidateSize({ pan: false }), delay));
+    window.setTimeout(() => checkoutDeliveryMap.invalidateSize({ pan: false }), 120);
 }
 
 function isPointInsideUCSYBoundary(lat, lng) {
@@ -187,40 +201,60 @@ function isPointInsideUCSYBoundary(lat, lng) {
     return inside;
 }
 
-function buildUCSYSatelliteImageUrl(host, cacheBust = false) {
-    const params = new URLSearchParams({
-        bbox: '96.083,16.994,96.102,17.011',
-        bboxSR: '4326',
-        imageSR: '4326',
-        size: '1600,1400',
-        format: 'jpg',
-        f: 'image'
-    });
-    if (cacheBust) params.set('_retry', String(Date.now()));
-    return `https://${host}/ArcGIS/rest/services/World_Imagery/MapServer/export?${params}`;
-}
-
 function retryDeliveryMapTiles() {
     const status = document.getElementById('checkout-map-network-status');
     if (!navigator.onLine) {
         if (status) status.querySelector('span').textContent = 'Your device is offline. Reconnect and retry.';
         return;
     }
-    if (status) status.querySelector('span').textContent = 'Reloading satellite images…';
-    checkoutSatelliteLayer?.setUrl(buildUCSYSatelliteImageUrl(
-        checkoutMapAlternateHostUsed ? 'services.arcgisonline.com' : 'server.arcgisonline.com',
-        true
-    ));
+    if (status) status.querySelector('span').textContent = 'Reloading the campus map…';
+    checkoutBaseMapLayer?.redraw();
     checkoutDeliveryMap?.invalidateSize({ pan: false });
 }
 
 function selectDeliveryLandmark(key) {
-    if (!key || !UCSY_LANDMARKS[key]) return;
-    initDeliveryMap();
+    if (!key) {
+        resetDeliveryMap();
+        return;
+    }
+    const mapWrap = document.getElementById('delivery-custom-map-wrap');
+    if (key === 'other') {
+        selectedDeliveryLocation = null;
+        if (checkoutDeliveryMarker && checkoutDeliveryMap) checkoutDeliveryMap.removeLayer(checkoutDeliveryMarker);
+        checkoutDeliveryMarker = null;
+        mapWrap?.classList.remove('d-none');
+        initDeliveryMap();
+        resetDeliveryMapView();
+        const selection = document.getElementById('checkout-map-selection');
+        if (selection) {
+            selection.textContent = 'Tap the map to select your exact delivery point.';
+            selection.classList.remove('has-selection');
+        }
+        return;
+    }
+    if (!UCSY_LANDMARKS[key]) return;
+    mapWrap?.classList.add('d-none');
     const landmark = UCSY_LANDMARKS[key];
-    checkoutDeliveryMap.setView([landmark.lat, landmark.lng], 18);
-    setDeliveryLocation(landmark.lat, landmark.lng, landmark.label);
+    setDeliveryLocation(landmark.lat, landmark.lng, landmark.label, 'landmark');
     showToast(`${landmark.label} selected as your delivery point.`, 'success');
+}
+
+function findNearestUCSYLandmark(lat, lng, accuracy = 0) {
+    const candidates = Object.entries(UCSY_LANDMARKS).map(([key, landmark]) => ({
+        key,
+        ...landmark,
+        distance: getCustomerDistanceMeters(lat, lng, landmark.lat, landmark.lng)
+    })).sort((a, b) => a.distance - b.distance);
+    const threshold = Math.min(180, Math.max(85, Number(accuracy || 0) + 35));
+    return candidates[0]?.distance <= threshold ? candidates[0] : null;
+}
+
+function getCustomerDistanceMeters(lat1, lng1, lat2, lng2) {
+    const toRad = value => value * Math.PI / 180;
+    const dLat = toRad(lat2 - lat1);
+    const dLng = toRad(lng2 - lng1);
+    const a = Math.sin(dLat / 2) ** 2 + Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLng / 2) ** 2;
+    return 6371000 * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 }
 
 function useCurrentDeliveryLocation() {
@@ -231,10 +265,23 @@ function useCurrentDeliveryLocation() {
     }
     if (button) { button.disabled = true; button.textContent = 'Locating…'; }
     navigator.geolocation.getCurrentPosition(position => {
-        initDeliveryMap();
         const { latitude, longitude, accuracy } = position.coords;
-        checkoutDeliveryMap.setView([latitude, longitude], 18);
-        setDeliveryLocation(latitude, longitude, `Current location (±${Math.round(accuracy)} m)`);
+        const nearest = findNearestUCSYLandmark(latitude, longitude, accuracy);
+        const landmarkSelect = document.getElementById('delivery-landmark-select');
+        const mapWrap = document.getElementById('delivery-custom-map-wrap');
+        if (nearest) {
+            if (landmarkSelect) landmarkSelect.value = nearest.key;
+            mapWrap?.classList.add('d-none');
+            setDeliveryLocation(latitude, longitude, nearest.label, 'gps');
+            showToast(`${nearest.label} detected near your current location.`, 'success');
+        } else {
+            if (landmarkSelect) landmarkSelect.value = 'other';
+            mapWrap?.classList.remove('d-none');
+            initDeliveryMap();
+            checkoutDeliveryMap.setView([latitude, longitude], 18, { animate: false });
+            setDeliveryLocation(latitude, longitude, 'Other location', 'gps');
+            showToast('Current location selected. Add a clear delivery note for the owner.', 'success');
+        }
         if (button) { button.disabled = false; button.textContent = '⌖ Use my location'; }
     }, error => {
         const messages = { 1: 'Location permission was denied.', 2: 'Your location is unavailable.', 3: 'Location request timed out.' };
@@ -244,15 +291,24 @@ function useCurrentDeliveryLocation() {
 }
 
 function resetDeliveryMap() {
+    if (document.querySelector('.delivery-map-picker.is-fullscreen')) toggleDeliveryMapFullscreen(false);
     selectedDeliveryLocation = null;
     if (checkoutDeliveryMarker && checkoutDeliveryMap) checkoutDeliveryMap.removeLayer(checkoutDeliveryMarker);
     checkoutDeliveryMarker = null;
-    checkoutDeliveryMap?.setView(UCSY_MAP_CENTER, 17);
+    resetDeliveryMapView();
     const landmarkSelect = document.getElementById('delivery-landmark-select');
     if (landmarkSelect) landmarkSelect.value = '';
+    document.getElementById('delivery-custom-map-wrap')?.classList.add('d-none');
     document.getElementById('checkout-map-boundary-warning')?.classList.add('d-none');
     const label = document.getElementById('checkout-map-selection');
-    if (label) label.textContent = 'No location selected yet.';
+    if (label) {
+        label.textContent = 'No delivery point selected yet.';
+        label.classList.remove('has-selection');
+    }
+}
+
+function resetDeliveryMapView() {
+    checkoutDeliveryMap?.setView(UCSY_MAP_CENTER, 17, { animate: false });
 }
 
 function toggleDeliveryMapFullscreen(forceOpen) {
@@ -277,7 +333,7 @@ function toggleDeliveryMapFullscreen(forceOpen) {
     button.innerHTML = shouldOpen ? '✓ Done' : '⛶ Full screen';
     button.setAttribute('aria-pressed', String(shouldOpen));
     button.setAttribute('aria-label', shouldOpen ? 'Close full screen map' : 'Open full screen map');
-    [80, 250, 500].forEach(delay => window.setTimeout(() => checkoutDeliveryMap?.invalidateSize({ pan: false }), delay));
+    window.setTimeout(() => checkoutDeliveryMap?.invalidateSize({ pan: false }), 160);
 }
 
 document.addEventListener('keydown', event => {
@@ -1794,6 +1850,7 @@ async function createOrder(deliveryNote, paymentMethod, screenshotFile, delivery
         shop_id: activeShopId,
         total_amount: totalAmount,
         delivery_note: deliveryNote,
+        delivery_location_label: deliveryLocation.label || 'Other location',
         delivery_lat: deliveryLocation.lat,
         delivery_lng: deliveryLocation.lng,
         client_request_id: checkoutRequestId,
@@ -1805,9 +1862,18 @@ async function createOrder(deliveryNote, paymentMethod, screenshotFile, delivery
         .select()
         .single();
 
-    const orderErrorText = [orderError?.message, orderError?.details, orderError?.hint].filter(Boolean).join(' ');
-    if (orderError && (orderError.code === '42703' || /client_request_id/i.test(orderErrorText))) {
-        delete orderPayload.client_request_id;
+    for (let attempt = 0; orderError && attempt < 2; attempt += 1) {
+        const orderErrorText = [orderError?.message, orderError?.details, orderError?.hint].filter(Boolean).join(' ');
+        let changed = false;
+        if (/delivery_location_label/i.test(orderErrorText) && 'delivery_location_label' in orderPayload) {
+            delete orderPayload.delivery_location_label;
+            changed = true;
+        }
+        if (/client_request_id/i.test(orderErrorText) && 'client_request_id' in orderPayload) {
+            delete orderPayload.client_request_id;
+            changed = true;
+        }
+        if (!changed) break;
         ({ data: orderData, error: orderError } = await supabaseClient.from('orders').insert(orderPayload).select().single());
     }
 

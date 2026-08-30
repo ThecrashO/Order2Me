@@ -6,6 +6,7 @@ BEGIN;
 ALTER TABLE public.orders
   ADD COLUMN IF NOT EXISTS delivery_lat double precision,
   ADD COLUMN IF NOT EXISTS delivery_lng double precision,
+  ADD COLUMN IF NOT EXISTS delivery_location_label text,
   ADD COLUMN IF NOT EXISTS client_request_id text,
   ADD COLUMN IF NOT EXISTS cancellation_reason text;
 
@@ -19,6 +20,9 @@ ALTER TABLE public.orders ADD CONSTRAINT orders_delivery_lat_check
   CHECK (delivery_lat IS NULL OR delivery_lat BETWEEN -90 AND 90);
 ALTER TABLE public.orders ADD CONSTRAINT orders_delivery_lng_check
   CHECK (delivery_lng IS NULL OR delivery_lng BETWEEN -180 AND 180);
+ALTER TABLE public.orders DROP CONSTRAINT IF EXISTS orders_delivery_location_label_check;
+ALTER TABLE public.orders ADD CONSTRAINT orders_delivery_location_label_check
+  CHECK (delivery_location_label IS NULL OR char_length(delivery_location_label) BETWEEN 1 AND 120);
 
 CREATE OR REPLACE FUNCTION public.protect_order_delivery_location()
 RETURNS trigger LANGUAGE plpgsql SET search_path = '' AS $$
@@ -26,6 +30,7 @@ BEGIN
   IF auth.uid() IS NOT NULL AND NOT public.is_admin() THEN
     NEW.delivery_lat:=OLD.delivery_lat;
     NEW.delivery_lng:=OLD.delivery_lng;
+    NEW.delivery_location_label:=OLD.delivery_location_label;
   END IF;
   RETURN NEW;
 END;

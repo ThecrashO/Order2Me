@@ -692,22 +692,13 @@
                         </div>
                     </div>
 
-                    <div class="mb-4 delivery-map-picker">
-                        <div class="d-flex align-items-center justify-content-between gap-2 mb-2">
-                            <label class="form-label fw-semibold mb-0">🗺️ Pin your UCSY delivery point <span class="text-danger">*</span></label>
-                            <div class="delivery-map-actions">
-                                <button type="button" class="btn btn-sm btn-outline-primary" id="checkout-map-fullscreen-btn"
-                                    onclick="toggleDeliveryMapFullscreen()" aria-pressed="false">⛶ Full screen</button>
-                                <button type="button" class="btn btn-sm btn-outline-secondary" onclick="resetDeliveryMap()">Reset</button>
-                            </div>
-                        </div>
-                        <p class="small text-muted mb-2">Tap the campus map where the owner should deliver your order.</p>
+                    <div class="mb-4 delivery-location-picker">
+                        <label class="form-label fw-semibold">📍 Delivery point <span class="text-danger">*</span></label>
+                        <p class="small text-muted mb-2">Choose a campus landmark or use your current location. The map is only needed for another location.</p>
                         <div class="delivery-location-tools mb-2">
-                            <button type="button" class="btn btn-sm btn-primary" id="use-current-location-btn"
-                                onclick="useCurrentDeliveryLocation()">⌖ Use my location</button>
-                            <select class="form-select form-select-sm" id="delivery-landmark-select"
-                                onchange="selectDeliveryLandmark(this.value)" aria-label="Choose a UCSY landmark">
-                                <option value="">Choose landmark…</option>
+                            <select class="form-select" id="delivery-landmark-select"
+                                onchange="selectDeliveryLandmark(this.value)" aria-label="Choose a UCSY delivery point">
+                                <option value="">Choose delivery point…</option>
                                 <option value="canteen">Canteen</option>
                                 <option value="library">UCSY Library</option>
                                 <option value="building-e">Building E</option>
@@ -716,16 +707,30 @@
                                 <option value="alinkar-hostel">အလင်္ကာအဆောင်</option>
                                 <option value="mudra-hostel">မုဒြာအဆောင်</option>
                                 <option value="depa-hostel">ဒီပအဆောင်</option>
+                                <option value="other">Other location — choose on map</option>
                             </select>
+                            <button type="button" class="btn btn-primary" id="use-current-location-btn"
+                                onclick="useCurrentDeliveryLocation()">⌖ Use my location</button>
                         </div>
-                        <div id="checkout-map-network-status" class="delivery-map-network-status d-none" role="status">
-                            <span>Loading the UCSY satellite map…</span>
-                            <button type="button" class="btn btn-sm btn-light" onclick="retryDeliveryMapTiles()">Retry map</button>
+                        <div id="checkout-map-selection" class="delivery-map-selection">No delivery point selected yet.</div>
+                        <div id="checkout-map-error" class="text-danger small mt-1 d-none">⚠ Please choose a landmark, use your location, or select Other location.</div>
+
+                        <div class="delivery-map-picker d-none mt-3" id="delivery-custom-map-wrap">
+                            <div class="d-flex align-items-center justify-content-between gap-2 mb-2">
+                                <div><strong>Choose another location</strong><p class="small text-muted mb-0">Tap once to place the delivery pin.</p></div>
+                                <div class="delivery-map-actions">
+                                    <button type="button" class="btn btn-sm btn-outline-primary" id="checkout-map-fullscreen-btn"
+                                        onclick="toggleDeliveryMapFullscreen()" aria-pressed="false">⛶ Expand</button>
+                                    <button type="button" class="btn btn-sm btn-outline-secondary" onclick="resetDeliveryMapView()">Reset view</button>
+                                </div>
+                            </div>
+                            <div id="checkout-map-network-status" class="delivery-map-network-status d-none" role="status">
+                                <span>Loading the campus map…</span>
+                                <button type="button" class="btn btn-sm btn-light" onclick="retryDeliveryMapTiles()">Retry map</button>
+                            </div>
+                            <div id="checkout-delivery-map" aria-label="Select another delivery location on the UCSY campus map"></div>
+                            <div id="checkout-map-boundary-warning" class="alert alert-warning py-2 px-3 small mt-2 d-none" role="alert"></div>
                         </div>
-                        <div id="checkout-delivery-map" aria-label="Select delivery location on UCSY campus map"></div>
-                        <div id="checkout-map-selection" class="delivery-map-selection">No location selected yet.</div>
-                        <div id="checkout-map-boundary-warning" class="alert alert-warning py-2 px-3 small mt-2 d-none" role="alert"></div>
-                        <div id="checkout-map-error" class="text-danger small mt-1 d-none">⚠ Please select a delivery point on the map.</div>
                     </div>
 
                     <!-- Payment Method -->

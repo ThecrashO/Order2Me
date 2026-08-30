@@ -19,9 +19,10 @@ University canteen များအတွက် ပြုလုပ်ထားသ
 - မဖြစ်မနေထည့်ရသော phone number နှင့် ပြင်ဆင်နိုင်သော profile photo
 - Approved shop များ၊ shop owner profile နှင့် menu ပုံများကြည့်ခြင်း
 - Category/search filter ဖြင့် menu ရှာခြင်း
-- Cart ထဲထည့်ပြီး delivery note နှင့် fullscreen ပြုလုပ်နိုင်သော UCSY satellite map ပေါ် GPS/landmark delivery point pin ထောက်ကာ order တင်ခြင်း
-- Google Earth KML မှရရှိသော UCSY polygon delivery boundary warning နှင့် duplicate order submission protection
-- အလင်္ကာ၊ မုဒြာနှင့် ဒီပအဆောင် အပါအဝင် UCSY landmark quick selection
+- Landmark-first delivery point — အလင်္ကာ၊ မုဒြာနှင့် ဒီပအဆောင် အပါအဝင် UCSY နေရာကို map မလိုဘဲရွေးနိုင်ခြင်း
+- `Use my location` ဖြင့် GPS နေရာကို အနီးဆုံး UCSY landmark/အဆောင်နာမည်နှင့် အလိုအလျောက်သိရှိခြင်း
+- `Other location` ရွေးမှသာ controlled OpenStreetMap picker၊ visible CSS pin၊ fullscreen view နှင့် UCSY boundary warning အသုံးပြုခြင်း
+- Duplicate order submission protection နှင့် မဖြစ်မနေ delivery note
 - KBZPay၊ WavePay payment method နှင့် payment screenshot
 - Order status timeline၊ ETA နှင့် delayed-order alert ကို Realtime သို့မဟုတ် polling fallback ဖြင့်ကြည့်ခြင်း
 - Owner ကို ဖုန်းခေါ်ရန် profile/call action
@@ -39,7 +40,7 @@ University canteen များအတွက် ပြုလုပ်ထားသ
 - Incoming order စာရင်းနှင့် order status workflow
 - Business Insights dashboard — revenue၊ sales trend၊ best-selling menu၊ peak hours၊ order performance၊ ratings နှင့် searchable order records
 - ကိုယ့်ဆိုင်တွင် order တင်ဖူးသော customers စာရင်း၊ profile နှင့် phone-call button
-- Payment screenshot၊ delivery note နှင့် customer ထောက်ထားသော delivery point ကို detail drawer/map/route ဖြင့်ကြည့်ခြင်း
+- Order detail တွင် landmark၊ delivery note နှင့် customer call button ကိုဦးစားပေးကြည့်ခြင်း၊ Other location ဖြစ်မှ exact point link ပြခြင်း
 - Browser notification၊ sound နှင့် toast alerts
 
 ### Administrator
@@ -192,7 +193,7 @@ SQL ဖိုင်များကို **Supabase Dashboard → SQL Editor** �
 13. `supabase/v1_security_lockdown.sql` — နောက်ဆုံး run ရမည့် anonymous-access lockdown
 14. `supabase/admin_control_center.sql` — Admin audit/RPC foundation၊ user/shop/order controls၊ moderation၊ announcements၊ system settings နှင့် analytics
 15. `supabase/admin_control_center_fix.sql` — Suspension/session enforcement၊ working system limits၊ distinct audit events နှင့် production corrective fixes
-16. `supabase/order_delivery_location.sql` — Customer map pin coordinates၊ duplicate-request key၊ cancellation reason နှင့် owner-only delivery location protection
+16. `supabase/order_delivery_location.sql` — Landmark label၊ optional map coordinates၊ duplicate-request key၊ cancellation reason နှင့် owner-only delivery location protection
 
 လိုအပ်သည့် existing database များတွင်သာ `supabase/allow_duplicate_profile_names.sql` ကို run ပါ။ Abandoned Web Push objects ရှိသေးလျှင် `supabase/remove_web_push.sql` ဖြင့်ဖယ်ရှားနိုင်သည်။
 
@@ -318,7 +319,9 @@ node scripts/verify.mjs
 - [ ] Owner shop availability open/closed
 - [ ] Menu add/edit/delete၊ image upload နှင့် Available/Unavailable filter
 - [ ] Customer shop/menu view၊ cart နှင့် order placement
-- [ ] UCSY satellite map ပေါ် marker ထောက်ပြီး Owner ဘက် `View delivery point` link မှ နေရာမှန်ဖွင့်ခြင်း
+- [ ] Landmark ရွေးထားသော order တွင် map မလိုဘဲ Owner ဘက် landmark၊ note နှင့် phone button ပြခြင်း
+- [ ] `Use my location` ဖြင့် အနီးဆုံး အဆောင်/landmark နာမည်မှန်စွာသိခြင်း
+- [ ] `Other location` map တွင် marker၊ controlled zoom/fullscreen နှင့် Owner `View exact point` မှ နေရာမှန်ဖွင့်ခြင်း
 - [ ] KBZPay/WavePay နှင့် payment screenshot order
 - [ ] Owner receives new order and changes every status
 - [ ] Customer receives status updates and confirms receipt
