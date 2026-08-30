@@ -1501,7 +1501,7 @@ async function loadMenuItems() {
     const menuList = document.getElementById('menu-list');
 
     if (error) {
-        menuList.innerHTML = `<p class="text-danger">Error: ${error.message}</p>`;
+        menuList.innerHTML = `<p class="text-danger">Error: ${escapeHtml(error.message)}</p>`;
         return;
     }
 

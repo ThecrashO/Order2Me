@@ -2,6 +2,10 @@
   "name": "order2me",
   "version": "1.0.0",
   "private": true,
+  "scripts": {
+    "verify": "node scripts/verify.mjs",
+    "test": "npm run verify"
+  },
   "dependencies": {
     "@supabase/ssr": "^0.12.3",
     "@supabase/supabase-js": "^2.110.8"

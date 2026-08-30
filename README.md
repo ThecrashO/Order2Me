@@ -1,6 +1,6 @@
 # Order2Me
 
-**Release:** `v1.0.0` · University Edition UCSY
+**Release:** `v1.0.0` · University Edition UCSY · Final review: `2026-08-30`
 
 University canteen များအတွက် ပြုလုပ်ထားသော multi-shop food ordering web application ဖြစ်သည်။ Customer များက ဆိုင်နှင့် menu များကိုရွေးပြီး order တင်နိုင်သလို Shop Owner များက menu၊ order နှင့် ဆိုင်ဖွင့်/ပိတ်အခြေအနေကို စီမံနိုင်သည်။ Administrator က owner account နှင့် shop များကို approve/reject လုပ်နိုင်သည်။
 
@@ -300,6 +300,18 @@ npx vercel --prod
 
 Release မလုပ်မီ Customer၊ Owner နှင့် Admin account သုံးခုဖြင့် အောက်ပါ end-to-end flow ကိုစမ်းပါ။
 
+Code၊ page asset references၊ duplicate HTML IDs နှင့် JSON configuration များကို အရင်စစ်ရန်—
+
+```bash
+npm test
+```
+
+`npm` command မရသော environment တွင် verifier ကို တိုက်ရိုက် run နိုင်သည်။
+
+```bash
+node scripts/verify.mjs
+```
+
 - [ ] Customer signup → 8-digit OTP → login
 - [ ] Forgot password → recovery OTP → new password login
 - [ ] Owner signup → pending page → Admin approval
@@ -317,6 +329,10 @@ Release မလုပ်မီ Customer၊ Owner နှင့် Admin account �
 - [ ] Customer က တခြား customer order မမြင်နိုင်ခြင်း
 - [ ] Owner က တခြား shop data မပြင်နိုင်ခြင်း
 - [ ] Service Worker update ပြီးနောက် latest UI ပေါ်ခြင်း
+- [ ] Owner actions ပြီးနောက် success/error toast ပေါ်ခြင်း
+- [ ] Suspended customer/owner ကို 15 seconds အတွင်း sign out လုပ်ခြင်း
+- [ ] Admin announcement create/delete နှင့် သက်ဆိုင်ရာ audience dashboard တွင်ပြခြင်း
+- [ ] Desktop 1366px နှင့် mobile 390px view တွင် horizontal overflow မရှိခြင်း
 
 ## Notifications နှင့် လက်ရှိကန့်သတ်ချက်များ
 
@@ -373,9 +389,10 @@ Release မလုပ်မီ Customer၊ Owner နှင့် Admin account �
 
 Order2Me တွင် multi-shop ordering၊ role-based dashboards၊ admin approval၊ menu/profile images၊ payment proof၊ customer/owner phone actions၊ shop/menu availability၊ Realtime with polling fallback၊ browser alerts၊ email confirmation OTP နှင့် password recovery flow များပါဝင်ပြီး university project demonstration အတွက် feature-complete အခြေအနေဖြစ်သည်။
 
-Production release မတိုင်မီ final end-to-end testing၊ Supabase migration audit၊ authenticated SMTP domain နှင့် security/RLS testing ပြုလုပ်ရန်လိုအပ်သည်။
+2026-08-30 final code review တွင် JavaScript syntax၊ local asset references၊ duplicate HTML IDs၊ JSON configuration၊ public authentication redirects နှင့် 390px mobile overflow ကိုစစ်ဆေးထားသည်။ Owner toast host၊ first-login profile creation race၊ escaped menu errors၊ strict Web App Manifest icons၊ service-worker cache version နှင့် Vercel security headers ကိုပြင်ဆင်ထားသည်။
+
+Production release မတိုင်မီ Supabase Dashboard မှ migration order ကိုအတည်ပြုခြင်း၊ Customer/Owner/Admin အစစ် account သုံးခုဖြင့် authenticated end-to-end testing၊ Custom SMTP domain နှင့် RLS negative tests ပြုလုပ်ရန်လိုအပ်သည်။ Code review တစ်ခုတည်းဖြင့် production database state၊ email deliverability သို့မဟုတ် role-specific data access ကို အပြည့်အဝအာမခံမပေးနိုင်ပါ။
 
 ---
 
 Built as a university project for a simpler canteen ordering experience.
-hi

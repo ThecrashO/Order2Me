@@ -192,7 +192,9 @@ async function createProfileAndShop(user, metadata = {}) {
     return profile;
 }
 
-async function getCurrentProfile() {
+let currentProfileRequest = null;
+
+async function loadCurrentProfile() {
     const user = await getCurrentUser();
     if (!user) return null;
 
@@ -243,6 +245,16 @@ async function getCurrentProfile() {
     }
 
     return profile;
+}
+
+async function getCurrentProfile() {
+    if (currentProfileRequest) return currentProfileRequest;
+    currentProfileRequest = loadCurrentProfile();
+    try {
+        return await currentProfileRequest;
+    } finally {
+        currentProfileRequest = null;
+    }
 }
 
 function dashboardForProfile(profile) {

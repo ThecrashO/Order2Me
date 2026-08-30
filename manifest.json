@@ -1,25 +1,25 @@
-﻿{
-    "name": "Order2Me",
-    "short_name": "Order2Me",
-    "description": "Multi-shop canteen ordering system for customers, owners and administrators",
-    "start_url": "./login.html",
-    "scope": "./",
-    "display": "standalone",
-    "orientation": "portrait",
-    "theme_color": "#0b1f3a",
-    "background_color": "#f8fafc",
-    "icons": [
-        {
-            "src": "images/logo.png",
-            "sizes": "192x192",
-            "type": "image/png",
-            "purpose": "any maskable"
-        },
-        {
-            "src": "images/logo.png",
-            "sizes": "512x512",
-            "type": "image/png",
-            "purpose": "any maskable"
-        }
-    ]
+{
+  "name": "Order2Me",
+  "short_name": "Order2Me",
+  "description": "Multi-shop canteen ordering system for customers, owners and administrators",
+  "start_url": "./login.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "theme_color": "#0b1f3a",
+  "background_color": "#f8fafc",
+  "icons": [
+    {
+      "src": "images/logo-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "images/logo-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
 }
