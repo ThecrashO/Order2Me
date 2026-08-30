@@ -117,14 +117,14 @@ Cancellation reasons remain visible in order history for accountability.
 
 ```mermaid
 flowchart LR
-    U[Customer / Owner / Admin] --> V[Order2Me on Vercel]
-    V --> C[/api/config]
-    V --> P[/supabase proxy]
-    P --> S[Supabase Auth]
-    P --> D[PostgreSQL + RLS]
-    P --> F[Supabase Storage]
-    V -. WebSocket .-> R[Supabase Realtime]
-    V -. Polling fallback .-> D
+    U["Customer · Owner · Admin"] --> V["Order2Me on Vercel"]
+    V --> C["Runtime config API"]
+    V --> P["Supabase proxy"]
+    P --> S["Supabase Auth"]
+    P --> D["PostgreSQL and RLS"]
+    P --> F["Supabase Storage"]
+    V -. "WebSocket" .-> R["Supabase Realtime"]
+    V -. "Polling fallback" .-> D
 ```
 
 REST, Auth, and Storage requests use a Vercel same-origin proxy. Realtime uses a direct authenticated WebSocket connection, with polling available when that connection is blocked or interrupted.
